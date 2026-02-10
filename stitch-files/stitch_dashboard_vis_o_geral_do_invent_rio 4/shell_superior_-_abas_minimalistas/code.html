@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dashboard Financeiro Consolidado - Shell V1</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0d40a5",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1a202c",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 24px -2px rgba(0, 0, 0, 0.04)',
+                        'hover': '0 8px 32px -4px rgba(0, 0, 0, 0.08)',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }.custom-scrollbar::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #e2e8f0;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#0d121b] font-display antialiased min-h-screen flex flex-col overflow-x-hidden selection:bg-primary/20">
+<header class="sticky top-0 z-50 w-full bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-md border-b border-[#e7ebf3] px-6 py-4">
+<div class="max-w-[1400px] mx-auto flex items-center justify-between gap-4">
+<div class="flex items-center gap-3 min-w-fit">
+<div class="size-8 bg-black rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[20px]">diamond</span>
+</div>
+<h1 class="text-xl font-black tracking-tight text-[#0d121b] dark:text-white hidden sm:block">Shell Superior</h1>
+</div>
+<nav class="hidden md:flex flex-1 justify-center">
+<ul class="flex items-center gap-1 bg-[#e7ebf3]/50 p-1 rounded-full">
+<li>
+<a class="px-5 py-2 text-sm font-bold text-[#6b7280] hover:text-[#0d121b] rounded-full transition-colors duration-200" href="#">Dashboard</a>
+</li>
+<li>
+<a class="px-5 py-2 text-sm font-bold text-[#6b7280] hover:text-[#0d121b] rounded-full transition-colors duration-200" href="#">Imóveis</a>
+</li>
+<li>
+<a class="px-5 py-2 text-sm font-bold text-[#6b7280] hover:text-[#0d121b] rounded-full transition-colors duration-200" href="#">Sócios &amp; Cotas</a>
+</li>
+<li>
+<a class="px-5 py-2 text-sm font-bold text-[#0d121b] bg-white shadow-sm rounded-full transition-all duration-200" href="#">Financeiro</a>
+</li>
+<li>
+<a class="px-5 py-2 text-sm font-bold text-[#6b7280] hover:text-[#0d121b] rounded-full transition-colors duration-200" href="#">Relatórios</a>
+</li>
+<li>
+<a class="px-5 py-2 text-sm font-bold text-[#6b7280] hover:text-[#0d121b] rounded-full transition-colors duration-200 flex items-center gap-1" href="#">
+                            IA Insights
+                            <span class="size-2 rounded-full bg-primary"></span>
+</a>
+</li>
+</ul>
+</nav>
+<div class="flex items-center gap-4 min-w-fit justify-end">
+<button class="p-2 text-[#6b7280] hover:text-black transition-colors rounded-full hover:bg-black/5 md:hidden">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="flex items-center gap-3">
+<button class="size-10 flex items-center justify-center rounded-full text-[#0d121b] hover:bg-black/5 transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border border-white"></span>
+</button>
+<button class="hidden sm:flex items-center justify-center gap-2 h-10 px-6 bg-[#0d121b] hover:bg-black text-white text-xs font-bold tracking-wide rounded-full shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>NOVO ATIVO</span>
+</button>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-1 w-full max-w-[1400px] mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-2 text-sm font-medium text-[#6b7280]">
+<span>Financeiro</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-[#0d121b]">Consolidado</span>
+</div>
+<h2 class="text-4xl font-black text-[#0d121b] tracking-tight">Gestão de Dívida</h2>
+<p class="text-[#6b7280] font-medium max-w-2xl">Visão unificada de alavancagem, projeção de juros e amortização do portfólio.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 h-10 px-5 bg-white border border-[#e7ebf3] text-[#0d121b] text-sm font-bold rounded-full hover:bg-gray-50 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">download</span>
+<span>Exportar Relatório</span>
+</button>
+<button class="flex items-center gap-2 h-10 px-5 bg-[#0d121b] text-white text-sm font-bold rounded-full hover:bg-black/90 transition-colors shadow-lg">
+<span class="material-symbols-outlined text-[18px]">add_card</span>
+<span>Simular Crédito</span>
+</button>
+</div>
+</div>
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-white p-8 rounded-xl border border-[#e7ebf3] shadow-soft flex flex-col justify-between hover:border-primary/30 transition-all duration-300 group relative overflow-hidden">
+<div class="absolute -right-6 -top-6 bg-primary/5 rounded-full size-32 group-hover:bg-primary/10 transition-colors"></div>
+<div class="flex flex-col gap-4 relative z-10">
+<div class="flex items-center gap-2">
+<div class="p-2 bg-red-50 rounded-lg text-red-600">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+<span class="text-xs font-bold text-[#6b7280] uppercase tracking-wider">Dívida Bancária Total</span>
+</div>
+<div>
+<span class="text-4xl font-black text-[#0d121b] tracking-tight block mb-1">R$ 28.450.000</span>
+<div class="flex items-center gap-2 text-xs font-medium text-[#6b7280]">
+<span class="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded text-[11px] font-bold">-4.2%</span>
+<span>vs. trimestre anterior</span>
+</div>
+</div>
+</div>
+<div class="mt-6 w-full h-1 bg-gray-100 rounded-full overflow-hidden">
+<div class="h-full bg-[#0d121b] w-[65%]"></div>
+</div>
+<div class="mt-2 flex justify-between text-[10px] font-bold text-[#6b7280] uppercase">
+<span>LTV Global: 32%</span>
+<span>Capacidade: R$ 45M</span>
+</div>
+</div>
+<div class="bg-white p-8 rounded-xl border border-[#e7ebf3] shadow-soft flex flex-col justify-between hover:border-primary/30 transition-all duration-300 group">
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-2">
+<div class="p-2 bg-blue-50 rounded-lg text-blue-600">
+<span class="material-symbols-outlined">trending_up</span>
+</div>
+<span class="text-xs font-bold text-[#6b7280] uppercase tracking-wider">Projeção Juros (12m)</span>
+</div>
+<div>
+<span class="text-4xl font-black text-[#0d121b] tracking-tight block mb-1">R$ 3.120.000</span>
+<span class="text-xs font-medium text-[#6b7280]">Custo médio efetivo (CET): 11.2% a.a.</span>
+</div>
+</div>
+<div class="mt-4 grid grid-cols-2 gap-2">
+<div class="bg-[#f8f9fc] p-3 rounded-lg">
+<span class="block text-[10px] font-bold text-[#6b7280] uppercase mb-1">Indexador IPCA</span>
+<span class="block text-sm font-bold text-[#0d121b]">65% da dívida</span>
+</div>
+<div class="bg-[#f8f9fc] p-3 rounded-lg">
+<span class="block text-[10px] font-bold text-[#6b7280] uppercase mb-1">Indexador CDI</span>
+<span class="block text-sm font-bold text-[#0d121b]">35% da dívida</span>
+</div>
+</div>
+</div>
+<div class="bg-white p-8 rounded-xl border border-[#e7ebf3] shadow-soft flex flex-col justify-between hover:border-primary/30 transition-all duration-300 group">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="p-2 bg-emerald-50 rounded-lg text-emerald-600">
+<span class="material-symbols-outlined">pie_chart</span>
+</div>
+<span class="text-xs font-bold text-[#6b7280] uppercase tracking-wider">Status de Quitação</span>
+</div>
+<span class="text-2xl font-black text-[#0d121b]">42%</span>
+</div>
+<div class="flex-1 flex items-center justify-center py-4">
+<div class="relative size-32 rounded-full flex items-center justify-center bg-gray-100" style="background: conic-gradient(#0d121b 0% 42%, #e7ebf3 42% 100%);">
+<div class="size-24 bg-white rounded-full flex flex-col items-center justify-center">
+<span class="text-xs font-bold text-[#6b7280] uppercase">Restante</span>
+<span class="text-lg font-black text-[#0d121b]">58%</span>
+</div>
+</div>
+</div>
+<div class="text-center">
+<span class="text-xs font-medium text-[#6b7280]">Previsão de quitação total: <strong>Dez/2032</strong></span>
+</div>
+</div>
+</section>
+<section class="bg-white p-8 rounded-xl border border-[#e7ebf3] shadow-soft">
+<div class="flex items-center justify-between mb-8">
+<div>
+<h3 class="text-lg font-bold text-[#0d121b]">Evolução da Dívida</h3>
+<p class="text-sm text-[#6b7280]">Projeção de amortização nos próximos 5 anos</p>
+</div>
+<div class="flex gap-2 text-xs font-bold">
+<div class="flex items-center gap-1.5 px-3 py-1 bg-gray-50 rounded-full border border-gray-100">
+<div class="size-2 rounded-full bg-[#0d121b]"></div>
+<span>Saldo Devedor</span>
+</div>
+<div class="flex items-center gap-1.5 px-3 py-1 bg-gray-50 rounded-full border border-gray-100">
+<div class="size-2 rounded-full bg-gray-300"></div>
+<span>Juros Pagos</span>
+</div>
+</div>
+</div>
+<div class="h-64 w-full flex items-end justify-between gap-4 md:gap-8 px-4">
+<div class="flex-1 flex flex-col items-center gap-3 group h-full justify-end cursor-pointer">
+<div class="relative w-full max-w-[80px] bg-gray-100 rounded-t-lg overflow-hidden flex flex-col justify-end transition-all hover:opacity-90 h-full">
+<div class="bg-gray-300 w-full h-[30%]"></div> 
+<div class="bg-[#0d121b] w-full h-[70%]"></div> 
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            R$ 28.4M
+                        </div>
+</div>
+<span class="text-xs font-bold text-[#6b7280]">2024</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-3 group h-full justify-end cursor-pointer">
+<div class="relative w-full max-w-[80px] bg-gray-100 rounded-t-lg overflow-hidden flex flex-col justify-end transition-all hover:opacity-90 h-[85%]">
+<div class="bg-gray-300 w-full h-[28%]"></div>
+<div class="bg-[#0d121b] w-full h-[72%]"></div>
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            R$ 24.1M
+                        </div>
+</div>
+<span class="text-xs font-bold text-[#6b7280]">2025</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-3 group h-full justify-end cursor-pointer">
+<div class="relative w-full max-w-[80px] bg-gray-100 rounded-t-lg overflow-hidden flex flex-col justify-end transition-all hover:opacity-90 h-[68%]">
+<div class="bg-gray-300 w-full h-[25%]"></div>
+<div class="bg-[#0d121b] w-full h-[75%]"></div>
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            R$ 19.3M
+                        </div>
+</div>
+<span class="text-xs font-bold text-[#6b7280]">2026</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-3 group h-full justify-end cursor-pointer">
+<div class="relative w-full max-w-[80px] bg-gray-100 rounded-t-lg overflow-hidden flex flex-col justify-end transition-all hover:opacity-90 h-[52%]">
+<div class="bg-gray-300 w-full h-[22%]"></div>
+<div class="bg-[#0d121b] w-full h-[78%]"></div>
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            R$ 14.8M
+                        </div>
+</div>
+<span class="text-xs font-bold text-[#6b7280]">2027</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-3 group h-full justify-end cursor-pointer">
+<div class="relative w-full max-w-[80px] bg-gray-100 rounded-t-lg overflow-hidden flex flex-col justify-end transition-all hover:opacity-90 h-[38%]">
+<div class="bg-gray-300 w-full h-[18%]"></div>
+<div class="bg-[#0d121b] w-full h-[82%]"></div>
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            R$ 10.5M
+                        </div>
+</div>
+<span class="text-xs font-bold text-[#6b7280]">2028</span>
+</div>
+</div>
+</section>
+<section class="bg-white rounded-xl shadow-soft border border-[#e7ebf3] overflow-hidden flex flex-col">
+<div class="p-6 border-b border-[#e7ebf3] flex items-center justify-between">
+<h3 class="text-lg font-bold text-[#0d121b]">Financiamentos Ativos</h3>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400 text-[18px]">search</span>
+<input class="pl-9 pr-4 py-1.5 text-sm border border-[#e7ebf3] rounded-full focus:ring-1 focus:ring-black focus:border-black w-64" placeholder="Buscar contrato..." type="text"/>
+</div>
+</div>
+<div class="overflow-x-auto custom-scrollbar">
+<table class="w-full min-w-[1000px] border-collapse text-left">
+<thead>
+<tr class="border-b border-[#e7ebf3] bg-[#fcfcfd]">
+<th class="py-4 px-6 text-xs font-bold text-[#6b7280] uppercase tracking-wider w-[30%]">Imóvel / Ativo</th>
+<th class="py-4 px-6 text-xs font-bold text-[#6b7280] uppercase tracking-wider w-[20%]">Instituição Financeira</th>
+<th class="py-4 px-6 text-xs font-bold text-[#6b7280] uppercase tracking-wider w-[10%]">Sistema</th>
+<th class="py-4 px-6 text-xs font-bold text-[#6b7280] uppercase tracking-wider w-[20%]">Progresso / Parcelas</th>
+<th class="py-4 px-6 text-xs font-bold text-[#6b7280] uppercase tracking-wider w-[20%] text-right">Saldo Devedor</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#e7ebf3]">
+<tr class="group hover:bg-[#f8f9fc] transition-colors cursor-pointer">
+<td class="py-4 px-6">
+<div class="flex items-center gap-4">
+<div class="h-12 w-16 rounded-lg bg-gray-200 overflow-hidden relative shadow-sm">
+<div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBmrzXL5MwJ0rG9Emfbi2DNSkGhS5WfvEafBvqqTfH2_sIKJW096pRZ-RGaXFlMz-K3uUMgp089rhZoFeNRxUGMZyydDqmcLL9UHFlaJ7MeiIm9D76Gf2Hf0-EVCXqLVsYaRPGG9w0l4N6Dg126ZOQnQ7MxA2EdJZbPbFbbPr70afmMKrb0WQ-p17Gip9ysKvsFJNDAm3w0hQltLDmOEV2pUHjHqNUSIZKRTjeQ1PEyZkwbJeVjf3WG4I9Gvg6gv5dmy8Iz5kB--hde');"></div>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-[#0d121b] group-hover:text-primary transition-colors">Mansão Jardins</span>
+<span class="text-xs font-medium text-[#6b7280]">Contrato: 4892.001-A</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-6">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-orange-600 bg-orange-50 p-1 rounded">account_balance</span>
+<span class="text-sm font-bold text-[#0d121b]">Itaú Private</span>
+</div>
+</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold bg-gray-100 text-[#6b7280] border border-gray-200 uppercase">
+                                    SAC
+                                </span>
+</td>
+<td class="py-4 px-6">
+<div class="flex flex-col gap-1.5 w-full max-w-[140px]">
+<div class="flex justify-between text-[10px] font-bold text-[#6b7280]">
+<span>124/240</span>
+<span>51%</span>
+</div>
+<div class="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+<div class="h-full bg-emerald-500 w-[51%]"></div>
+</div>
+</div>
+</td>
+<td class="py-4 px-6 text-right">
+<div class="flex flex-col items-end">
+<span class="text-sm font-bold text-[#0d121b]">R$ 3.200.000</span>
+<span class="text-[10px] font-medium text-[#6b7280]">Juros 9.5% a.a.</span>
+</div>
+</td>
+</tr>
+<tr class="group hover:bg-[#f8f9fc] transition-colors cursor-pointer">
+<td class="py-4 px-6">
+<div class="flex items-center gap-4">
+<div class="h-12 w-16 rounded-lg bg-gray-200 overflow-hidden relative shadow-sm">
+<div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBWfBneKugNR2QY1pvAH-THZDPbbydRvwS32V16DtHaH7JXHbmWxfGHv-tAGtQwLZdEQJG85JZNPbV8Nkb0uU3Cv5UqJ8k3GZz7cfiOWv2MNGLsw6tb34TugCQpfRa_P1Wb2QbAWqvC2qCNT87UEobXVZ_pVJFwVaNHU_0gVz3RjsVcmbsY2zKQX3jbqM74IGPfcRtAy-ck6MLbsrPCjC5Y4HPW7w_uCYA_YUC6islMRhWfy2plFOdeWBBCXAlfqWkfTAQfdGIL6e-t');"></div>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-[#0d121b] group-hover:text-primary transition-colors">Penthouse Leblon</span>
+<span class="text-xs font-medium text-[#6b7280]">Contrato: 9921.B-22</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-6">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#c5a666] bg-[#fdf8ed] p-1 rounded">assured_workload</span>
+<span class="text-sm font-bold text-[#0d121b]">Safra</span>
+</div>
+</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold bg-gray-100 text-[#6b7280] border border-gray-200 uppercase">
+                                    PRICE
+                                </span>
+</td>
+<td class="py-4 px-6">
+<div class="flex flex-col gap-1.5 w-full max-w-[140px]">
+<div class="flex justify-between text-[10px] font-bold text-[#6b7280]">
+<span>48/180</span>
+<span>26%</span>
+</div>
+<div class="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+<div class="h-full bg-blue-500 w-[26%]"></div>
+</div>
+</div>
+</td>
+<td class="py-4 px-6 text-right">
+<div class="flex flex-col items-end">
+<span class="text-sm font-bold text-[#0d121b]">R$ 15.100.000</span>
+<span class="text-[10px] font-medium text-[#6b7280]">Juros 12.1% a.a.</span>
+</div>
+</td>
+</tr>
+<tr class="group hover:bg-[#f8f9fc] transition-colors cursor-pointer">
+<td class="py-4 px-6">
+<div class="flex items-center gap-4">
+<div class="h-12 w-16 rounded-lg bg-gray-200 overflow-hidden relative shadow-sm">
+<div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAW6x86wOfQACk0KhCIDzaoVVXyoH_iteml9xDWv58y4ThbthaZ6mOnnRjw-58Cvm1bZ4fq2bpmveC76MivxPsl6Qw_J-r13xYO6cXcHP5raB0THFmNVwqlmbx49PINK9gfHyzhvC5n6SfEPT59wS75hZStLYoXzPx6Ol6IOJ-4Jjbehs2bvpm0TXeCs09_F4X0xbdhJScjL2gh3w1mHoa58ZKuQYNxF2r04yMLQvdUIsCJJNQtYUtidYITG7yx2oJxB7OKQ26DB9qa');"></div>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-[#0d121b] group-hover:text-primary transition-colors">Loja Faria Lima</span>
+<span class="text-xs font-medium text-[#6b7280]">Contrato: 2133.X-01</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-6">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-red-600 bg-red-50 p-1 rounded">account_balance_wallet</span>
+<span class="text-sm font-bold text-[#0d121b]">Bradesco</span>
+</div>
+</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold bg-gray-100 text-[#6b7280] border border-gray-200 uppercase">
+                                    SAC
+                                </span>
+</td>
+<td class="py-4 px-6">
+<div class="flex flex-col gap-1.5 w-full max-w-[140px]">
+<div class="flex justify-between text-[10px] font-bold text-[#6b7280]">
+<span>89/120</span>
+<span>74%</span>
+</div>
+<div class="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+<div class="h-full bg-emerald-500 w-[74%]"></div>
+</div>
+</div>
+</td>
+<td class="py-4 px-6 text-right">
+<div class="flex flex-col items-end">
+<span class="text-sm font-bold text-[#0d121b]">R$ 1.850.000</span>
+<span class="text-[10px] font-medium text-[#6b7280]">Juros 10.5% a.a.</span>
+</div>
+</td>
+</tr>
+<tr class="group hover:bg-[#f8f9fc] transition-colors cursor-pointer">
+<td class="py-4 px-6">
+<div class="flex items-center gap-4">
+<div class="h-12 w-16 rounded-lg bg-gray-200 overflow-hidden relative shadow-sm">
+<div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDngFmhX9Lm3J7x9hJQvyR7oIY4YjtPIYA6I1sXEpDPJVo6_i_VQEOaQ3q8H42cearcbXRsV-s1w8RPmBIgbGkpPr0_EUBKFr6yo14ksgiBhf3cJ60XXo-7aTFBfp-Zrg7vRTVZoFCgBLr2VjoAkEfuZEV6HDqC52VRTqQdN2WefzshOhZ4OT6xBmdbj9tYyVlyuTU6bY6r2bmP--nPk0u1A9MgPEy0dchSzvbERIJGvgSvodO-g4oqoe-js-np2Jv9RL_fYxRX04G-');"></div>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-[#0d121b] group-hover:text-primary transition-colors">Fazenda Boa Vista</span>
+<span class="text-xs font-medium text-[#6b7280]">Contrato: Rural-092</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-6">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-green-700 bg-green-50 p-1 rounded">agriculture</span>
+<span class="text-sm font-bold text-[#0d121b]">BB Agro</span>
+</div>
+</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold bg-gray-100 text-[#6b7280] border border-gray-200 uppercase">
+                                    Rural
+                                </span>
+</td>
+<td class="py-4 px-6">
+<div class="flex flex-col gap-1.5 w-full max-w-[140px]">
+<div class="flex justify-between text-[10px] font-bold text-[#6b7280]">
+<span>12/60</span>
+<span>20%</span>
+</div>
+<div class="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+<div class="h-full bg-yellow-500 w-[20%]"></div>
+</div>
+</div>
+</td>
+<td class="py-4 px-6 text-right">
+<div class="flex flex-col items-end">
+<span class="text-sm font-bold text-[#0d121b]">R$ 8.300.000</span>
+<span class="text-[10px] font-medium text-[#6b7280]">Sub. Agrícola</span>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-6 py-4 bg-white border-t border-[#e7ebf3] flex items-center justify-between">
+<p class="text-sm text-[#6b7280] font-medium">Total: <span class="text-[#0d121b] font-bold">R$ 28.450.000</span> em dívidas ativas</p>
+<div class="flex items-center gap-2">
+<button class="px-3 py-1.5 border border-[#e7ebf3] rounded-full text-sm font-bold text-[#6b7280] disabled:opacity-50 hover:bg-gray-50 transition-colors" disabled="">Anterior</button>
+<button class="px-3 py-1.5 border border-[#e7ebf3] rounded-full text-sm font-bold text-[#0d121b] hover:bg-gray-50 transition-colors">Próximo</button>
+</div>
+</div>
+</section>
+</main>
+
+</body></html>

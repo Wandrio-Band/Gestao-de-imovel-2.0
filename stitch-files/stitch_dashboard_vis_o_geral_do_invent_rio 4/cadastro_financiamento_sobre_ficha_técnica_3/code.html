@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gestão de Sócios &amp; Cotas</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#1152d4",
+              "background-light": "#f6f6f8",
+              "background-dark": "#101622",
+              "surface": "#ffffff",
+            },
+            fontFamily: {
+              "sans": ["Inter", "sans-serif"]
+            },
+            borderRadius: {
+              "xl": "1rem", 
+              "2xl": "2rem", 
+              "3xl": "3rem", 
+              "super": "3.5rem",
+            },
+            boxShadow: {
+                "soft": "0 20px 40px -10px rgba(0,0,0,0.05)"
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-[#f2f4f7] text-[#0d121b] min-h-screen font-sans selection:bg-primary/20">
+<header class="sticky top-0 z-50 px-8 py-6 w-full flex items-center justify-between bg-gradient-to-b from-[#f2f4f7] via-[#f2f4f7]/95 to-transparent backdrop-blur-sm">
+<div class="flex items-center gap-3 opacity-50 hover:opacity-100 transition-opacity cursor-pointer">
+<div class="w-8 h-8 rounded-full bg-[#0d121b] flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-sm">grid_view</span>
+</div>
+<span class="font-bold text-sm tracking-wide hidden sm:block">FAMILY OFFICE</span>
+</div>
+<nav class="bg-white/80 backdrop-blur-md shadow-sm border border-white/50 p-1.5 rounded-full flex items-center gap-1">
+<a class="px-4 lg:px-6 py-2.5 rounded-full text-xs font-bold text-gray-400 hover:text-[#0d121b] hover:bg-white transition-all hidden sm:block" href="#">VISÃO GERAL</a>
+<a class="px-6 py-2.5 rounded-full text-xs font-bold text-white bg-[#0d121b] shadow-lg shadow-[#0d121b]/20" href="#">SÓCIOS &amp; COTAS</a>
+<a class="px-4 lg:px-6 py-2.5 rounded-full text-xs font-bold text-gray-400 hover:text-[#0d121b] hover:bg-white transition-all hidden sm:block" href="#">ATIVOS</a>
+<a class="px-4 lg:px-6 py-2.5 rounded-full text-xs font-bold text-gray-400 hover:text-[#0d121b] hover:bg-white transition-all hidden md:block" href="#">FINANÇAS</a>
+</nav>
+<button class="group flex items-center gap-2 bg-[#0d121b] hover:bg-primary text-white px-5 py-3 rounded-full text-xs font-bold transition-all shadow-lg hover:shadow-primary/30">
+<span class="material-symbols-outlined text-sm group-hover:rotate-90 transition-transform">add</span>
+<span class="hidden sm:inline">NOVO ATIVO</span>
+</button>
+</header>
+<main class="px-8 pb-24 w-full max-w-[1920px] mx-auto">
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+<article class="bg-white rounded-[3.5rem] p-8 flex flex-col gap-8 shadow-soft border border-white/50 hover:border-primary/20 transition-all duration-300 group h-full relative overflow-hidden">
+<div class="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none">
+<span class="material-symbols-outlined text-[120px]">person</span>
+</div>
+<div class="flex items-center gap-4 relative z-10">
+<div class="w-14 h-14 rounded-full bg-[#f0f2f5] border-2 border-white shadow-sm flex items-center justify-center overflow-hidden">
+<img alt="Raquel" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDukdwb7vbIu30sE5wLEbK2RvXJY0L-j307UVenWTTpSmTWvaQw4Rbmr3hEy6jRHwbJ1P0cYIin-_MWE90sja39jNE9Vgi1KkHAwC8NeafF4o5dCWpoZ4cy91jZkYBx8JBELJh9zTQgUlkUgQ2Hj0D60BwGB_X5M19LqzOUlO2XMkixpyL7i4Xu7iKn0ioNRP1EM7fFgHlDm6-3m1thBnQ5DR6fvL1V1_-00tJf_zp6TrMjghuI-mZMORCFz8W--gZG0JuwZFxg700a"/>
+</div>
+<div>
+<h2 class="text-xl font-bold text-[#0d121b]">Raquel</h2>
+<div class="flex items-center gap-1 text-[#4c669a]">
+<span class="material-symbols-outlined text-sm">verified</span>
+<span class="text-[10px] font-bold uppercase tracking-wider">Sócio Fundador</span>
+</div>
+</div>
+</div>
+<div class="relative z-10">
+<span class="text-xs font-bold text-[#4c669a] uppercase tracking-wider">Patrimônio Consolidado</span>
+<h3 class="text-4xl font-extrabold text-[#0d121b] mt-1 tracking-tight">R$ 12.4M</h3>
+</div>
+<div class="grid grid-cols-2 gap-4 relative z-10">
+<div class="bg-[#f8f9fc] rounded-2xl p-4">
+<div class="text-2xl font-bold text-[#0d121b]">14</div>
+<div class="text-[10px] font-bold text-[#4c669a] uppercase">Ativos Vinc.</div>
+</div>
+<div class="bg-[#f8f9fc] rounded-2xl p-4">
+<div class="text-2xl font-bold text-[#0d121b]">32%</div>
+<div class="text-[10px] font-bold text-[#4c669a] uppercase">Portfólio</div>
+</div>
+</div>
+<div class="flex items-center justify-between gap-4 py-2 relative z-10">
+<div class="relative w-24 h-24 rounded-full flex-shrink-0" style="background: conic-gradient(#1152d4 0% 50%, #0d121b 50% 80%, #e2e8f0 80% 100%)">
+<div class="absolute inset-4 bg-white rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-[#4c669a]">pie_chart</span>
+</div>
+</div>
+<div class="flex flex-col gap-2 flex-1">
+<div class="flex items-center gap-2 text-xs font-medium text-[#4c669a]">
+<span class="w-2 h-2 rounded-full bg-primary"></span> Residencial (50%)
+                       </div>
+<div class="flex items-center gap-2 text-xs font-medium text-[#4c669a]">
+<span class="w-2 h-2 rounded-full bg-[#0d121b]"></span> Comercial (30%)
+                       </div>
+<div class="flex items-center gap-2 text-xs font-medium text-[#4c669a]">
+<span class="w-2 h-2 rounded-full bg-slate-200"></span> Loteamento (20%)
+                       </div>
+</div>
+</div>
+<div class="relative z-10">
+<div class="flex justify-between text-[10px] font-bold uppercase text-[#4c669a] mb-2">
+<span>Status de Quitação</span>
+<span>85%</span>
+</div>
+<div class="h-2 w-full bg-[#f0f2f5] rounded-full overflow-hidden">
+<div class="h-full bg-[#0d121b] rounded-full" style="width: 85%"></div>
+</div>
+</div>
+<div class="mt-auto grid grid-cols-2 gap-3 relative z-10">
+<button class="px-4 py-3 rounded-full border border-[#e7ebf3] text-xs font-bold text-[#0d121b] hover:bg-[#f8f9fc] transition">
+                        Ver Ativos
+                    </button>
+<button class="px-4 py-3 rounded-full bg-[#f0f2f5] text-xs font-bold text-[#0d121b] hover:bg-[#e7ebf3] transition flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">description</span>
+                        Relatório
+                    </button>
+</div>
+</article>
+<article class="bg-white rounded-[3.5rem] p-8 flex flex-col gap-8 shadow-soft border border-white/50 hover:border-primary/20 transition-all duration-300 group h-full relative overflow-hidden">
+<div class="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none">
+<span class="material-symbols-outlined text-[120px]">person_3</span>
+</div>
+<div class="flex items-center gap-4 relative z-10">
+<div class="w-14 h-14 rounded-full bg-[#f0f2f5] border-2 border-white shadow-sm flex items-center justify-center overflow-hidden">
+<img alt="Marilia" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuVy_RBlsLgy5-RSUYJakkGrtdu6NRgR7mGkCR-eh7f7Q3QfRuoMtn_gtFNC6pm73tDjTYHAXhmyOVyDuwYcHytdkGG-wz4WBEz4ePxSna-qcEM5sQ_gj4j5p7NMl-lalrcAcYRrBY3IonAXwqz2e4EV4wbW5RJ-auLsVAM1TGkLbA1vIsVix6cJt2yIMsXeeNkDL9aQTlF_EHLohTilRSGGaTQsQPej9ZGUyxlO1SFYDve81HqyJvXiGu1lvCL7MW_STi4bKv9x1v"/>
+</div>
+<div>
+<h2 class="text-xl font-bold text-[#0d121b]">Marilia</h2>
+<div class="flex items-center gap-1 text-[#4c669a]">
+<span class="material-symbols-outlined text-sm">verified</span>
+<span class="text-[10px] font-bold uppercase tracking-wider">Sócia Fixa</span>
+</div>
+</div>
+</div>
+<div class="relative z-10">
+<span class="text-xs font-bold text-[#4c669a] uppercase tracking-wider">Patrimônio Consolidado</span>
+<h3 class="text-4xl font-extrabold text-[#0d121b] mt-1 tracking-tight">R$ 8.2M</h3>
+</div>
+<div class="grid grid-cols-2 gap-4 relative z-10">
+<div class="bg-[#f8f9fc] rounded-2xl p-4">
+<div class="text-2xl font-bold text-[#0d121b]">08</div>
+<div class="text-[10px] font-bold text-[#4c669a] uppercase">Ativos Vinc.</div>
+</div>
+<div class="bg-[#f8f9fc] rounded-2xl p-4">
+<div class="text-2xl font-bold text-[#0d121b]">18%</div>
+<div class="text-[10px] font-bold text-[#4c669a] uppercase">Portfólio</div>
+</div>
+</div>
+<div class="flex items-center justify-between gap-4 py-2 relative z-10">
+<div class="relative w-24 h-24 rounded-full flex-shrink-0" style="background: conic-gradient(#1152d4 0% 40%, #0d121b 40% 80%, #e2e8f0 80% 100%)">
+<div class="absolute inset-4 bg-white rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-[#4c669a]">donut_large</span>
+</div>
+</div>
+<div class="flex flex-col gap-2 flex-1">
+<div class="flex items-center gap-2 text-xs font-medium text-[#4c669a]">
+<span class="w-2 h-2 rounded-full bg-primary"></span> Residencial (40%)
+                       </div>
+<div class="flex items-center gap-2 text-xs font-medium text-[#4c669a]">
+<span class="w-2 h-2 rounded-full bg-[#0d121b]"></span> Comercial (40%)
+                       </div>
+<div class="flex items-center gap-2 text-xs font-medium text-[#4c669a]">
+<span class="w-2 h-2 rounded-full bg-slate-200"></span> Loteamento (20%)
+                       </div>
+</div>
+</div>
+<div class="relative z-10">
+<div class="flex justify-between text-[10px] font-bold uppercase text-[#4c669a] mb-2">
+<span>Status de Quitação</span>
+<span>92%</span>
+</div>
+<div class="h-2 w-full bg-[#f0f2f5] rounded-full overflow-hidden">
+<div class="h-full bg-[#0d121b] rounded-full" style="width: 92%"></div>
+</div>
+</div>
+<div class="mt-auto grid grid-cols-2 gap-3 relative z-10">
+<button class="px-4 py-3 rounded-full border border-[#e7ebf3] text-xs font-bold text-[#0d121b] hover:bg-[#f8f9fc] transition">
+                        Ver Ativos
+                    </button>
+<button class="px-4 py-3 rounded-full bg-[#f0f2f5] text-xs font-bold text-[#0d121b] hover:bg-[#e7ebf3] transition flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">description</span>
+                        Relatório
+                    </button>
+</div>
+</article>
+<article class="bg-white rounded-[3.5rem] p-8 flex flex-col gap-8 shadow-soft border border-white/50 hover:border-primary/20 transition-all duration-300 group h-full relative overflow-hidden">
+<div class="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none">
+<span class="material-symbols-outlined text-[120px]">person_4</span>
+</div>
+<div class="flex items-center gap-4 relative z-10">
+<div class="w-14 h-14 rounded-full bg-[#f0f2f5] border-2 border-white shadow-sm flex items-center justify-center overflow-hidden">
+<img alt="Wândrio" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBG6MrhOqv11vJAkqGx36wRiJBmyXF28IHjxRgJHaXve2qpCaKCgcTck005rqzuF7FQgvsiEYKi8UJ6pGeuvXl2GPJP2l3x1LtEybZERVQNJv19DB7Wcd59kwowN89ipy_ZR1euw6w8ek1u5CRcxh3cLU2LzQNH0-IN8Z88Lm6-dac3KAs6ZgsOEgxbZc5kvAdgJWbWcutaccxO9C281i-nxWkWmI_7k7BeNN6hKijAdNb9Z7Nkx1prIXaE6SruI5kLAy2ngUyOXKKz"/>
+</div>
+<div>
+<h2 class="text-xl font-bold text-[#0d121b]">Wândrio</h2>
+<div class="flex items-center gap-1 text-[#4c669a]">
+<span class="material-symbols-outlined text-sm">verified</span>
+<span class="text-[10px] font-bold uppercase tracking-wider">Sócio Investidor</span>
+</div>
+</div>
+</div>
+<div class="relative z-10">
+<span class="text-xs font-bold text-[#4c669a] uppercase tracking-wider">Patrimônio Consolidado</span>
+<h3 class="text-4xl font-extrabold text-[#0d121b] mt-1 tracking-tight">R$ 15.1M</h3>
+</div>
+<div class="grid grid-cols-2 gap-4 relative z-10">
+<div class="bg-[#f8f9fc] rounded-2xl p-4">
+<div class="text-2xl font-bold text-[#0d121b]">15</div>
+<div class="text-[10px] font-bold text-[#4c669a] uppercase">Ativos Vinc.</div>
+</div>
+<div class="bg-[#f8f9fc] rounded-2xl p-4">
+<div class="text-2xl font-bold text-[#0d121b]">32%</div>
+<div class="text-[10px] font-bold text-[#4c669a] uppercase">Portfólio</div>
+</div>
+</div>
+<div class="flex items-center justify-between gap-4 py-2 relative z-10">
+<div class="relative w-24 h-24 rounded-full flex-shrink-0" style="background: conic-gradient(#1152d4 0% 20%, #0d121b 20% 90%, #e2e8f0 90% 100%)">
+<div class="absolute inset-4 bg-white rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-[#4c669a]">data_usage</span>
+</div>
+</div>
+<div class="flex flex-col gap-2 flex-1">
+<div class="flex items-center gap-2 text-xs font-medium text-[#4c669a]">
+<span class="w-2 h-2 rounded-full bg-primary"></span> Residencial (20%)
+                       </div>
+<div class="flex items-center gap-2 text-xs font-medium text-[#4c669a]">
+<span class="w-2 h-2 rounded-full bg-[#0d121b]"></span> Comercial (70%)
+                       </div>
+<div class="flex items-center gap-2 text-xs font-medium text-[#4c669a]">
+<span class="w-2 h-2 rounded-full bg-slate-200"></span> Loteamento (10%)
+                       </div>
+</div>
+</div>
+<div class="relative z-10">
+<div class="flex justify-between text-[10px] font-bold uppercase text-[#4c669a] mb-2">
+<span>Status de Quitação</span>
+<span>65%</span>
+</div>
+<div class="h-2 w-full bg-[#f0f2f5] rounded-full overflow-hidden">
+<div class="h-full bg-[#0d121b] rounded-full" style="width: 65%"></div>
+</div>
+</div>
+<div class="mt-auto grid grid-cols-2 gap-3 relative z-10">
+<button class="px-4 py-3 rounded-full border border-[#e7ebf3] text-xs font-bold text-[#0d121b] hover:bg-[#f8f9fc] transition">
+                        Ver Ativos
+                    </button>
+<button class="px-4 py-3 rounded-full bg-[#f0f2f5] text-xs font-bold text-[#0d121b] hover:bg-[#e7ebf3] transition flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">description</span>
+                        Relatório
+                    </button>
+</div>
+</article>
+<article class="bg-white rounded-[3.5rem] p-8 flex flex-col gap-8 shadow-soft border border-white/50 hover:border-primary/20 transition-all duration-300 group h-full relative overflow-hidden">
+<div class="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none">
+<span class="material-symbols-outlined text-[120px]">folder_shared</span>
+</div>
+<div class="flex items-center gap-4 relative z-10">
+<div class="w-14 h-14 rounded-full bg-[#0d121b] border-2 border-white shadow-sm flex items-center justify-center overflow-hidden text-white">
+<span class="text-xs font-bold">INV</span>
+</div>
+<div>
+<h2 class="text-xl font-bold text-[#0d121b]">Inventário Tilinha</h2>
+<div class="flex items-center gap-1 text-[#4c669a]">
+<span class="material-symbols-outlined text-sm">family_history</span>
+<span class="text-[10px] font-bold uppercase tracking-wider">Espólio</span>
+</div>
+</div>
+</div>
+<div class="relative z-10">
+<span class="text-xs font-bold text-[#4c669a] uppercase tracking-wider">Patrimônio Consolidado</span>
+<h3 class="text-4xl font-extrabold text-[#0d121b] mt-1 tracking-tight">R$ 10.5M</h3>
+</div>
+<div class="grid grid-cols-2 gap-4 relative z-10">
+<div class="bg-[#f8f9fc] rounded-2xl p-4">
+<div class="text-2xl font-bold text-[#0d121b]">09</div>
+<div class="text-[10px] font-bold text-[#4c669a] uppercase">Ativos Vinc.</div>
+</div>
+<div class="bg-[#f8f9fc] rounded-2xl p-4">
+<div class="text-2xl font-bold text-[#0d121b]">25%</div>
+<div class="text-[10px] font-bold text-[#4c669a] uppercase">Portfólio</div>
+</div>
+</div>
+<div class="flex items-center justify-between gap-4 py-2 relative z-10">
+<div class="relative w-24 h-24 rounded-full flex-shrink-0" style="background: conic-gradient(#1152d4 0% 10%, #0d121b 10% 20%, #e2e8f0 20% 100%)">
+<div class="absolute inset-4 bg-white rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-[#4c669a]">folder_open</span>
+</div>
+</div>
+<div class="flex flex-col gap-2 flex-1">
+<div class="flex items-center gap-2 text-xs font-medium text-[#4c669a]">
+<span class="w-2 h-2 rounded-full bg-primary"></span> Residencial (10%)
+                       </div>
+<div class="flex items-center gap-2 text-xs font-medium text-[#4c669a]">
+<span class="w-2 h-2 rounded-full bg-[#0d121b]"></span> Comercial (10%)
+                       </div>
+<div class="flex items-center gap-2 text-xs font-medium text-[#4c669a]">
+<span class="w-2 h-2 rounded-full bg-slate-200"></span> Loteamento (80%)
+                       </div>
+</div>
+</div>
+<div class="relative z-10">
+<div class="flex justify-between text-[10px] font-bold uppercase text-[#4c669a] mb-2">
+<span>Status de Quitação</span>
+<span>100%</span>
+</div>
+<div class="h-2 w-full bg-[#f0f2f5] rounded-full overflow-hidden">
+<div class="h-full bg-green-500 rounded-full" style="width: 100%"></div>
+</div>
+</div>
+<div class="mt-auto grid grid-cols-2 gap-3 relative z-10">
+<button class="px-4 py-3 rounded-full border border-[#e7ebf3] text-xs font-bold text-[#0d121b] hover:bg-[#f8f9fc] transition">
+                        Ver Ativos
+                    </button>
+<button class="px-4 py-3 rounded-full bg-[#f0f2f5] text-xs font-bold text-[#0d121b] hover:bg-[#e7ebf3] transition flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">description</span>
+                        Relatório
+                    </button>
+</div>
+</article>
+</div>
+</main>
+<footer class="fixed bottom-0 left-0 w-full px-8 py-4 bg-white/80 backdrop-blur-md border-t border-white/50 flex flex-col sm:flex-row items-center justify-between text-xs text-[#4c669a] z-40">
+<div class="flex items-center gap-2 mb-2 sm:mb-0">
+<span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+<span class="font-medium">Sistema Operacional • v4.2.0</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">history</span>
+<span class="font-bold">Última auditoria de participações realizada hoje às 09:00</span>
+</div>
+</footer>
+
+</body></html>

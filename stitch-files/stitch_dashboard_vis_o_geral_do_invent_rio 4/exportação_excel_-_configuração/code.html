@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Exportação Excel - Configuração</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1152d4",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar for Notion-like feel */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        .material-symbols-outlined {
+            font-variation-settings:
+            'FILL' 0,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 24
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings:
+            'FILL' 1,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 24
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white antialiased overflow-hidden">
+<div class="flex h-screen w-full overflow-hidden">
+<!-- SideNavBar -->
+<aside class="w-64 flex-shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#151b2b] hidden md:flex flex-col justify-between h-full transition-all duration-300">
+<div class="flex flex-col gap-4 p-4">
+<!-- User Profile / Branding Area -->
+<div class="flex gap-3 items-center mb-6 px-2">
+<div class="bg-center bg-no-repeat bg-cover rounded-xl size-10 shadow-sm border border-slate-100 dark:border-slate-700" data-alt="Abstract geometric logo representing structure and finance" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDJ4pWr_h2Aq9UdKjDe_Qe83Jtwa-nOLVqr_eXvIYkyKyto3aZQ_eOfF6-wn1UUGSLt1j7sckeibkedmVQf5Rq6TswEA_LZRLcX20IvYMaFh_UQ90V5NqcZOG44RDRqRZYy3yX9__xw-9WnQGdmMXBgzgwZ74DJOmfU-ZLkfSI62t4sUr4U4pPma_6JiM4VjiwDjt61-RMHbqbVx59hTjHFF41iDLS2bYayivf737JsruMLIJwwnBzYHXoxu2dJX8TaCOz6QgAIBlr_");'>
+</div>
+<div class="flex flex-col">
+<h1 class="text-slate-900 dark:text-white text-base font-bold leading-tight">Gestor Pro</h1>
+<p class="text-slate-500 dark:text-slate-400 text-xs font-normal">Admin View</p>
+</div>
+</div>
+<!-- Navigation -->
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">grid_view</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">apartment</span>
+<span class="text-sm font-medium">Portfólio</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">group</span>
+<span class="text-sm font-medium">Sócios</span>
+</a>
+<!-- Active State -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary dark:text-primary dark:bg-primary/20 transition-colors" href="#">
+<span class="material-symbols-outlined fill">description</span>
+<span class="text-sm font-semibold">Relatórios</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">settings</span>
+<span class="text-sm font-medium">Configurações</span>
+</a>
+</nav>
+</div>
+<!-- Bottom Actions -->
+<div class="p-4 border-t border-slate-100 dark:border-slate-800">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">logout</span>
+<span class="text-sm font-medium">Sair</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<div class="flex flex-col flex-1 h-full min-w-0 bg-background-light dark:bg-background-dark">
+<!-- TopNavBar -->
+<header class="h-16 flex items-center justify-between px-6 bg-white/80 dark:bg-[#151b2b]/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 z-10 sticky top-0">
+<div class="flex items-center gap-4">
+<!-- Mobile Menu Button (Hidden on Desktop) -->
+<button class="md:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<!-- Search Bar -->
+<div class="hidden sm:flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg px-3 py-1.5 w-64 focus-within:ring-2 ring-primary/20 transition-all">
+<span class="material-symbols-outlined text-slate-400 text-[20px]">search</span>
+<input class="bg-transparent border-none text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:ring-0 w-full ml-2" placeholder="Buscar ativos, relatórios..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4">
+<button class="text-slate-500 hover:text-primary dark:text-slate-400 transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 size-2 bg-red-500 rounded-full border-2 border-white dark:border-[#151b2b]"></span>
+</button>
+<button class="text-slate-500 hover:text-primary dark:text-slate-400 transition-colors">
+<span class="material-symbols-outlined">help</span>
+</button>
+</div>
+<div class="h-8 w-px bg-slate-200 dark:bg-slate-700"></div>
+<div class="flex items-center gap-3">
+<div class="text-right hidden sm:block">
+<p class="text-sm font-semibold text-slate-900 dark:text-white">Mariana Costa</p>
+<p class="text-xs text-slate-500 dark:text-slate-400">Diretora Financeira</p>
+</div>
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-9 border-2 border-white dark:border-slate-700 shadow-sm" data-alt="Professional headshot of a woman in business attire" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAMCVydjCyvsEZ1MYjsSUb1wHpsGQZJmjTfT7JF362_G-SG69iB9mVFZvot8B0cY6gI8eVzXaNORIgAiZYCdyhKd5CCDQh4VK0S7jCwq3p-EAEMpjGN3LnO6JDL6QCcPWtcGELKj2yaybVix_lDzWqD9HPo4zd3Qf0yyFWHKLTkmwks26uaTi2BiuifY8ywH7P7SSJA3nf0en6qUX3ylMSbLbp2ZKpqfTTRge8BGTLgzkRT0fGv_ok4Fxyg83uz6YSjJQjxw9Y4IMPP");'>
+</div>
+</div>
+</div>
+</header>
+<!-- Scrollable Content -->
+<main class="flex-1 overflow-y-auto p-6 md:p-10">
+<div class="max-w-6xl mx-auto flex flex-col gap-8 pb-20">
+<!-- Breadcrumbs & Heading -->
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+<span class="hover:text-primary cursor-pointer transition-colors">Home</span>
+<span class="material-symbols-outlined text-[16px] text-slate-300">chevron_right</span>
+<span class="hover:text-primary cursor-pointer transition-colors">Relatórios</span>
+<span class="material-symbols-outlined text-[16px] text-slate-300">chevron_right</span>
+<span class="text-slate-900 dark:text-white font-medium">Exportação Excel</span>
+</div>
+<div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mt-2">
+<div>
+<h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Configuração de Exportação</h1>
+<p class="text-slate-500 dark:text-slate-400 mt-1 text-base">Personalize os dados e o período para gerar relatórios de auditoria.</p>
+</div>
+</div>
+</div>
+<!-- Configuration Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Card 1: Scope -->
+<div class="bg-white dark:bg-[#1a202c] rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col gap-6 hover:shadow-md transition-shadow duration-300 relative group">
+<!-- Visual Decoration -->
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-t-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="flex items-center gap-3 border-b border-slate-100 dark:border-slate-700 pb-4">
+<div class="bg-blue-50 dark:bg-blue-900/30 p-2 rounded-lg text-primary">
+<span class="material-symbols-outlined">filter_alt</span>
+</div>
+<h2 class="text-lg font-semibold text-slate-800 dark:text-white">1. Escopo de Dados</h2>
+</div>
+<div class="flex flex-col gap-4">
+<label class="relative flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 cursor-pointer hover:border-primary/50 transition-colors">
+<input checked="" class="mt-1 size-4 border-slate-300 text-primary focus:ring-primary" name="scope" type="radio"/>
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-slate-900 dark:text-white">Todos os Imóveis</span>
+<span class="text-xs text-slate-500 dark:text-slate-400">Exportar dados de todo o portfólio (124 Ativos).</span>
+</div>
+</label>
+<label class="relative flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a202c] cursor-pointer hover:border-primary/50 transition-colors group/radio">
+<input class="mt-1 size-4 border-slate-300 text-primary focus:ring-primary" name="scope" type="radio"/>
+<div class="flex flex-col w-full">
+<span class="text-sm font-semibold text-slate-900 dark:text-white">Por Sócio Específico</span>
+<span class="text-xs text-slate-500 dark:text-slate-400 mb-2">Selecione um investidor para filtrar.</span>
+<!-- Animated Dropdown Simulation (Disabled look initially, but styled for UI) -->
+<select class="mt-2 w-full text-sm rounded-md border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:border-primary focus:ring-primary">
+<option>Selecionar investidor...</option>
+<option>Carlos Mendes (Principal)</option>
+<option>Grupo Horizon Invest</option>
+<option>Ana Vilela</option>
+</select>
+</div>
+</label>
+<label class="relative flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a202c] cursor-pointer hover:border-primary/50 transition-colors">
+<input class="mt-1 size-4 border-slate-300 text-primary focus:ring-primary" name="scope" type="radio"/>
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-slate-900 dark:text-white">Apenas com Dívida</span>
+<span class="text-xs text-slate-500 dark:text-slate-400">Imóveis com pendências ou alavancagem ativa.</span>
+</div>
+</label>
+</div>
+</div>
+<!-- Card 2: Tabs -->
+<div class="bg-white dark:bg-[#1a202c] rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col gap-6 hover:shadow-md transition-shadow duration-300 relative group">
+<!-- Visual Decoration -->
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-t-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="flex items-center gap-3 border-b border-slate-100 dark:border-slate-700 pb-4">
+<div class="bg-purple-50 dark:bg-purple-900/30 p-2 rounded-lg text-purple-600 dark:text-purple-400">
+<span class="material-symbols-outlined">table_view</span>
+</div>
+<h2 class="text-lg font-semibold text-slate-800 dark:text-white">2. Seleção de Abas</h2>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex justify-between items-center mb-2 px-1">
+<span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Planilhas Disponíveis</span>
+<button class="text-xs font-semibold text-primary hover:underline">Selecionar Tudo</button>
+</div>
+<label class="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg cursor-pointer transition-colors">
+<input checked="" class="rounded border-slate-300 text-primary focus:ring-primary size-5" type="checkbox"/>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-900 dark:text-white">Resumo Executivo</span>
+</div>
+<span class="ml-auto text-xs bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-1 rounded">Dashboard</span>
+</label>
+<label class="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg cursor-pointer transition-colors">
+<input checked="" class="rounded border-slate-300 text-primary focus:ring-primary size-5" type="checkbox"/>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-900 dark:text-white">Distribuição de Cotas</span>
+</div>
+<span class="ml-auto text-xs bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-1 rounded">Equity</span>
+</label>
+<label class="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg cursor-pointer transition-colors">
+<input class="rounded border-slate-300 text-primary focus:ring-primary size-5" type="checkbox"/>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-900 dark:text-white">Fluxo Financeiro</span>
+</div>
+<span class="ml-auto text-xs bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-1 rounded">Cashflow</span>
+</label>
+<label class="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg cursor-pointer transition-colors">
+<input class="rounded border-slate-300 text-primary focus:ring-primary size-5" type="checkbox"/>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-900 dark:text-white">Dossiê Raw</span>
+</div>
+<span class="ml-auto text-xs bg-amber-100 text-amber-700 border border-amber-200 px-2 py-1 rounded">Heavy</span>
+</label>
+</div>
+</div>
+<!-- Card 3: Timeframe -->
+<div class="bg-white dark:bg-[#1a202c] rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col gap-6 hover:shadow-md transition-shadow duration-300 relative group">
+<!-- Visual Decoration -->
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-t-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="flex items-center gap-3 border-b border-slate-100 dark:border-slate-700 pb-4">
+<div class="bg-emerald-50 dark:bg-emerald-900/30 p-2 rounded-lg text-emerald-600 dark:text-emerald-400">
+<span class="material-symbols-outlined">calendar_month</span>
+</div>
+<h2 class="text-lg font-semibold text-slate-800 dark:text-white">3. Período</h2>
+</div>
+<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-1">
+<label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Intervalo Rápido</label>
+<div class="flex flex-wrap gap-2 mt-1">
+<button class="px-3 py-1.5 text-xs font-medium rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-emerald-100 hover:text-emerald-700 transition-colors">Últimos 30 dias</button>
+<button class="px-3 py-1.5 text-xs font-medium rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">Este Ano (YTD)</button>
+<button class="px-3 py-1.5 text-xs font-medium rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-emerald-100 hover:text-emerald-700 transition-colors">Ano Passado</button>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 mt-2">
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-slate-700 dark:text-slate-300">Data Início</label>
+<input class="text-sm rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 focus:border-emerald-500 focus:ring-emerald-500" type="date" value="2023-01-01"/>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-slate-700 dark:text-slate-300">Data Fim</label>
+<input class="text-sm rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 focus:border-emerald-500 focus:ring-emerald-500" type="date" value="2023-10-24"/>
+</div>
+</div>
+<div class="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-100 dark:border-amber-800/50 flex items-start gap-2 mt-auto">
+<span class="material-symbols-outlined text-amber-500 text-[18px] mt-0.5">info</span>
+<p class="text-xs text-amber-800 dark:text-amber-200 leading-snug">Dados anteriores a 2021 estão arquivados e podem levar mais tempo para processar.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Sticky Footer Action Bar -->
+<footer class="bg-white dark:bg-[#151b2b] border-t border-slate-200 dark:border-slate-800 p-6 z-20">
+<div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+<!-- File Estimation Info -->
+<div class="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400">description</span>
+<span>Estimativa: <strong>~450 linhas</strong></span>
+</div>
+<div class="w-1 h-4 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
+<div>Tamanho: <strong>~1.2 MB</strong></div>
+</div>
+<!-- Action Buttons -->
+<div class="flex items-center gap-3 w-full sm:w-auto">
+<button class="flex-1 sm:flex-none px-5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-medium text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                            Salvar Modelo
+                        </button>
+<button class="flex-1 sm:flex-none px-6 py-2.5 rounded-lg bg-primary text-white font-medium text-sm hover:bg-blue-700 active:bg-blue-800 shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2 group">
+<span class="material-symbols-outlined text-[20px] group-hover:animate-bounce">download</span>
+                            Exportar Excel (.xlsx)
+                        </button>
+</div>
+</div>
+</footer>
+</div>
+</div>
+</body></html>

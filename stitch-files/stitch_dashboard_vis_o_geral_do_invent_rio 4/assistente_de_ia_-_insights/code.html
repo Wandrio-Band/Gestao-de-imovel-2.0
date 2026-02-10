@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Assistente de IA - Interatividade e Navegação Finalizadas</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1152d4",
+                        "background-light": "#ffffff",
+                        "background-dark": "#191919",
+                        "surface-light": "#f7f7f5",
+                        "surface-dark": "#202020",
+                        "text-main": "#37352f",
+                        "text-sub": "#787774",
+                        "border-light": "#e3e2e0",
+                        "border-dark": "#2f2f2f",
+                        "notion-gray": "#ebeced",
+                        "notion-blue": "#e7f3f8",
+                        "notion-red": "#fdebec",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "sans": ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.375rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                    boxShadow: {
+                        "soft": "0 2px 8px rgba(0, 0, 0, 0.04)",
+                        "glow": "0 0 15px rgba(17, 82, 212, 0.15)",
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d3d1cb;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #aeaca6;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.5s ease-out forwards;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-main dark:text-gray-100 font-sans overflow-hidden h-screen flex">
+<aside class="w-[260px] h-full flex flex-col border-r border-border-light dark:border-border-dark bg-surface-light/50 dark:bg-surface-dark transition-colors duration-300 flex-shrink-0 z-20">
+<div class="p-4 flex flex-col h-full justify-between">
+<div class="flex flex-col gap-6">
+<div class="flex items-center gap-3 px-2 mt-2">
+<div class="h-8 w-8 rounded bg-primary flex items-center justify-center text-white shadow-sm">
+<span class="material-symbols-outlined text-xl">token</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-text-main dark:text-white text-sm font-bold leading-tight">Asset OS</h1>
+<p class="text-text-sub text-[10px] font-medium uppercase tracking-wide">Workspace</p>
+</div>
+</div>
+<nav class="flex flex-col gap-0.5">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-notion-gray/50 dark:bg-white/5 text-text-main dark:text-white font-medium group transition-all" href="#">
+<span class="material-symbols-outlined text-[20px] text-primary">auto_awesome</span>
+<span class="text-sm">Assistente IA</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-text-sub dark:text-gray-400 hover:bg-notion-gray dark:hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]">space_dashboard</span>
+<span class="text-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-text-sub dark:text-gray-400 hover:bg-notion-gray dark:hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]">real_estate_agent</span>
+<span class="text-sm">Inventário</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-text-sub dark:text-gray-400 hover:bg-notion-gray dark:hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]">gavel</span>
+<span class="text-sm">Auditoria</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-text-sub dark:text-gray-400 hover:bg-notion-gray dark:hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="text-sm">Configurações</span>
+</a>
+</nav>
+</div>
+<div class="flex items-center gap-3 px-2 py-2 hover:bg-notion-gray dark:hover:bg-white/5 rounded-lg cursor-pointer transition-colors">
+<div class="h-8 w-8 rounded bg-cover bg-center shadow-sm" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDJlYrwT1RTa-_wZ6Jx6xbjfDa_9EShLqdmr1o3fRMO9oXCLVt-qgy-yVUbeMyPN7iPx5Fs0lsq_8QTuvy7j8IGKmQTz8ip1abTckIuOOjLLt6O-zK0E8UE1ByIsRBU8vUyu6W3iUmNwls8nZa1jUT5ZxMprzlQMyI9SmmhLGUcxYG8q9jL-zh4x5NiNiFu0LR7sppCELdQnEwWn_Vyp7vtqETQOzd9En1dtRfSwTbZVF_8R8ZMO526aMkw3yo5BUsRwPqxkKM6MZor");'></div>
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-text-main dark:text-white">Dr. Mendes</span>
+<span class="text-xs text-text-sub">Sócio Diretor</span>
+</div>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex flex-col h-full relative bg-background-light dark:bg-background-dark">
+<header class="h-14 flex items-center justify-between px-8 border-b border-border-light dark:border-border-dark bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md sticky top-0 z-10">
+<div class="flex items-center gap-2 text-sm text-text-sub">
+<a class="hover:text-text-main transition-colors flex items-center gap-1 group" href="#">
+<span class="material-symbols-outlined text-base group-hover:text-text-main">folder_open</span>
+<span>Portfólios</span>
+</a>
+<span class="material-symbols-outlined text-xs">chevron_right</span>
+<a class="text-text-main dark:text-white font-medium flex items-center gap-2 hover:underline decoration-border-light" href="#">
+                    Fundo Alpha Prime
+                </a>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white dark:bg-surface-dark border border-border-light dark:border-border-dark hover:bg-surface-light dark:hover:bg-white/5 text-text-main dark:text-white rounded shadow-sm transition-all group active:scale-95">
+<span class="material-symbols-outlined text-sm text-text-sub group-hover:text-primary transition-colors">refresh</span>
+                    Novo Chat
+                </button>
+<div class="h-4 w-px bg-border-light dark:bg-border-dark mx-1"></div>
+<span class="px-2 py-1 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs font-semibold border border-green-200 dark:border-green-800 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-green-600"></span>
+                    Online
+                </span>
+<button class="p-1.5 text-text-sub hover:bg-notion-gray dark:hover:bg-white/10 rounded transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_horiz</span>
+</button>
+</div>
+</header>
+<div class="flex-1 overflow-y-auto px-4 md:px-16 lg:px-32 py-8 scroll-smooth" id="chat-container">
+<div class="max-w-3xl mx-auto flex flex-col gap-8 pb-40">
+<div class="flex flex-col gap-6 mt-12 items-center text-center animate-fade-in-up">
+<div class="w-16 h-16 rounded-2xl bg-white border border-border-light dark:bg-surface-dark dark:border-border-dark flex items-center justify-center shadow-soft">
+<span class="material-symbols-outlined text-4xl text-text-main dark:text-white">colors_spark</span>
+</div>
+<div class="space-y-2">
+<h2 class="text-3xl font-bold tracking-tight text-text-main dark:text-white">Como posso ajudar hoje?</h2>
+<p class="text-text-sub text-base max-w-lg mx-auto">
+                            Consulte o inventário sobre riscos, rentabilidade e auditorias.
+                        </p>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 animate-fade-in-up" style="animation-delay: 100ms;">
+<button class="group flex flex-col gap-2 p-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-surface-dark hover:bg-notion-gray/50 dark:hover:bg-white/5 transition-all text-left shadow-sm hover:shadow-md cursor-pointer active:scale-[0.98]">
+<div class="flex items-center gap-2 text-text-main dark:text-white font-semibold text-sm">
+<span class="material-symbols-outlined text-orange-500">warning</span>
+<span>Risco de Alavancagem</span>
+</div>
+<p class="text-text-sub text-xs leading-relaxed">"Qual o risco de alavancagem do meu portfólio atual?"</p>
+</button>
+<button class="group flex flex-col gap-2 p-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-surface-dark hover:bg-notion-gray/50 dark:hover:bg-white/5 transition-all text-left shadow-sm hover:shadow-md cursor-pointer active:scale-[0.98]">
+<div class="flex items-center gap-2 text-text-main dark:text-white font-semibold text-sm">
+<span class="material-symbols-outlined text-blue-500">trending_down</span>
+<span>Rentabilidade</span>
+</div>
+<p class="text-text-sub text-xs leading-relaxed">"Quais imóveis estão com baixa rentabilidade de aluguel?"</p>
+</button>
+<button class="group flex flex-col gap-2 p-4 rounded-xl border border-border-light dark:border-border-dark bg-white dark:bg-surface-dark hover:bg-notion-gray/50 dark:hover:bg-white/5 transition-all text-left shadow-sm hover:shadow-md cursor-pointer active:scale-[0.98]">
+<div class="flex items-center gap-2 text-text-main dark:text-white font-semibold text-sm">
+<span class="material-symbols-outlined text-purple-500">fact_check</span>
+<span>Auditoria</span>
+</div>
+<p class="text-text-sub text-xs leading-relaxed">"Há pendências de auditoria nas cotas dos sócios?"</p>
+</button>
+</div>
+<div class="flex justify-end gap-3 animate-fade-in-up" style="animation-delay: 200ms;">
+<div class="bg-primary text-white px-4 py-3 rounded-2xl rounded-tr-sm shadow-sm text-sm leading-relaxed max-w-[85%]">
+<p>Quais imóveis estão com baixa rentabilidade de aluguel este mês?</p>
+</div>
+<div class="h-8 w-8 rounded-full bg-cover bg-center shrink-0 border border-border-light" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBzshKWoDNx8v6PqDzbdfE9l_cyZMnMD4e28bQW4tKiZMEpa83Bohc977vsoBWBmzQ3iDnFTum2DTeH0sX7LPP6o9GYr5BlZv00LzIKxJFvBrnULyonCKg0LMS0etK-nadSOU2_nvYpKc2eat8I6VPZKi-v8nR7WjFyaGCyhPrngkzjpXAzKyN88cU8ejEDQct9CNXEQ5BOuoDJUV1194q5TV9Z0edXmy2KqLOjRp5m_MZvwIEwTqnW5zChdbp9YvptBFJo_WV0p15g");'></div>
+</div>
+<div class="flex justify-start gap-4 animate-fade-in-up" style="animation-delay: 300ms;">
+<div class="h-8 w-8 rounded bg-white border border-border-light shrink-0 flex items-center justify-center text-text-main shadow-sm">
+<span class="material-symbols-outlined text-lg">colors_spark</span>
+</div>
+<div class="flex flex-col gap-3 max-w-[90%]">
+<div class="bg-transparent text-text-main dark:text-gray-200 text-sm leading-relaxed w-full">
+<p class="mb-3">
+                                Analisei o inventário e comparei com o benchmark de mercado (0,5% a.m.). Identifiquei <strong class="font-semibold text-red-600 bg-red-50 dark:bg-red-900/20 px-1 rounded">2 ativos</strong> com performance abaixo do esperado:
+                            </p>
+<ul class="list-disc pl-5 mb-4 space-y-1 text-text-sub">
+<li><strong>Edifício Horizon:</strong> 0,38% a.m. (Impactado por vacância no 3º andar)</li>
+<li><strong>Galpão Logístico Sul:</strong> 0,42% a.m. (Renegociação em andamento)</li>
+</ul>
+<div class="mb-3 p-4 bg-surface-light dark:bg-surface-dark rounded-xl border border-border-light dark:border-border-dark">
+<div class="flex justify-between items-center mb-3">
+<h4 class="font-bold text-xs text-text-sub uppercase tracking-wider">Rentabilidade vs Meta (%)</h4>
+</div>
+<div class="space-y-3">
+<div class="flex flex-col gap-1">
+<div class="flex justify-between text-xs font-medium">
+<span>Meta do Fundo</span>
+<span class="text-text-sub">0.50%</span>
+</div>
+<div class="h-2 w-full bg-border-light dark:bg-gray-700 rounded-full overflow-hidden">
+<div class="h-full bg-gray-400 w-[50%]"></div>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex justify-between text-xs font-medium">
+<span>Edifício Horizon</span>
+<span class="text-red-500">0.38%</span>
+</div>
+<div class="h-2 w-full bg-border-light dark:bg-gray-700 rounded-full overflow-hidden">
+<div class="h-full bg-red-400 w-[38%]"></div>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex justify-between text-xs font-medium">
+<span>Galpão Sul</span>
+<span class="text-red-500">0.42%</span>
+</div>
+<div class="h-2 w-full bg-border-light dark:bg-gray-700 rounded-full overflow-hidden">
+<div class="h-full bg-red-400 w-[42%]"></div>
+</div>
+</div>
+</div>
+</div>
+<a class="inline-flex items-center gap-2 text-primary hover:text-blue-700 font-medium text-xs mt-1 transition-colors px-3 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 border border-transparent hover:border-blue-100" href="#">
+<span class="material-symbols-outlined text-base">open_in_new</span>
+                                Ver detalhes financeiros do Edifício Horizon
+                            </a>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="absolute bottom-6 left-0 right-0 px-4 flex justify-center z-30 pointer-events-none">
+<div class="w-full max-w-3xl pointer-events-auto">
+<div class="bg-white dark:bg-surface-dark rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-border-light dark:border-border-dark p-2 flex flex-col gap-1 relative backdrop-blur-sm">
+<div class="flex items-end gap-2 px-2 py-1">
+<button class="p-2 text-text-sub hover:text-text-main transition-colors rounded hover:bg-notion-gray dark:hover:bg-white/10 mb-0.5" title="Anexar arquivo">
+<span class="material-symbols-outlined text-[22px]">add_circle</span>
+</button>
+<textarea class="w-full bg-transparent border-none text-text-main dark:text-white placeholder-text-sub/50 focus:ring-0 resize-none py-3 max-h-40 text-sm font-medium" placeholder="Faça uma pergunta sobre seus ativos..." rows="1"></textarea>
+<button class="mb-0.5 bg-primary disabled:opacity-50 text-white h-9 w-9 rounded-lg hover:bg-blue-700 transition-colors shadow-sm flex items-center justify-center">
+<span class="material-symbols-outlined text-lg">arrow_upward</span>
+</button>
+</div>
+<div class="px-3 pb-1 flex justify-center items-center">
+<span class="text-[10px] text-text-sub/70">A IA pode cometer erros. Verifique os dados importantes.</span>
+</div>
+</div>
+</div>
+</div>
+<div class="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background-light dark:from-background-dark to-transparent pointer-events-none z-10"></div>
+</main>
+<script>
+        // Simple script to auto-resize textarea
+        const tx = document.querySelector("textarea");
+        tx.setAttribute("style", "height:" + (tx.scrollHeight) + "px;overflow-y:hidden;");
+        tx.addEventListener("input", OnInput, false);
+        function OnInput() {
+            this.style.height = 0;
+            this.style.height = (this.scrollHeight) + "px";
+        }
+    </script>
+
+</body></html>

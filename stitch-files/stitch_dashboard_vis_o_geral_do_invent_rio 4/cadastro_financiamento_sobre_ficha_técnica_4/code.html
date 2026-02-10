@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dashboard Geral - Patrimonial PRO</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#0f172a", // Darker primary for 'Pro' look
+              "accent": "#2563eb",
+              "background-light": "#f2f4f7",
+              "background-dark": "#0B1120",
+            },
+            fontFamily: {
+              "display": ["Inter", "sans-serif"]
+            },
+            borderRadius: {
+              "DEFAULT": "1rem", 
+              "lg": "2rem", 
+              "xl": "3rem", 
+              "2xl": "3.5rem",
+              "full": "9999px"
+            },
+            boxShadow: {
+                "soft": "0 20px 40px -10px rgba(0, 0, 0, 0.05)"
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#0d121b] h-screen overflow-hidden flex flex-col">
+<header class="flex-none flex items-end justify-between px-10 pt-8 pb-0 border-b border-[#e7ebf3] bg-white w-full z-30 relative">
+<div class="flex items-center gap-16 h-full">
+<div class="flex items-center gap-3 pb-5">
+<div class="w-9 h-9 bg-black rounded-xl flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-xl">token</span>
+</div>
+<div class="flex flex-col leading-none">
+<span class="font-black text-lg tracking-tight text-black">PATRIMONIAL<span class="text-gray-400 font-medium">PRO</span></span>
+</div>
+</div>
+<nav class="flex gap-10 translate-y-[1px]">
+<a class="pb-5 text-xs font-black text-black border-b-[3px] border-black tracking-wide" href="#">
+                    DASHBOARD
+                </a>
+<a class="pb-5 text-xs font-bold text-gray-400 border-b-[3px] border-transparent hover:text-black transition-all tracking-wide" href="#">
+                    ATIVOS
+                </a>
+<a class="pb-5 text-xs font-bold text-gray-400 border-b-[3px] border-transparent hover:text-black transition-all tracking-wide" href="#">
+                    SÓCIOS
+                </a>
+<a class="pb-5 text-xs font-bold text-gray-400 border-b-[3px] border-transparent hover:text-black transition-all tracking-wide" href="#">
+                    FINANCEIRO
+                </a>
+<a class="pb-5 text-xs font-bold text-gray-400 border-b-[3px] border-transparent hover:text-black transition-all tracking-wide flex items-center gap-1" href="#">
+                    IA INSIGHTS
+                    <span class="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></span>
+</a>
+<a class="pb-5 text-xs font-bold text-gray-400 border-b-[3px] border-transparent hover:text-black transition-all tracking-wide" href="#">
+                    RELATÓRIOS
+                </a>
+</nav>
+</div>
+<div class="pb-4 flex items-center gap-4">
+<button class="w-10 h-10 rounded-full bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-600 transition-colors">
+<span class="material-symbols-outlined text-xl">search</span>
+</button>
+<button class="w-10 h-10 rounded-full bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-600 transition-colors relative">
+<span class="material-symbols-outlined text-xl">notifications</span>
+<span class="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+</button>
+<div class="w-px h-8 bg-gray-200 mx-2"></div>
+<button class="flex items-center gap-2 bg-black hover:bg-gray-800 text-white text-xs font-extrabold py-3 px-6 rounded-full transition-all shadow-lg shadow-gray-200">
+<span class="material-symbols-outlined text-sm font-bold">add</span>
+                NOVO ATIVO
+            </button>
+</div>
+</header>
+<main class="flex-1 w-full overflow-y-auto overflow-x-hidden p-6 lg:p-10 relative z-0">
+<div class="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6 auto-rows-min">
+<div class="col-span-1 lg:col-span-2 bg-white rounded-[3rem] p-8 lg:p-10 shadow-soft border border-gray-100 group cursor-pointer hover:shadow-xl transition-all duration-300 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
+<span class="material-symbols-outlined text-9xl">account_balance</span>
+</div>
+<div class="flex flex-col justify-between h-full gap-8 relative z-10">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center border border-gray-100">
+<span class="material-symbols-outlined text-gray-900">payments</span>
+</div>
+<h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider">Valor Total de Mercado</h3>
+</div>
+<div class="flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-full border border-green-100">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+<span class="text-xs font-bold">+12.5% vs 2023</span>
+</div>
+</div>
+<div>
+<h2 class="text-5xl lg:text-6xl font-black text-black tracking-tighter mb-2">
+<span class="text-3xl text-gray-400 font-bold align-top mt-2 inline-block">R$</span>
+                            142.5 mi
+                        </h2>
+<p class="text-sm font-semibold text-gray-400 pl-1">Avaliação atualizada em 24 Out 2023</p>
+</div>
+<div class="w-full h-1 bg-gray-100 rounded-full mt-4 overflow-hidden">
+<div class="h-full bg-black w-3/4 rounded-full"></div>
+</div>
+</div>
+</div>
+<div class="col-span-1 bg-white rounded-[3rem] p-8 shadow-soft border border-gray-100 cursor-pointer hover:shadow-xl transition-all duration-300 flex flex-col items-center justify-center relative">
+<div class="absolute top-8 left-8 flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-blue-600"></div>
+<h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Ocupação</h3>
+</div>
+<div class="relative w-48 h-48 mt-6">
+<div class="w-full h-full rounded-full" style="background: conic-gradient(#000000 0% 92%, #f3f4f6 92% 100%);"></div>
+<div class="absolute inset-4 bg-white rounded-full flex flex-col items-center justify-center">
+<span class="text-4xl font-black text-black tracking-tight">92%</span>
+<span class="text-xs font-bold text-gray-400 uppercase">Locado</span>
+</div>
+</div>
+<div class="mt-6 flex gap-6">
+<div class="flex flex-col items-center">
+<span class="text-sm font-bold text-black">42</span>
+<span class="text-[10px] font-bold text-gray-400 uppercase">Unidades</span>
+</div>
+<div class="w-px h-8 bg-gray-100"></div>
+<div class="flex flex-col items-center">
+<span class="text-sm font-bold text-black">1.8%</span>
+<span class="text-[10px] font-bold text-gray-400 uppercase">Vacância</span>
+</div>
+</div>
+</div>
+<div class="col-span-1 bg-white rounded-[3rem] p-8 shadow-soft border border-gray-100 cursor-pointer hover:shadow-xl transition-all duration-300 flex flex-col">
+<div class="flex items-center justify-between mb-8">
+<h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">pie_chart</span> Sócios
+                    </h3>
+<button class="w-8 h-8 rounded-full bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-600 transition-colors">
+<span class="material-symbols-outlined text-base">arrow_forward</span>
+</button>
+</div>
+<div class="flex-1 flex flex-col justify-center gap-5">
+<div class="flex items-center justify-between group">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center font-bold text-xs">GP</div>
+<div class="flex flex-col">
+<span class="text-sm font-extrabold text-black">Grupo Alpha</span>
+<span class="text-[10px] font-bold text-gray-400">Majoritário</span>
+</div>
+</div>
+<span class="text-sm font-black text-black bg-gray-50 px-2 py-1 rounded-lg group-hover:bg-gray-100 transition-colors">55%</span>
+</div>
+<div class="flex items-center justify-between group">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-bold text-xs">IV</div>
+<div class="flex flex-col">
+<span class="text-sm font-extrabold text-black">Investidores</span>
+<span class="text-[10px] font-bold text-gray-400">Pool A</span>
+</div>
+</div>
+<span class="text-sm font-black text-black bg-gray-50 px-2 py-1 rounded-lg group-hover:bg-gray-100 transition-colors">30%</span>
+</div>
+<div class="flex items-center justify-between group">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-bold text-xs">FD</div>
+<div class="flex flex-col">
+<span class="text-sm font-extrabold text-black">Founders</span>
+<span class="text-[10px] font-bold text-gray-400">Gestão</span>
+</div>
+</div>
+<span class="text-sm font-black text-black bg-gray-50 px-2 py-1 rounded-lg group-hover:bg-gray-100 transition-colors">15%</span>
+</div>
+</div>
+</div>
+<div class="col-span-1 lg:col-span-4 bg-[#101622] rounded-[3rem] p-8 lg:p-10 shadow-2xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/20 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
+<div class="relative z-10 flex flex-col lg:flex-row gap-10 lg:items-center">
+<div class="flex-shrink-0 flex flex-col gap-4 max-w-xs">
+<div class="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center border border-white/10 shadow-inner backdrop-blur-md">
+<span class="material-symbols-outlined text-white text-3xl">auto_awesome</span>
+</div>
+<div>
+<h3 class="text-2xl font-black text-white tracking-tight mb-1">IA Insights</h3>
+<p class="text-sm text-gray-400 font-medium leading-relaxed">
+                                Nossa inteligência artificial analisou 2.4TB de dados do mercado hoje.
+                            </p>
+</div>
+<button class="w-fit mt-2 px-5 py-2.5 rounded-full bg-accent hover:bg-blue-600 text-white text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-blue-900/50">
+                            Ver Relatório Completo
+                        </button>
+</div>
+<div class="hidden lg:block w-px h-40 bg-white/10"></div>
+<div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="bg-white/5 hover:bg-white/10 border border-white/5 rounded-3xl p-5 transition-all cursor-pointer group/item">
+<div class="flex items-start justify-between mb-3">
+<span class="px-2 py-1 rounded bg-green-500/20 text-green-400 text-[10px] font-bold uppercase border border-green-500/20">Oportunidade</span>
+<span class="material-symbols-outlined text-gray-500 group-hover/item:text-white transition-colors text-sm">arrow_outward</span>
+</div>
+<p class="text-sm font-bold text-gray-200 leading-snug mb-2">
+                                Antecipação de Parcelas (Ed. Horizon)
+                            </p>
+<p class="text-xs text-gray-400 font-medium">
+                                Economia projetada de <span class="text-white">R$ 45.000</span> com amortização via IPCA neste trimestre.
+                            </p>
+</div>
+<div class="bg-white/5 hover:bg-white/10 border border-white/5 rounded-3xl p-5 transition-all cursor-pointer group/item">
+<div class="flex items-start justify-between mb-3">
+<span class="px-2 py-1 rounded bg-orange-500/20 text-orange-400 text-[10px] font-bold uppercase border border-orange-500/20">Atenção</span>
+<span class="material-symbols-outlined text-gray-500 group-hover/item:text-white transition-colors text-sm">arrow_outward</span>
+</div>
+<p class="text-sm font-bold text-gray-200 leading-snug mb-2">
+                                Renovação Contratual (Torre Alpha)
+                            </p>
+<p class="text-xs text-gray-400 font-medium">
+                                Contrato do 12º andar vence em 60 dias. Valor de mercado subiu <span class="text-white">8.5%</span> na região.
+                            </p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+
+</body></html>

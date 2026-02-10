@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cotas e Ativos - Visão Auditoria</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1152d4",
+                        "primary-hover": "#0e44b3",
+                        "background-light": "#ffffff",
+                        "background-subtle": "#f7f7f5", 
+                        "background-dark": "#191919",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#202020",
+                        "border-light": "#e0e0e0",
+                        "border-dark": "#333333",
+                        "text-main": "#37352f",
+                        "text-secondary": "#787774",
+                        "text-light": "#ffffff"
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.375rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                    },
+                    boxShadow: {
+                        "soft": "0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1)",
+                        "card": "0 2px 4px rgba(0,0,0,0.02), 0 0 0 1px rgba(0,0,0,0.04)"
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 10px;
+            width: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #d3d1cb;
+            border-radius: 5px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background-color: #b0afa9;
+        }
+        .table-cell-padding {
+            padding: 0.875rem 1rem;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f5;}.toggle-bg {
+            transition: background-color 0.2s ease-in-out;
+        }
+        .toggle-dot {
+            transition: transform 0.2s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-background-subtle dark:bg-background-dark text-text-main antialiased min-h-screen flex flex-col overflow-x-hidden">
+<header class="sticky top-0 z-40 w-full bg-surface-light dark:bg-surface-dark border-b border-border-light dark:border-border-dark shadow-sm">
+<div class="px-6 md:px-8 py-3 flex items-center justify-between whitespace-nowrap">
+<div class="flex items-center gap-3 text-text-main dark:text-white">
+<div class="size-6 text-primary">
+<svg class="w-full h-full" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M42.4379 44C42.4379 44 36.0744 33.9038 41.1692 24C46.8624 12.9336 42.2078 4 42.2078 4L7.01134 4C7.01134 4 11.6577 12.932 5.96912 23.9969C0.876273 33.9029 7.27094 44 7.27094 44L42.4379 44Z" fill="currentColor"></path>
+</svg>
+</div>
+<h2 class="text-[15px] font-semibold leading-tight">Sistema Patrimonial PRO</h2>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center justify-center rounded-md h-8 px-3 bg-primary hover:bg-primary-hover text-text-light text-xs font-semibold transition-colors shadow-sm">
+                    + NOVO ATIVO
+                </button>
+<div class="h-5 w-px bg-border-light dark:bg-border-dark mx-1"></div>
+<div class="flex gap-1">
+<button class="flex size-8 cursor-pointer items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-text-secondary" title="Backup">
+<span class="material-symbols-outlined text-[18px]">cloud_sync</span>
+</button>
+<button class="flex size-8 cursor-pointer items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-text-secondary" title="Importar">
+<span class="material-symbols-outlined text-[18px]">upload</span>
+</button>
+<button class="flex size-8 cursor-pointer items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-text-secondary" title="Exportar">
+<span class="material-symbols-outlined text-[18px]">download</span>
+</button>
+<button class="flex size-8 cursor-pointer items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-text-secondary" title="Configurações">
+<span class="material-symbols-outlined text-[18px]">settings</span>
+</button>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-1 px-6 md:px-10 py-8 flex justify-center">
+<div class="w-full max-w-[1600px] flex flex-col gap-6">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-border-light dark:border-border-dark">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 text-text-secondary text-xs font-medium uppercase tracking-wide">
+<span class="material-symbols-outlined text-[16px]">pie_chart</span>
+<span>Auditoria Financeira</span>
+</div>
+<h1 class="text-text-main dark:text-white text-3xl font-bold tracking-tight">Cotas e Ativos - Visão Auditoria</h1>
+</div>
+<div class="flex items-center gap-3">
+<span class="text-xs font-semibold text-text-secondary uppercase tracking-wider">Base de Cálculo:</span>
+<div class="flex bg-gray-200 dark:bg-gray-800 p-1 rounded-lg">
+<button class="px-4 py-1.5 rounded-md bg-white dark:bg-gray-700 shadow-sm text-text-main dark:text-white text-sm font-bold border border-gray-200 dark:border-gray-600 transition-all">
+                            MERCADO
+                        </button>
+<button class="px-4 py-1.5 rounded-md text-text-secondary hover:text-text-main dark:text-gray-400 dark:hover:text-white text-sm font-medium transition-all">
+                            IRPF
+                        </button>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-3">
+<div class="flex flex-wrap items-center gap-2">
+<span class="text-xs font-semibold text-text-secondary mr-2 uppercase tracking-wide">Filtrar por Sócio:</span>
+<button class="group flex items-center gap-1.5 pr-3 pl-1.5 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all cursor-pointer">
+<div class="size-5 rounded-full bg-blue-200 dark:bg-blue-700 flex items-center justify-center text-blue-800 dark:text-blue-100 text-[10px] font-bold">R</div>
+<span class="text-xs font-semibold">Raquel</span>
+</button>
+<button class="group flex items-center gap-1.5 pr-3 pl-1.5 py-1 rounded-full bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-all cursor-pointer opacity-70 hover:opacity-100">
+<div class="size-5 rounded-full bg-teal-200 dark:bg-teal-700 flex items-center justify-center text-teal-800 dark:text-teal-100 text-[10px] font-bold">M</div>
+<span class="text-xs font-semibold">Marilia</span>
+</button>
+<button class="group flex items-center gap-1.5 pr-3 pl-1.5 py-1 rounded-full bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-all cursor-pointer opacity-70 hover:opacity-100">
+<div class="size-5 rounded-full bg-purple-200 dark:bg-purple-700 flex items-center justify-center text-purple-800 dark:text-purple-100 text-[10px] font-bold">W</div>
+<span class="text-xs font-semibold">Wândrio</span>
+</button>
+<button class="group flex items-center gap-1.5 pr-3 pl-1.5 py-1 rounded-full bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800 hover:bg-orange-100 dark:hover:bg-orange-900/50 transition-all cursor-pointer opacity-70 hover:opacity-100">
+<div class="size-5 rounded-full bg-orange-200 dark:bg-orange-700 flex items-center justify-center text-orange-800 dark:text-orange-100 text-[10px] font-bold">I</div>
+<span class="text-xs font-semibold">Inventário Tilinha</span>
+</button>
+</div>
+<div class="flex flex-col md:flex-row gap-3 items-center w-full">
+<div class="relative flex-grow w-full md:w-auto">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-text-secondary text-[18px]">search</span>
+</div>
+<input class="w-full pl-9 pr-4 py-1.5 rounded-md border border-border-light dark:border-gray-600 bg-white dark:bg-gray-800 text-text-main dark:text-white text-sm focus:ring-1 focus:ring-primary focus:border-primary transition-shadow outline-none shadow-sm" placeholder="Localizar Ativo..." type="text"/>
+</div>
+<div class="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 no-scrollbar">
+<div class="relative min-w-[140px]">
+<select class="w-full appearance-none pl-2.5 pr-7 py-1.5 rounded-md border border-border-light dark:border-gray-600 bg-white dark:bg-gray-800 text-text-main dark:text-white text-xs font-medium focus:outline-none focus:border-primary cursor-pointer shadow-sm">
+<option>Todos os Tipos</option>
+<option>Residencial</option>
+<option>Comercial</option>
+<option>Terreno</option>
+</select>
+<div class="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-text-secondary text-[16px]">expand_more</span>
+</div>
+</div>
+<div class="relative min-w-[140px]">
+<select class="w-full appearance-none pl-2.5 pr-7 py-1.5 rounded-md border border-border-light dark:border-gray-600 bg-white dark:bg-gray-800 text-text-main dark:text-white text-xs font-medium focus:outline-none focus:border-primary cursor-pointer shadow-sm">
+<option>Todos os Status</option>
+<option>Ativo</option>
+<option>Vendido</option>
+<option>Em Reforma</option>
+</select>
+<div class="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-text-secondary text-[16px]">expand_more</span>
+</div>
+</div>
+<div class="relative min-w-[110px]">
+<select class="w-full appearance-none pl-2.5 pr-7 py-1.5 rounded-md border border-border-light dark:border-gray-600 bg-white dark:bg-gray-800 text-text-main dark:text-white text-xs font-medium focus:outline-none focus:border-primary cursor-pointer shadow-sm">
+<option>UF: Todas</option>
+<option>SP</option>
+<option>RJ</option>
+<option>MG</option>
+</select>
+<div class="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-text-secondary text-[16px]">expand_more</span>
+</div>
+</div>
+<button class="flex items-center justify-center p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-text-secondary transition-colors" title="Limpar Filtros">
+<span class="material-symbols-outlined text-[18px]">filter_alt_off</span>
+</button>
+</div>
+</div>
+</div>
+<div class="w-full overflow-hidden bg-surface-light dark:bg-surface-dark rounded-lg border border-border-light dark:border-border-dark shadow-card flex flex-col">
+<div class="overflow-x-auto custom-scrollbar">
+<table class="w-full min-w-[1200px] border-collapse">
+<thead>
+<tr class="bg-gray-50/50 dark:bg-gray-800/50 border-b border-border-light dark:border-border-dark text-left">
+<th class="table-cell-padding text-[11px] font-bold text-text-secondary uppercase tracking-wider w-[280px]">Ativo Imobiliário</th>
+<th class="table-cell-padding text-[11px] font-bold text-text-secondary uppercase tracking-wider w-[120px]">Localização</th>
+<th class="table-cell-padding text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider w-[160px]">
+                                    Raquel
+                                </th>
+<th class="table-cell-padding text-[11px] font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider w-[160px]">
+                                    Marilia
+                                </th>
+<th class="table-cell-padding text-[11px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider w-[160px]">
+                                    Wândrio
+                                </th>
+<th class="table-cell-padding text-[11px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider w-[160px]">
+                                    Inv. Tilinha
+                                </th>
+<th class="table-cell-padding text-[11px] font-bold text-text-secondary uppercase tracking-wider text-right w-[180px]">Valor Total (100%)</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-light dark:divide-border-dark">
+<tr class="group hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+<td class="table-cell-padding align-top">
+<div class="flex items-start gap-3">
+<div class="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded bg-gray-100 dark:bg-gray-700 text-text-main dark:text-gray-300">
+<span class="material-symbols-outlined text-[16px]">apartment</span>
+</div>
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="text-[10px] font-mono text-text-secondary bg-gray-100 dark:bg-gray-700 px-1 rounded text-opacity-80">ID #042</span>
+</div>
+<p class="text-sm font-semibold text-text-main dark:text-white leading-tight">Edifício Faria Lima Prime</p>
+</div>
+</div>
+</td>
+<td class="table-cell-padding align-top">
+<div class="flex flex-col">
+<span class="text-sm text-text-main dark:text-gray-200">São Paulo</span>
+<span class="text-xs text-text-secondary">SP</span>
+</div>
+</td>
+<td class="table-cell-padding align-top bg-blue-50/20 dark:bg-blue-900/5">
+<div class="flex flex-col gap-1">
+<span class="inline-flex w-fit items-center rounded-sm bg-blue-100 dark:bg-blue-900/40 px-1.5 py-0.5 text-[11px] font-bold text-blue-700 dark:text-blue-300">25%</span>
+<span class="text-sm font-medium text-text-main dark:text-white tabular-nums tracking-tight">R$ 2.500.000</span>
+</div>
+</td>
+<td class="table-cell-padding align-top bg-teal-50/20 dark:bg-teal-900/5">
+<div class="flex flex-col gap-1">
+<span class="inline-flex w-fit items-center rounded-sm bg-teal-100 dark:bg-teal-900/40 px-1.5 py-0.5 text-[11px] font-bold text-teal-700 dark:text-teal-300">25%</span>
+<span class="text-sm font-medium text-text-main dark:text-white tabular-nums tracking-tight">R$ 2.500.000</span>
+</div>
+</td>
+<td class="table-cell-padding align-top bg-purple-50/20 dark:bg-purple-900/5">
+<div class="flex flex-col gap-1">
+<span class="inline-flex w-fit items-center rounded-sm bg-purple-100 dark:bg-purple-900/40 px-1.5 py-0.5 text-[11px] font-bold text-purple-700 dark:text-purple-300">50%</span>
+<span class="text-sm font-medium text-text-main dark:text-white tabular-nums tracking-tight">R$ 5.000.000</span>
+</div>
+</td>
+<td class="table-cell-padding align-top bg-orange-50/20 dark:bg-orange-900/5">
+<div class="flex flex-col gap-1 opacity-40">
+<span class="inline-flex w-fit items-center rounded-sm bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 text-[11px] font-bold text-gray-500 dark:text-gray-400">0%</span>
+<span class="text-sm font-medium text-text-main dark:text-white tabular-nums tracking-tight">-</span>
+</div>
+</td>
+<td class="table-cell-padding align-top text-right bg-gray-50/30 dark:bg-gray-800/10 border-l border-border-light dark:border-border-dark">
+<div class="flex flex-col items-end gap-1">
+<span class="text-sm font-bold text-text-main dark:text-white tabular-nums">R$ 10.000.000</span>
+</div>
+</td>
+</tr>
+<tr class="group hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+<td class="table-cell-padding align-top">
+<div class="flex items-start gap-3">
+<div class="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded bg-gray-100 dark:bg-gray-700 text-text-main dark:text-gray-300">
+<span class="material-symbols-outlined text-[16px]">home</span>
+</div>
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="text-[10px] font-mono text-text-secondary bg-gray-100 dark:bg-gray-700 px-1 rounded text-opacity-80">ID #089</span>
+</div>
+<p class="text-sm font-semibold text-text-main dark:text-white leading-tight">Casa Alphaville - Lote 12</p>
+</div>
+</div>
+</td>
+<td class="table-cell-padding align-top">
+<div class="flex flex-col">
+<span class="text-sm text-text-main dark:text-gray-200">Barueri</span>
+<span class="text-xs text-text-secondary">SP</span>
+</div>
+</td>
+<td class="table-cell-padding align-top bg-blue-50/20 dark:bg-blue-900/5">
+<div class="flex flex-col gap-1">
+<span class="inline-flex w-fit items-center rounded-sm bg-blue-100 dark:bg-blue-900/40 px-1.5 py-0.5 text-[11px] font-bold text-blue-700 dark:text-blue-300">33.3%</span>
+<span class="text-sm font-medium text-text-main dark:text-white tabular-nums tracking-tight">R$ 1.200.000</span>
+</div>
+</td>
+<td class="table-cell-padding align-top bg-teal-50/20 dark:bg-teal-900/5">
+<div class="flex flex-col gap-1">
+<span class="inline-flex w-fit items-center rounded-sm bg-teal-100 dark:bg-teal-900/40 px-1.5 py-0.5 text-[11px] font-bold text-teal-700 dark:text-teal-300">33.3%</span>
+<span class="text-sm font-medium text-text-main dark:text-white tabular-nums tracking-tight">R$ 1.200.000</span>
+</div>
+</td>
+<td class="table-cell-padding align-top bg-purple-50/20 dark:bg-purple-900/5">
+<div class="flex flex-col gap-1">
+<span class="inline-flex w-fit items-center rounded-sm bg-purple-100 dark:bg-purple-900/40 px-1.5 py-0.5 text-[11px] font-bold text-purple-700 dark:text-purple-300">33.3%</span>
+<span class="text-sm font-medium text-text-main dark:text-white tabular-nums tracking-tight">R$ 1.200.000</span>
+</div>
+</td>
+<td class="table-cell-padding align-top bg-orange-50/20 dark:bg-orange-900/5">
+<div class="flex flex-col gap-1 opacity-40">
+<span class="inline-flex w-fit items-center rounded-sm bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 text-[11px] font-bold text-gray-500 dark:text-gray-400">0%</span>
+<span class="text-sm font-medium text-text-main dark:text-white tabular-nums tracking-tight">-</span>
+</div>
+</td>
+<td class="table-cell-padding align-top text-right bg-gray-50/30 dark:bg-gray-800/10 border-l border-border-light dark:border-border-dark">
+<div class="flex flex-col items-end gap-1">
+<span class="text-sm font-bold text-text-main dark:text-white tabular-nums">R$ 3.600.000</span>
+</div>
+</td>
+</tr>
+<tr class="group hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+<td class="table-cell-padding align-top">
+<div class="flex items-start gap-3">
+<div class="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded bg-gray-100 dark:bg-gray-700 text-text-main dark:text-gray-300">
+<span class="material-symbols-outlined text-[16px]">landscape</span>
+</div>
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="text-[10px] font-mono text-text-secondary bg-gray-100 dark:bg-gray-700 px-1 rounded text-opacity-80">ID #103</span>
+</div>
+<p class="text-sm font-semibold text-text-main dark:text-white leading-tight">Terreno Gleba B - Industrial</p>
+</div>
+</div>
+</td>
+<td class="table-cell-padding align-top">
+<div class="flex flex-col">
+<span class="text-sm text-text-main dark:text-gray-200">Betim</span>
+<span class="text-xs text-text-secondary">MG</span>
+</div>
+</td>
+<td class="table-cell-padding align-top bg-blue-50/20 dark:bg-blue-900/5">
+<div class="flex flex-col gap-1 opacity-40">
+<span class="inline-flex w-fit items-center rounded-sm bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 text-[11px] font-bold text-gray-500 dark:text-gray-400">0%</span>
+<span class="text-sm font-medium text-text-main dark:text-white tabular-nums tracking-tight">-</span>
+</div>
+</td>
+<td class="table-cell-padding align-top bg-teal-50/20 dark:bg-teal-900/5">
+<div class="flex flex-col gap-1 opacity-40">
+<span class="inline-flex w-fit items-center rounded-sm bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 text-[11px] font-bold text-gray-500 dark:text-gray-400">0%</span>
+<span class="text-sm font-medium text-text-main dark:text-white tabular-nums tracking-tight">-</span>
+</div>
+</td>
+<td class="table-cell-padding align-top bg-purple-50/20 dark:bg-purple-900/5">
+<div class="flex flex-col gap-1 opacity-40">
+<span class="inline-flex w-fit items-center rounded-sm bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 text-[11px] font-bold text-gray-500 dark:text-gray-400">0%</span>
+<span class="text-sm font-medium text-text-main dark:text-white tabular-nums tracking-tight">-</span>
+</div>
+</td>
+<td class="table-cell-padding align-top bg-orange-50/20 dark:bg-orange-900/5">
+<div class="flex flex-col gap-1">
+<span class="inline-flex w-fit items-center rounded-sm bg-orange-100 dark:bg-orange-900/40 px-1.5 py-0.5 text-[11px] font-bold text-orange-700 dark:text-orange-300">100%</span>
+<span class="text-sm font-medium text-text-main dark:text-white tabular-nums tracking-tight">R$ 850.000</span>
+</div>
+</td>
+<td class="table-cell-padding align-top text-right bg-gray-50/30 dark:bg-gray-800/10 border-l border-border-light dark:border-border-dark">
+<div class="flex flex-col items-end gap-1">
+<span class="text-sm font-bold text-text-main dark:text-white tabular-nums">R$ 850.000</span>
+</div>
+</td>
+</tr>
+<tr class="group hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+<td class="table-cell-padding align-top">
+<div class="flex items-start gap-3">
+<div class="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded bg-gray-100 dark:bg-gray-700 text-text-main dark:text-gray-300">
+<span class="material-symbols-outlined text-[16px]">storefront</span>
+</div>
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="text-[10px] font-mono text-text-secondary bg-gray-100 dark:bg-gray-700 px-1 rounded text-opacity-80">ID #055</span>
+</div>
+<p class="text-sm font-semibold text-text-main dark:text-white leading-tight">Galpão Logístico Sul</p>
+</div>
+</div>
+</td>
+<td class="table-cell-padding align-top">
+<div class="flex flex-col">
+<span class="text-sm text-text-main dark:text-gray-200">Curitiba</span>
+<span class="text-xs text-text-secondary">PR</span>
+</div>
+</td>
+<td class="table-cell-padding align-top bg-blue-50/20 dark:bg-blue-900/5">
+<div class="flex flex-col gap-1">
+<span class="inline-flex w-fit items-center rounded-sm bg-blue-100 dark:bg-blue-900/40 px-1.5 py-0.5 text-[11px] font-bold text-blue-700 dark:text-blue-300">10%</span>
+<span class="text-sm font-medium text-text-main dark:text-white tabular-nums tracking-tight">R$ 1.500.000</span>
+</div>
+</td>
+<td class="table-cell-padding align-top bg-teal-50/20 dark:bg-teal-900/5">
+<div class="flex flex-col gap-1">
+<span class="inline-flex w-fit items-center rounded-sm bg-teal-100 dark:bg-teal-900/40 px-1.5 py-0.5 text-[11px] font-bold text-teal-700 dark:text-teal-300">10%</span>
+<span class="text-sm font-medium text-text-main dark:text-white tabular-nums tracking-tight">R$ 1.500.000</span>
+</div>
+</td>
+<td class="table-cell-padding align-top bg-purple-50/20 dark:bg-purple-900/5">
+<div class="flex flex-col gap-1">
+<span class="inline-flex w-fit items-center rounded-sm bg-purple-100 dark:bg-purple-900/40 px-1.5 py-0.5 text-[11px] font-bold text-purple-700 dark:text-purple-300">80%</span>
+<span class="text-sm font-medium text-text-main dark:text-white tabular-nums tracking-tight">R$ 12.000.000</span>
+</div>
+</td>
+<td class="table-cell-padding align-top bg-orange-50/20 dark:bg-orange-900/5">
+<div class="flex flex-col gap-1 opacity-40">
+<span class="inline-flex w-fit items-center rounded-sm bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 text-[11px] font-bold text-gray-500 dark:text-gray-400">0%</span>
+<span class="text-sm font-medium text-text-main dark:text-white tabular-nums tracking-tight">-</span>
+</div>
+</td>
+<td class="table-cell-padding align-top text-right bg-gray-50/30 dark:bg-gray-800/10 border-l border-border-light dark:border-border-dark">
+<div class="flex flex-col items-end gap-1">
+<span class="text-sm font-bold text-text-main dark:text-white tabular-nums">R$ 15.000.000</span>
+</div>
+</td>
+</tr>
+</tbody>
+<tfoot class="sticky bottom-0 z-10">
+<tr class="bg-white dark:bg-gray-900 border-t-2 border-border-light dark:border-border-dark shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+<td class="table-cell-padding text-xs font-bold text-text-main dark:text-white uppercase tracking-wider" colspan="2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">functions</span>
+                                        TOTAL DO PORTFÓLIO
+                                    </div>
+</td>
+<td class="table-cell-padding bg-blue-50/30 dark:bg-blue-900/10">
+<div class="text-sm font-bold text-blue-700 dark:text-blue-400 tabular-nums tracking-tight">R$ 5.200.000</div>
+</td>
+<td class="table-cell-padding bg-teal-50/30 dark:bg-teal-900/10">
+<div class="text-sm font-bold text-teal-700 dark:text-teal-400 tabular-nums tracking-tight">R$ 5.200.000</div>
+</td>
+<td class="table-cell-padding bg-purple-50/30 dark:bg-purple-900/10">
+<div class="text-sm font-bold text-purple-700 dark:text-purple-400 tabular-nums tracking-tight">R$ 18.200.000</div>
+</td>
+<td class="table-cell-padding bg-orange-50/30 dark:bg-orange-900/10">
+<div class="text-sm font-bold text-orange-700 dark:text-orange-400 tabular-nums tracking-tight">R$ 850.000</div>
+</td>
+<td class="table-cell-padding text-right bg-gray-50 dark:bg-gray-800 border-l border-border-light dark:border-border-dark">
+<div class="text-base font-extrabold text-text-main dark:text-white tabular-nums">R$ 29.450.000</div>
+</td>
+</tr>
+</tfoot>
+</table>
+</div>
+</div>
+<div class="flex items-center justify-between text-xs text-text-secondary pt-2">
+<span class="font-medium">Exibindo 4 de 23 ativos</span>
+<div class="flex gap-2">
+<button class="px-3 py-1.5 rounded-md bg-white dark:bg-gray-800 border border-border-light dark:border-border-dark disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm font-medium">Anterior</button>
+<button class="px-3 py-1.5 rounded-md bg-white dark:bg-gray-800 border border-border-light dark:border-border-dark hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm font-medium">Próxima</button>
+</div>
+</div>
+</div>
+</main>
+
+</body></html>

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Popup Cadastro de Locação - Layout Compacto</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1152d4",
+                        "primary-dark": "#0d3ca0",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1a2230",
+                        "text-main": "#0d121b",
+                        "text-secondary": "#4c669a",
+                        "text-light": "#ffffff",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "1rem",
+                        "lg": "1.5rem",
+                        "xl": "2.5rem",
+                        "2xl": "3rem",
+                        "3xl": "4rem",
+                        "full": "9999px"
+                    },
+                    boxShadow: {
+                        "soft": "0 4px 20px -2px rgba(0, 0, 0, 0.05)",
+                        "card": "0 0 0 1px rgba(0,0,0,0.03), 0 2px 8px rgba(0,0,0,0.04)",
+                        "elevated": "0 10px 30px -5px rgba(0, 0, 0, 0.1), 0 4px 10px -2px rgba(0, 0, 0, 0.05)"
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .pro-input {
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            background-color: #f3f4f6;}
+        .dark .pro-input {
+            background-color: #1f2937;
+            border-color: transparent;
+            color: white;
+        }
+        .pro-input:hover {
+            background-color: #e5e7eb;
+        }
+        .dark .pro-input:hover {
+            background-color: #374151;
+        }
+        .pro-input:focus {
+            background-color: #ffffff;
+            border-color: #1152d4;
+            box-shadow: 0 0 0 4px rgba(17, 82, 212, 0.1);
+        }
+        .dark .pro-input:focus {
+            background-color: #1a2230;
+            border-color: #1152d4;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+        .dark .glass-panel {
+            background: rgba(26, 34, 48, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-main dark:text-white min-h-screen flex flex-col font-display selection:bg-primary selection:text-white overflow-x-hidden">
+<div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-fade-in">
+<div class="bg-white dark:bg-surface-dark w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl animate-scale-up relative flex flex-col">
+<div class="flex items-center justify-between p-8 pb-4 sticky top-0 bg-white dark:bg-surface-dark z-20 border-b border-gray-100 dark:border-gray-800">
+<div>
+<h2 class="text-2xl font-black text-black dark:text-white tracking-tight">Dados do Contrato de Locação</h2>
+<p class="text-sm text-text-secondary mt-1">Preencha os detalhes para formalizar o registro.</p>
+</div>
+<button class="size-10 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-gray-500 dark:text-gray-400">close</span>
+</button>
+</div>
+<div class="p-8 grid grid-cols-1 lg:grid-cols-2 gap-10">
+<div class="flex flex-col gap-10">
+<section>
+<div class="flex items-center gap-3 mb-5">
+<div class="size-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-700 dark:text-blue-400">
+<span class="material-symbols-outlined text-lg">person</span>
+</div>
+<h3 class="text-lg font-bold text-gray-900 dark:text-white">Informações do Locatário</h3>
+</div>
+<div class="space-y-5">
+<div>
+<label class="block text-sm font-bold text-black dark:text-white mb-2 ml-1">Nome Completo / Razão Social</label>
+<input class="pro-input w-full h-12 px-5 rounded-lg text-sm font-medium text-text-main focus:outline-none" placeholder="Ex: João da Silva / Empresa LTDA" type="text"/>
+</div>
+<div>
+<label class="block text-sm font-bold text-black dark:text-white mb-2 ml-1">CPF / CNPJ</label>
+<input class="pro-input w-full h-12 px-5 rounded-lg text-sm font-medium text-text-main focus:outline-none" placeholder="000.000.000-00" type="text"/>
+</div>
+</div>
+</section>
+<section>
+<div class="flex items-center gap-3 mb-5">
+<div class="size-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-400">
+<span class="material-symbols-outlined text-lg">calendar_month</span>
+</div>
+<h3 class="text-lg font-bold text-gray-900 dark:text-white">Vigência do Contrato</h3>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block text-sm font-bold text-black dark:text-white mb-2 ml-1">Data de Início</label>
+<input class="pro-input w-full h-12 px-5 rounded-lg text-sm font-medium text-text-main focus:outline-none" type="date"/>
+</div>
+<div>
+<label class="block text-sm font-bold text-black dark:text-white mb-2 ml-1">Data de Término</label>
+<input class="pro-input w-full h-12 px-5 rounded-lg text-sm font-medium text-text-main focus:outline-none" type="date"/>
+</div>
+</div>
+</section>
+</div>
+<div class="flex flex-col gap-10">
+<section>
+<div class="flex items-center gap-3 mb-5">
+<div class="size-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-700 dark:text-emerald-400">
+<span class="material-symbols-outlined text-lg">payments</span>
+</div>
+<h3 class="text-lg font-bold text-gray-900 dark:text-white">Condições Financeiras</h3>
+</div>
+<div class="space-y-5">
+<div>
+<label class="block text-sm font-bold text-black dark:text-white mb-2 ml-1">Valor do Aluguel</label>
+<div class="relative">
+<span class="absolute left-5 top-1/2 -translate-y-1/2 text-text-secondary font-bold text-sm">R$</span>
+<input class="pro-input w-full h-12 pl-12 pr-5 rounded-lg text-sm font-bold text-text-main focus:outline-none" type="text" value="0,00"/>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block text-sm font-bold text-black dark:text-white mb-2 ml-1">Dia de Vencimento</label>
+<input class="pro-input w-full h-12 px-5 rounded-lg text-sm font-medium text-text-main focus:outline-none" max="31" min="1" placeholder="Dia (1-31)" type="number"/>
+</div>
+<div>
+<label class="block text-sm font-bold text-black dark:text-white mb-2 ml-1">Índice de Reajuste</label>
+<div class="relative">
+<select class="pro-input w-full h-12 px-5 rounded-lg text-sm font-medium text-text-main appearance-none focus:outline-none cursor-pointer">
+<option>IGP-M</option>
+<option>IPCA</option>
+<option>INPC</option>
+<option>IVAR</option>
+</select>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none text-sm">expand_more</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="flex-1 flex flex-col">
+<div class="flex items-center gap-3 mb-5">
+<div class="size-8 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-700 dark:text-orange-400">
+<span class="material-symbols-outlined text-lg">folder_open</span>
+</div>
+<h3 class="text-lg font-bold text-gray-900 dark:text-white">Documentação</h3>
+</div>
+<div class="relative group cursor-pointer flex-1 min-h-[140px]">
+<input class="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer" type="file"/>
+<div class="h-full border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl bg-gray-50 dark:bg-gray-800/50 p-6 flex flex-col items-center justify-center text-center transition-all group-hover:border-primary group-hover:bg-blue-50/50 dark:group-hover:bg-blue-900/10">
+<div class="size-12 rounded-full bg-white dark:bg-surface-dark shadow-sm flex items-center justify-center mb-3 text-primary group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-2xl">cloud_upload</span>
+</div>
+<h4 class="text-sm font-bold text-text-main dark:text-white mb-0.5">Inserir Contrato (PDF)</h4>
+<p class="text-xs text-text-secondary">Arraste ou clique para selecionar</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+<div class="p-8 pt-4 sticky bottom-0 bg-white dark:bg-surface-dark z-20 border-t border-gray-100 dark:border-gray-800 flex items-center justify-end gap-4 rounded-b-2xl">
+<button class="px-8 h-12 rounded-full border border-gray-200 dark:border-gray-700 text-text-secondary font-bold text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                Cancelar
+            </button>
+<button class="px-8 h-12 rounded-full bg-black dark:bg-white text-white dark:text-black font-bold text-sm shadow-xl shadow-gray-200 dark:shadow-gray-900/50 hover:shadow-2xl hover:-translate-y-0.5 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+                Salvar e Ativar Locação
+            </button>
+</div>
+</div>
+</div>
+<nav class="sticky top-0 z-50 w-full glass-panel border-b border-gray-100 dark:border-gray-800 transition-colors duration-300">
+<div class="max-w-[1400px] mx-auto px-6 h-20 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="size-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/30">
+<span class="material-symbols-outlined text-2xl">apartment</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-text-main dark:text-white tracking-tight">Sistema Patrimonial PRO</span>
+<span class="text-[10px] font-semibold text-text-secondary uppercase tracking-widest">Premium Estate</span>
+</div>
+</div>
+<div class="hidden md:flex items-center gap-2 bg-white/50 dark:bg-black/20 p-1.5 rounded-full border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm">
+<a class="px-5 py-2.5 rounded-full text-sm font-medium text-text-secondary hover:text-primary hover:bg-white dark:hover:bg-gray-800 transition-all" href="#">Dashboard</a>
+<a class="px-5 py-2.5 rounded-full text-sm font-bold text-primary bg-white dark:bg-gray-800 shadow-sm" href="#">Ativos</a>
+<a class="px-5 py-2.5 rounded-full text-sm font-medium text-text-secondary hover:text-primary hover:bg-white dark:hover:bg-gray-800 transition-all" href="#">Financeiro</a>
+<a class="px-5 py-2.5 rounded-full text-sm font-medium text-text-secondary hover:text-primary hover:bg-white dark:hover:bg-gray-800 transition-all" href="#">Auditoria</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="size-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-text-secondary hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="size-10 rounded-full bg-cover bg-center border-2 border-white dark:border-gray-700 shadow-md cursor-pointer" data-alt="User profile picture showing a professional person smiling" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCoJiZ4yAY8HjrL4yEEPKx1akKEdo3SwzLyGZA3TU6l2xHxkPmqdO-3pjwo-RHJGhbcE6N7Jv1FPQD7z4cML0JZUlwXZLNbjsDqHlY_2k3voo3frjkdmvGtc49KeRZbuIgCvTzuemyNKw90Umkpq9Oqf_4gigxKyL88VN5p3MlhfDeXekjBNd0CVUy8cWUz285UOADwD1o5-pTjBubDzSpvPaFCW_NAEhwnXWfghKX41ngfBqNtLqrOAapf5Ao9k4DSd0S39sGg91-6');">
+</div>
+</div>
+</div>
+</nav>
+<main class="flex-1 w-full max-w-[1400px] mx-auto px-6 py-8 pb-20 blur-sm pointer-events-none select-none">
+<header class="mb-10 animate-fade-in-up">
+<div class="flex items-center gap-2 text-sm font-medium text-text-secondary mb-4">
+<a class="hover:text-primary transition-colors" href="#">Cadastro</a>
+<span class="material-symbols-outlined text-base">chevron_right</span>
+<span class="text-text-main dark:text-white font-semibold">Novo Ativo</span>
+</div>
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<h1 class="text-4xl md:text-5xl font-black text-text-main dark:text-white tracking-tight mb-2">Edifício Horizon - Apto 402</h1>
+<div class="flex items-center gap-3">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-bold uppercase tracking-wide">
+<span class="size-2 rounded-full bg-blue-500 animate-pulse"></span>
+                        Em Cadastro
+                    </span>
+<span class="text-text-secondary text-sm font-medium">Criado em: Hoje, 14:30</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="h-12 px-6 rounded-full border border-gray-200 dark:border-gray-700 text-text-secondary dark:text-gray-300 font-bold text-sm hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors">
+                    Cancelar
+                </button>
+<button class="h-12 px-8 rounded-full bg-primary hover:bg-primary-dark text-white font-bold text-sm shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all flex items-center gap-2 transform active:scale-95">
+<span class="material-symbols-outlined text-[20px]">save</span>
+                    Salvar Cadastro
+                </button>
+</div>
+</div>
+</header>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<div class="lg:col-span-7 xl:col-span-8 flex flex-col gap-8">
+<section class="bg-surface-light dark:bg-surface-dark rounded-2xl p-8 shadow-card border border-gray-100 dark:border-gray-800">
+<div class="flex items-center gap-3 mb-8">
+<div class="size-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">location_on</span>
+</div>
+<h2 class="text-xl font-bold text-text-main dark:text-white">Identificação e Localização</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="md:col-span-2">
+<div class="h-14 bg-gray-50 rounded-full w-full"></div>
+</div>
+<div class="md:col-span-2">
+<div class="h-14 bg-gray-50 rounded-full w-full"></div>
+</div>
+</div>
+</section>
+</div>
+<div class="lg:col-span-5 xl:col-span-4 flex flex-col gap-8">
+<section class="bg-surface-light dark:bg-surface-dark rounded-2xl p-8 shadow-card border border-gray-100 dark:border-gray-800 lg:sticky lg:top-28">
+<div class="flex items-center justify-between mb-6">
+<h2 class="text-lg font-bold text-text-main dark:text-white">Quadro de Participações</h2>
+</div>
+<div class="flex justify-center mb-8 relative">
+<div class="size-48 rounded-full border-8 border-gray-100"></div>
+</div>
+</section>
+</div>
+</div>
+</main>
+
+</body></html>

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lista de Ativos - Visão Tabela</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#1152d4",
+              "background-light": "#f6f6f8",
+              "background-dark": "#101622",
+            },
+            fontFamily: {
+              "display": ["Inter", "sans-serif"]
+            },
+            borderRadius: {
+              "DEFAULT": "1rem", 
+              "lg": "2rem", 
+              "xl": "3rem", 
+              "modal": "3.5rem",
+              "full": "9999px"
+            },
+            boxShadow: {
+                "notion": "0 2px 4px rgba(15, 15, 15, 0.1)",
+                "float": "0 8px 30px rgba(0,0,0,0.08)"
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }.asset-table th {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #6b7280;
+            font-weight: 700;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid #e7ebf3;
+        }
+        .asset-table td {
+            padding: 1rem 1.5rem;
+            vertical-align: middle;
+            color: #0d121b;
+        }
+        .editable-cell input:focus {
+            background-color: #f0fdf4;
+            color: #15803d;
+            border-radius: 0.5rem;
+            outline: 2px solid #bbf7d0;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#0d121b] h-screen overflow-hidden flex flex-col">
+<header class="flex-none flex items-end justify-between px-10 pt-6 border-b border-[#e7ebf3] bg-white w-full z-20">
+<div class="flex items-center gap-12">
+<div class="flex items-center gap-2 pb-4">
+<div class="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-lg">domain</span>
+</div>
+<span class="font-extrabold text-lg tracking-tight">ASSET<span class="text-primary">MANAGER</span></span>
+</div>
+<nav class="flex gap-8">
+<a class="pb-4 text-sm font-bold text-[#9ca3af] border-b-[3px] border-transparent hover:text-[#0d121b] transition-all" href="#">Dashboard</a>
+<a class="pb-4 text-sm font-extrabold text-[#0d121b] border-b-[3px] border-[#0d121b]" href="#">Ativos</a>
+<a class="pb-4 text-sm font-bold text-[#9ca3af] border-b-[3px] border-transparent hover:text-[#0d121b] transition-all" href="#">Sócios</a>
+<a class="pb-4 text-sm font-bold text-[#9ca3af] border-b-[3px] border-transparent hover:text-[#0d121b] transition-all" href="#">Financeiro</a>
+<a class="pb-4 text-sm font-bold text-[#9ca3af] border-b-[3px] border-transparent hover:text-[#0d121b] transition-all" href="#">IA</a>
+<a class="pb-4 text-sm font-bold text-[#9ca3af] border-b-[3px] border-transparent hover:text-[#0d121b] transition-all" href="#">Relatórios</a>
+</nav>
+</div>
+<div class="pb-3">
+<button class="flex items-center gap-2 bg-[#0d121b] hover:bg-[#2a2f3a] text-white text-xs font-extrabold py-3 px-6 rounded-full transition-all shadow-xl shadow-gray-200/50">
+<span class="material-symbols-outlined text-base font-bold">add</span>
+                NOVO ATIVO
+             </button>
+</div>
+</header>
+<div class="flex-1 p-6 w-full h-full overflow-hidden">
+<div class="w-full h-full bg-white rounded-[3rem] border border-[#e7ebf3] shadow-sm flex flex-col overflow-hidden relative">
+<div class="px-8 py-6 border-b border-[#f0f2f5] flex flex-wrap items-center justify-between gap-4 bg-white/50 backdrop-blur-sm z-10">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative group">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] material-symbols-outlined group-focus-within:text-[#0d121b] transition-colors">search</span>
+<input class="w-64 bg-[#f6f6f8] border-none rounded-full py-2.5 pl-12 pr-4 text-sm font-bold placeholder-[#9ca3af] focus:ring-2 focus:ring-[#0d121b]/10 focus:bg-white transition-all" placeholder="Buscar ativo..." type="text"/>
+</div>
+<div class="w-px h-8 bg-[#e7ebf3]"></div>
+<div class="flex items-center gap-2">
+<button class="px-4 py-2 bg-white border border-[#e7ebf3] rounded-full text-xs font-bold text-[#4c669a] hover:bg-[#f8f9fc] hover:border-[#cfd7e7] flex items-center gap-2 transition-all">
+<span class="material-symbols-outlined text-sm">group</span>
+                            Sócios (Todos)
+                            <span class="material-symbols-outlined text-sm">expand_more</span>
+</button>
+<div class="flex items-center gap-2 bg-[#f6f6f8] p-1 rounded-full">
+<button class="px-4 py-1.5 bg-white shadow-sm rounded-full text-xs font-bold text-[#0d121b]">Todos</button>
+<button class="px-4 py-1.5 hover:bg-white/50 rounded-full text-xs font-bold text-[#6b7280] transition-all">Residencial</button>
+<button class="px-4 py-1.5 hover:bg-white/50 rounded-full text-xs font-bold text-[#6b7280] transition-all">Comercial</button>
+<button class="px-4 py-1.5 hover:bg-white/50 rounded-full text-xs font-bold text-[#6b7280] transition-all">Terrenos</button>
+</div>
+</div>
+</div>
+<div class="flex items-center bg-[#f6f6f8] p-1 rounded-full border border-[#e7ebf3]">
+<button class="p-2 rounded-full bg-white shadow-sm text-[#0d121b] transition-all">
+<span class="material-symbols-outlined text-xl">table_rows</span>
+</button>
+<button class="p-2 rounded-full text-[#9ca3af] hover:text-[#0d121b] hover:bg-white/50 transition-all">
+<span class="material-symbols-outlined text-xl">grid_view</span>
+</button>
+</div>
+</div>
+<div class="flex-1 overflow-auto hide-scrollbar bg-white">
+<table class="w-full text-left border-collapse asset-table">
+<thead class="sticky top-0 bg-white z-10 shadow-[0_1px_0_rgba(231,235,243,1)]">
+<tr>
+<th class="w-[30%] pl-8">Imóvel Ativo</th>
+<th class="w-[12%] text-right">Valor IRPF</th>
+<th class="w-[12%] text-right">Mercado</th>
+<th class="w-[12%] text-right">Aluguel</th>
+<th class="w-[8%] text-center border-l border-[#f0f2f5]">
+<div class="flex flex-col items-center gap-1" title="Roberto Silva">
+<div class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold">RS</div>
+</div>
+</th>
+<th class="w-[8%] text-center">
+<div class="flex flex-col items-center gap-1" title="Ana Martins">
+<div class="w-6 h-6 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-[10px] font-bold">AM</div>
+</div>
+</th>
+<th class="w-[8%] text-center">
+<div class="flex flex-col items-center gap-1" title="Carlos Ferreira">
+<div class="w-6 h-6 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center text-[10px] font-bold">CF</div>
+</div>
+</th>
+<th class="w-[8%] text-center pr-8">
+<div class="flex flex-col items-center gap-1" title="Lucia Barros">
+<div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px] font-bold">LB</div>
+</div>
+</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#f0f2f5]">
+<tr class="group hover:bg-[#f8f9fc] transition-colors cursor-pointer">
+<td class="pl-8 py-5">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 overflow-hidden border border-[#e7ebf3]">
+<span class="material-symbols-outlined">apartment</span>
+</div>
+<div>
+<div class="text-sm font-extrabold text-[#0d121b] group-hover:text-primary transition-colors">Edifício Horizon - 402</div>
+<div class="text-[11px] font-semibold text-[#6b7280]">Av. Atlântica, 1450 • Residencial</div>
+</div>
+</div>
+</td>
+<td class="editable-cell text-right">
+<input class="text-right text-sm font-bold bg-transparent border-none w-full p-1 text-[#6b7280]" readonly="" type="text" value="R$ 1.800.000"/>
+</td>
+<td class="editable-cell text-right">
+<input class="text-right text-sm font-extrabold bg-transparent border-none w-full p-1 text-[#0d121b]" type="text" value="R$ 2.450.000"/>
+</td>
+<td class="editable-cell text-right">
+<input class="text-right text-sm font-bold bg-transparent border-none w-full p-1 text-emerald-600" type="text" value="R$ 12.500"/>
+</td>
+<td class="text-center border-l border-[#f0f2f5]"><span class="inline-block px-2 py-1 rounded bg-blue-50 text-blue-700 text-xs font-bold">50%</span></td>
+<td class="text-center"><span class="inline-block px-2 py-1 rounded bg-purple-50 text-purple-700 text-xs font-bold">50%</span></td>
+<td class="text-center"><span class="text-gray-300 text-xs font-medium">-</span></td>
+<td class="text-center pr-8"><span class="text-gray-300 text-xs font-medium">-</span></td>
+</tr>
+<tr class="group hover:bg-[#f8f9fc] transition-colors cursor-pointer">
+<td class="pl-8 py-5">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 overflow-hidden border border-[#e7ebf3]">
+<span class="material-symbols-outlined">home_work</span>
+</div>
+<div>
+<div class="text-sm font-extrabold text-[#0d121b] group-hover:text-primary transition-colors">Casa Alphaville - Lote 12</div>
+<div class="text-[11px] font-semibold text-[#6b7280]">Rua das Acácias, 88 • Residencial</div>
+</div>
+</div>
+</td>
+<td class="editable-cell text-right">
+<input class="text-right text-sm font-bold bg-transparent border-none w-full p-1 text-[#6b7280]" readonly="" type="text" value="R$ 3.200.000"/>
+</td>
+<td class="editable-cell text-right">
+<input class="text-right text-sm font-extrabold bg-transparent border-none w-full p-1 text-[#0d121b]" type="text" value="R$ 4.800.000"/>
+</td>
+<td class="editable-cell text-right">
+<input class="text-right text-sm font-bold bg-transparent border-none w-full p-1 text-gray-400" type="text" value="R$ 0,00"/>
+</td>
+<td class="text-center border-l border-[#f0f2f5]"><span class="inline-block px-2 py-1 rounded bg-blue-50 text-blue-700 text-xs font-bold">25%</span></td>
+<td class="text-center"><span class="inline-block px-2 py-1 rounded bg-purple-50 text-purple-700 text-xs font-bold">25%</span></td>
+<td class="text-center"><span class="inline-block px-2 py-1 rounded bg-orange-50 text-orange-700 text-xs font-bold">25%</span></td>
+<td class="text-center pr-8"><span class="inline-block px-2 py-1 rounded bg-emerald-50 text-emerald-700 text-xs font-bold">25%</span></td>
+</tr>
+<tr class="group hover:bg-[#f8f9fc] transition-colors cursor-pointer">
+<td class="pl-8 py-5">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 overflow-hidden border border-[#e7ebf3]">
+<span class="material-symbols-outlined">storefront</span>
+</div>
+<div>
+<div class="text-sm font-extrabold text-[#0d121b] group-hover:text-primary transition-colors">Loja Shopping Metrópole</div>
+<div class="text-[11px] font-semibold text-[#6b7280]">Piso L2 - Loja 244 • Comercial</div>
+</div>
+</div>
+</td>
+<td class="editable-cell text-right">
+<input class="text-right text-sm font-bold bg-transparent border-none w-full p-1 text-[#6b7280]" readonly="" type="text" value="R$ 850.000"/>
+</td>
+<td class="editable-cell text-right">
+<input class="text-right text-sm font-extrabold bg-transparent border-none w-full p-1 text-[#0d121b]" type="text" value="R$ 1.100.000"/>
+</td>
+<td class="editable-cell text-right">
+<input class="text-right text-sm font-bold bg-transparent border-none w-full p-1 text-emerald-600" type="text" value="R$ 8.200"/>
+</td>
+<td class="text-center border-l border-[#f0f2f5]"><span class="text-gray-300 text-xs font-medium">-</span></td>
+<td class="text-center"><span class="text-gray-300 text-xs font-medium">-</span></td>
+<td class="text-center"><span class="inline-block px-2 py-1 rounded bg-orange-50 text-orange-700 text-xs font-bold">100%</span></td>
+<td class="text-center pr-8"><span class="text-gray-300 text-xs font-medium">-</span></td>
+</tr>
+<tr class="group hover:bg-[#f8f9fc] transition-colors cursor-pointer">
+<td class="pl-8 py-5">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 overflow-hidden border border-[#e7ebf3]">
+<span class="material-symbols-outlined">landscape</span>
+</div>
+<div>
+<div class="text-sm font-extrabold text-[#0d121b] group-hover:text-primary transition-colors">Terreno Lago Norte</div>
+<div class="text-[11px] font-semibold text-[#6b7280]">Q. 05 Conj. 12 • Terreno</div>
+</div>
+</div>
+</td>
+<td class="editable-cell text-right">
+<input class="text-right text-sm font-bold bg-transparent border-none w-full p-1 text-[#6b7280]" readonly="" type="text" value="R$ 500.000"/>
+</td>
+<td class="editable-cell text-right">
+<input class="text-right text-sm font-extrabold bg-transparent border-none w-full p-1 text-[#0d121b]" type="text" value="R$ 950.000"/>
+</td>
+<td class="editable-cell text-right">
+<input class="text-right text-sm font-bold bg-transparent border-none w-full p-1 text-gray-400" type="text" value="R$ 0,00"/>
+</td>
+<td class="text-center border-l border-[#f0f2f5]"><span class="inline-block px-2 py-1 rounded bg-blue-50 text-blue-700 text-xs font-bold">33%</span></td>
+<td class="text-center"><span class="inline-block px-2 py-1 rounded bg-purple-50 text-purple-700 text-xs font-bold">33%</span></td>
+<td class="text-center"><span class="inline-block px-2 py-1 rounded bg-orange-50 text-orange-700 text-xs font-bold">33%</span></td>
+<td class="text-center pr-8"><span class="text-gray-300 text-xs font-medium">-</span></td>
+</tr>
+<tr class="group hover:bg-[#f8f9fc] transition-colors cursor-pointer">
+<td class="pl-8 py-5">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 overflow-hidden border border-[#e7ebf3]">
+<span class="material-symbols-outlined">domain</span>
+</div>
+<div>
+<div class="text-sm font-extrabold text-[#0d121b] group-hover:text-primary transition-colors">Centro Logístico Sul</div>
+<div class="text-[11px] font-semibold text-[#6b7280]">BR-101 KM 200 • Industrial</div>
+</div>
+</div>
+</td>
+<td class="editable-cell text-right">
+<input class="text-right text-sm font-bold bg-transparent border-none w-full p-1 text-[#6b7280]" readonly="" type="text" value="R$ 5.400.000"/>
+</td>
+<td class="editable-cell text-right">
+<input class="text-right text-sm font-extrabold bg-transparent border-none w-full p-1 text-[#0d121b]" type="text" value="R$ 8.200.000"/>
+</td>
+<td class="editable-cell text-right">
+<input class="text-right text-sm font-bold bg-transparent border-none w-full p-1 text-emerald-600" type="text" value="R$ 45.000"/>
+</td>
+<td class="text-center border-l border-[#f0f2f5]"><span class="inline-block px-2 py-1 rounded bg-blue-50 text-blue-700 text-xs font-bold">25%</span></td>
+<td class="text-center"><span class="inline-block px-2 py-1 rounded bg-purple-50 text-purple-700 text-xs font-bold">25%</span></td>
+<td class="text-center"><span class="inline-block px-2 py-1 rounded bg-orange-50 text-orange-700 text-xs font-bold">25%</span></td>
+<td class="text-center pr-8"><span class="inline-block px-2 py-1 rounded bg-emerald-50 text-emerald-700 text-xs font-bold">25%</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="bg-[#f8f9fc] border-t border-[#e7ebf3] px-8 py-5 z-20">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#4c669a]">functions</span>
+<span class="text-xs font-bold uppercase tracking-wider text-[#4c669a]">Totais Consolidados</span>
+</div>
+<div class="flex items-center gap-12 pr-8">
+<div class="flex flex-col items-end">
+<span class="text-[10px] font-bold text-[#9ca3af] uppercase mb-0.5">Total IRPF</span>
+<span class="text-sm font-bold text-[#6b7280]">R$ 11.750.000</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-[10px] font-bold text-[#9ca3af] uppercase mb-0.5">Valor de Mercado</span>
+<span class="text-lg font-extrabold text-[#0d121b]">R$ 17.500.000</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-[10px] font-bold text-[#9ca3af] uppercase mb-0.5">Receita Mensal</span>
+<span class="text-lg font-extrabold text-emerald-600 bg-emerald-50 px-3 py-0.5 rounded-lg border border-emerald-100 shadow-sm">+ R$ 65.700</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</body></html>

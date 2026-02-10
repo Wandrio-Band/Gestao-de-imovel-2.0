@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Auditoria e Gestão de Duplicidades - Gestor Fiscal IA</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "primary-dark": "#0f4bc2",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1e293b",
+                        "text-main-light": "#111318",
+                        "text-main-dark": "#f1f5f9",
+                        "text-secondary-light": "#616f89",
+                        "text-secondary-dark": "#94a3b8",
+                        "border-light": "#e2e8f0",
+                        "border-dark": "#334155",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-main-light dark:text-text-main-dark transition-colors duration-200">
+<div class="flex h-screen w-full overflow-hidden">
+<aside class="flex w-64 flex-col border-r border-border-light bg-surface-light dark:bg-surface-dark dark:border-border-dark hidden md:flex z-20">
+<div class="flex h-full flex-col justify-between p-4">
+<div class="flex flex-col gap-6">
+<div class="flex items-center gap-3 px-2">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-10 shadow-sm" data-alt="Abstract blue geometric logo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBlIKGgugdzEsPPZ9TaVlZOTEXOChj_HTHp9WiuMStf4S6xyGCro9Q3zqXII2XdYMGNFw0LWaEsT3BMuD3qFNdDAxOqc62aaIc0363-_Va5ZV9HcvncizJMF-ZS8R15v3-bavszJgvsDxQ61FHQsRqM-rl4srYivu8hgOIHKCLL83B4igbsq-w2PS40EqI_c9o6qbBHkbN7UP9R53FfPWciN2V7ecHD7JyPY_cXRac27VYcqMbmcXKRFb0tFH6pbLmo5e76ROiSsmw");'></div>
+<div class="flex flex-col">
+<h1 class="text-text-main-light dark:text-text-main-dark text-base font-bold leading-normal">Gestor Fiscal IA</h1>
+<p class="text-text-secondary-light dark:text-text-secondary-dark text-xs font-normal leading-normal">Antigravity Integrated</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-secondary-light dark:text-text-secondary-dark hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px]">dashboard</span>
+<span class="text-sm font-medium leading-normal">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-secondary-light dark:text-text-secondary-dark hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px]">description</span>
+<span class="text-sm font-medium leading-normal">Documentos</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary text-white shadow-md" href="#">
+<span class="material-symbols-outlined text-[24px] fill-1">warning</span>
+<span class="text-sm font-medium leading-normal">Auditoria e Duplicatas</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-secondary-light dark:text-text-secondary-dark hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px]">bar_chart</span>
+<span class="text-sm font-medium leading-normal">Relatórios</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-secondary-light dark:text-text-secondary-dark hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px]">settings</span>
+<span class="text-sm font-medium leading-normal">Configurações</span>
+</a>
+</nav>
+</div>
+<div class="flex items-center gap-3 px-3 py-2 mt-auto">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-8" data-alt="User avatar profile picture" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCQtcMBrbJRKyJTbXledMSXycdqus01tRpMgCC4d5JXCIXi14fG2IVkFb-Iiu-HxmWhbBUGdMjV7ygEwuZQRBZHumywQWPIWnA5FPSqOwbe6mWenRrseJB26ta8wB_IpcrpffavPUEFNHuufYKPYAR08IhLprm9sy_CWHpIzwS3ty6jRv5WDHbA9OLVs_Eb5ztcdyF0KiqItMh3lMVSpOU6r3eKjt5El2ua5TtImPASz6Jnl_jHIx1RmhcsxX6vZizr4bTGrQofrYQ");'></div>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-text-main-light dark:text-text-main-dark">Usuário Admin</span>
+<span class="text-xs text-text-secondary-light dark:text-text-secondary-dark">Sair</span>
+</div>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex flex-col h-full overflow-hidden bg-background-light dark:bg-background-dark relative">
+<header class="flex items-center justify-between whitespace-nowrap border-b border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-6 py-3 shrink-0">
+<div class="flex items-center gap-4">
+<button class="md:hidden text-text-main-light dark:text-text-main-dark">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h2 class="text-text-main-light dark:text-text-main-dark text-lg font-bold leading-tight tracking-tight">Gestão de Auditoria</h2>
+<div class="hidden sm:flex items-center relative ml-4">
+<span class="material-symbols-outlined absolute left-3 text-text-secondary-light text-[20px]">search</span>
+<input class="h-10 w-64 rounded-lg bg-background-light dark:bg-background-dark pl-10 pr-4 text-sm text-text-main-light dark:text-text-main-dark placeholder-text-secondary-light focus:outline-none focus:ring-2 focus:ring-primary border-none" placeholder="Buscar auditorias..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="relative flex size-10 items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-text-main-light dark:text-text-main-dark transition-colors">
+<span class="material-symbols-outlined text-[24px]">notifications</span>
+<span class="absolute top-2.5 right-2.5 size-2 rounded-full bg-red-500 border border-white dark:border-surface-dark"></span>
+</button>
+<button class="flex size-10 items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-text-main-light dark:text-text-main-dark transition-colors">
+<span class="material-symbols-outlined text-[24px]">help</span>
+</button>
+</div>
+</header>
+<div class="flex-1 overflow-y-auto p-6 md:p-8 scroll-smooth">
+<div class="max-w-[1200px] mx-auto flex flex-col gap-6">
+<nav class="flex text-sm text-text-secondary-light dark:text-text-secondary-dark">
+<a class="hover:text-primary transition-colors" href="#">Início</a>
+<span class="mx-2">/</span>
+<a class="hover:text-primary transition-colors" href="#">Gestão Fiscal</a>
+<span class="mx-2">/</span>
+<span class="text-text-main-light dark:text-text-main-dark font-medium">Fila de Auditoria</span>
+</nav>
+<div class="flex flex-col gap-2">
+<h1 class="text-3xl md:text-4xl font-black text-text-main-light dark:text-text-main-dark tracking-tight">Detecção de Duplicatas</h1>
+<p class="text-text-secondary-light dark:text-text-secondary-dark text-base max-w-2xl">
+                        A IA sinalizou os seguintes registros como duplicatas potenciais com base na correspondência de CNPJ, Valor e Data. Por favor, revise cuidadosamente antes de mesclar ou excluir.
+                    </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="flex flex-col gap-1 rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark p-5 shadow-sm">
+<div class="flex items-center justify-between">
+<p class="text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark">Pendentes de Revisão</p>
+<span class="material-symbols-outlined text-amber-500">hourglass_top</span>
+</div>
+<p class="text-3xl font-bold text-text-main-light dark:text-text-main-dark">14</p>
+</div>
+<div class="flex flex-col gap-1 rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark p-5 shadow-sm">
+<div class="flex items-center justify-between">
+<p class="text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark">Duplicatas Confirmadas</p>
+<span class="material-symbols-outlined text-red-500">error</span>
+</div>
+<p class="text-3xl font-bold text-text-main-light dark:text-text-main-dark">3</p>
+</div>
+<div class="flex flex-col gap-1 rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark p-5 shadow-sm">
+<div class="flex items-center justify-between">
+<p class="text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark">Falsos Positivos</p>
+<span class="material-symbols-outlined text-green-500">check_circle</span>
+</div>
+<p class="text-3xl font-bold text-text-main-light dark:text-text-main-dark">126</p>
+</div>
+</div>
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6 h-full min-h-[600px]">
+<div class="xl:col-span-1 flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<h3 class="text-lg font-bold text-text-main-light dark:text-text-main-dark">Fila de Revisão</h3>
+<span class="text-xs font-medium bg-primary/10 text-primary px-2 py-1 rounded-full">14 Pendentes</span>
+</div>
+<div class="flex flex-col gap-3 h-[600px] overflow-y-auto pr-2">
+<div class="group cursor-pointer rounded-lg border-2 border-primary bg-surface-light dark:bg-surface-dark p-4 shadow-sm transition-all relative overflow-hidden">
+<div class="absolute top-0 left-0 h-full w-1 bg-primary"></div>
+<div class="flex justify-between items-start mb-2">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-text-main-light dark:text-text-main-dark">NF #9920-A</span>
+<span class="text-xs text-text-secondary-light dark:text-text-secondary-dark">Tech Solutions Ltda</span>
+</div>
+<span class="text-xs font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded">98% de Correspondência</span>
+</div>
+<div class="flex items-center justify-between text-xs text-text-secondary-light dark:text-text-secondary-dark">
+<span>24 Out, 2023</span>
+<span class="font-medium">R$ 1.250,00</span>
+</div>
+</div>
+<div class="group cursor-pointer rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark hover:border-primary/50 p-4 shadow-sm transition-all relative">
+<div class="flex justify-between items-start mb-2">
+<div class="flex flex-col">
+<span class="text-sm font-medium text-text-main-light dark:text-text-main-dark">NF #4521</span>
+<span class="text-xs text-text-secondary-light dark:text-text-secondary-dark">Office Supplies Co.</span>
+</div>
+<span class="text-xs font-medium text-amber-600 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded">85% de Correspondência</span>
+</div>
+<div class="flex items-center justify-between text-xs text-text-secondary-light dark:text-text-secondary-dark">
+<span>22 Out, 2023</span>
+<span class="font-medium">R$ 450,00</span>
+</div>
+</div>
+<div class="group cursor-pointer rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark hover:border-primary/50 p-4 shadow-sm transition-all relative">
+<div class="flex justify-between items-start mb-2">
+<div class="flex flex-col">
+<span class="text-sm font-medium text-text-main-light dark:text-text-main-dark">NF #1102</span>
+<span class="text-xs text-text-secondary-light dark:text-text-secondary-dark">Cleaning Services Inc</span>
+</div>
+<span class="text-xs font-medium text-amber-600 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded">92% de Correspondência</span>
+</div>
+<div class="flex items-center justify-between text-xs text-text-secondary-light dark:text-text-secondary-dark">
+<span>20 Out, 2023</span>
+<span class="font-medium">R$ 2.100,00</span>
+</div>
+</div>
+<div class="group cursor-pointer rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark hover:border-primary/50 p-4 shadow-sm transition-all relative">
+<div class="flex justify-between items-start mb-2">
+<div class="flex flex-col">
+<span class="text-sm font-medium text-text-main-light dark:text-text-main-dark">NF #8822</span>
+<span class="text-xs text-text-secondary-light dark:text-text-secondary-dark">Marketing Agency Pro</span>
+</div>
+<span class="text-xs font-medium text-amber-600 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded">88% de Correspondência</span>
+</div>
+<div class="flex items-center justify-between text-xs text-text-secondary-light dark:text-text-secondary-dark">
+<span>18 Out, 2023</span>
+<span class="font-medium">R$ 5.400,00</span>
+</div>
+</div>
+</div>
+</div>
+<div class="xl:col-span-2 flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<h3 class="text-lg font-bold text-text-main-light dark:text-text-main-dark">Comparação Lado a Lado</h3>
+<div class="flex items-center gap-2 text-sm text-text-secondary-light dark:text-text-secondary-dark">
+<span class="material-symbols-outlined text-[18px]">info</span>
+<span>Duplicata de alta confiança detectada</span>
+</div>
+</div>
+<div class="flex-1 rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark shadow-sm overflow-hidden flex flex-col">
+<div class="p-6 border-b border-border-light dark:border-border-dark bg-background-light/50 dark:bg-background-dark/50">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">description</span>
+</div>
+<div>
+<h4 class="text-base font-bold text-text-main-light dark:text-text-main-dark">Nota Fiscal #9920-A</h4>
+<p class="text-sm text-text-secondary-light dark:text-text-secondary-dark">Enviado por: Robô do Sistema • Hoje às 10:42</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark">ID do Conflito:</span>
+<code class="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded text-xs font-mono">DUP-2023-882</code>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-2 h-full">
+<div class="border-r border-border-light dark:border-border-dark p-6 flex flex-col gap-6">
+<div class="flex items-center justify-between pb-2 border-b border-border-light dark:border-border-dark">
+<span class="text-sm font-bold uppercase tracking-wider text-primary">Documento de Entrada</span>
+<span class="text-xs bg-primary/10 text-primary px-2 py-1 rounded">Pendente</span>
+</div>
+<div class="flex flex-col gap-4">
+<div class="group">
+<label class="text-xs uppercase text-text-secondary-light dark:text-text-secondary-dark font-semibold">Nome do Fornecedor</label>
+<p class="text-base font-medium text-text-main-light dark:text-text-main-dark mt-1">Tech Solutions Ltda</p>
+</div>
+<div class="group p-2 -mx-2 rounded bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30">
+<div class="flex items-center gap-2">
+<label class="text-xs uppercase text-amber-700 dark:text-amber-500 font-semibold">CNPJ</label>
+<span class="material-symbols-outlined text-[16px] text-amber-600">compare_arrows</span>
+</div>
+<p class="text-base font-bold text-text-main-light dark:text-text-main-dark mt-1">12.345.678/0001-90</p>
+</div>
+<div class="group p-2 -mx-2 rounded bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30">
+<div class="flex items-center gap-2">
+<label class="text-xs uppercase text-amber-700 dark:text-amber-500 font-semibold">Valor Total</label>
+<span class="material-symbols-outlined text-[16px] text-amber-600">compare_arrows</span>
+</div>
+<p class="text-base font-bold text-text-main-light dark:text-text-main-dark mt-1">R$ 1.250,00</p>
+</div>
+<div class="group p-2 -mx-2 rounded bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30">
+<div class="flex items-center gap-2">
+<label class="text-xs uppercase text-amber-700 dark:text-amber-500 font-semibold">Data de Emissão</label>
+<span class="material-symbols-outlined text-[16px] text-amber-600">compare_arrows</span>
+</div>
+<p class="text-base font-bold text-text-main-light dark:text-text-main-dark mt-1">24 Out, 2023</p>
+</div>
+<div class="mt-4 p-3 bg-background-light dark:bg-background-dark rounded-lg flex items-center justify-center border border-dashed border-border-light dark:border-border-dark cursor-pointer hover:border-primary transition-colors h-32">
+<div class="text-center">
+<span class="material-symbols-outlined text-text-secondary-light text-3xl">visibility</span>
+<p class="text-xs text-text-secondary-light mt-2">Ver Prévia do PDF</p>
+</div>
+</div>
+</div>
+</div>
+<div class="p-6 flex flex-col gap-6 bg-slate-50 dark:bg-slate-800/20">
+<div class="flex items-center justify-between pb-2 border-b border-border-light dark:border-border-dark">
+<span class="text-sm font-bold uppercase tracking-wider text-text-secondary-light dark:text-text-secondary-dark">Registro Existente no Banco</span>
+<span class="text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2 py-1 rounded">Processado</span>
+</div>
+<div class="flex flex-col gap-4 opacity-90">
+<div class="group">
+<label class="text-xs uppercase text-text-secondary-light dark:text-text-secondary-dark font-semibold">Nome do Fornecedor</label>
+<p class="text-base font-medium text-text-main-light dark:text-text-main-dark mt-1">Tech Solutions Ltda</p>
+</div>
+<div class="group p-2 -mx-2 rounded bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30">
+<label class="text-xs uppercase text-amber-700 dark:text-amber-500 font-semibold">CNPJ</label>
+<p class="text-base font-bold text-text-main-light dark:text-text-main-dark mt-1">12.345.678/0001-90</p>
+</div>
+<div class="group p-2 -mx-2 rounded bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30">
+<label class="text-xs uppercase text-amber-700 dark:text-amber-500 font-semibold">Valor Total</label>
+<p class="text-base font-bold text-text-main-light dark:text-text-main-dark mt-1">R$ 1.250,00</p>
+</div>
+<div class="group p-2 -mx-2 rounded bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30">
+<label class="text-xs uppercase text-amber-700 dark:text-amber-500 font-semibold">Data de Emissão</label>
+<p class="text-base font-bold text-text-main-light dark:text-text-main-dark mt-1">24 Out, 2023</p>
+</div>
+<div class="mt-4 flex flex-col gap-2">
+<p class="text-xs text-text-secondary-light dark:text-text-secondary-dark">ID do Registro Original: <span class="font-mono">#REC-9871</span></p>
+<p class="text-xs text-text-secondary-light dark:text-text-secondary-dark">Criado: 25 Out, 2023 por John Doe</p>
+</div>
+</div>
+</div>
+</div>
+<div class="p-6 border-t border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark flex flex-wrap gap-4 items-center justify-end">
+<div class="mr-auto">
+<button class="text-text-secondary-light dark:text-text-secondary-dark hover:text-text-main-light dark:hover:text-text-main-dark text-sm font-medium flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[18px]">flag</span>
+                                        Relatar Problema
+                                    </button>
+</div>
+<button class="px-5 py-2.5 rounded-lg border border-border-light dark:border-border-dark text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 font-bold text-sm transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+                                    Excluir Entrada
+                                </button>
+<button class="px-5 py-2.5 rounded-lg border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-sm transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">call_merge</span>
+                                    Mesclar Registros
+                                </button>
+<button class="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-dark text-white font-bold text-sm shadow-sm transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px] fill-1">check_circle</span>
+                                    Aprovar (Não é Duplicata)
+                                </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+</body></html>

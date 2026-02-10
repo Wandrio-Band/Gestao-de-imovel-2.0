@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Relatório Executivo - Sistema Patrimonial PRO</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1152d4",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cfd7e7;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #b0b8c8;
+        }.chart-bar {
+            background: linear-gradient(180deg, rgba(17, 82, 212, 0.1) 0%, rgba(17, 82, 212, 0) 100%);
+        }
+        .chart-line {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: dash 2s linear forwards;
+        }
+        @keyframes dash {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+    </style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-[#0d121b]">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#e7ebf3] bg-white px-10 py-3 sticky top-0 z-50">
+<div class="flex items-center gap-4 text-[#0d121b]">
+<div class="size-6 text-primary">
+<span class="material-symbols-outlined text-3xl">domain</span>
+</div>
+<h2 class="text-[#0d121b] text-lg font-bold leading-tight tracking-[-0.015em]">Sistema Patrimonial PRO</h2>
+</div>
+<div class="flex flex-1 justify-end gap-8">
+<div class="flex items-center gap-9 hidden md:flex">
+<a class="text-[#0d121b] text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Backup</a>
+<a class="text-[#0d121b] text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Enviar</a>
+<a class="text-[#0d121b] text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Receber</a>
+<a class="text-[#0d121b] text-sm font-medium leading-normal hover:text-primary transition-colors flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+                        Configurações
+                    </a>
+</div>
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-blue-700 transition-colors shadow-sm">
+<span class="truncate flex items-center gap-1"><span class="material-symbols-outlined text-[20px]">add</span> NOVO ATIVO</span>
+</button>
+</div>
+</header>
+<div class="flex flex-1">
+<aside class="hidden lg:flex flex-col w-64 border-r border-[#e7ebf3] bg-white pt-8 pb-4 px-4 h-[calc(100vh-65px)] sticky top-[65px]">
+<div class="flex flex-col gap-6">
+<div class="flex items-center gap-3 px-2">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-12 shadow-inner border border-gray-200" data-alt="Admin user profile picture" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC-ZGU83hHa1Axp0-vVX6NJPgqokg1JYY7LQj2rQY7WBOI6QNfWc1AjcUUdx54sQ2Q1XHsMQbvgOnWm_faxCouyVOF3TuLSUQWlg9_vr4j7Ve9clcHPrVjbKtXcfnOiUBYI_QuW05-VaRf8i4q78GJxvJcg4TBibvcmkzjH0PM6TLuNdNt2Fts3RwyQHvFG69030xQSaJAboC8WOMBYhv6BLltlgtWoMx0zYZZU0bgFz_dc7KKRdYXLR83oJdaBRsbjMSI1a1EAqSaS");'></div>
+<div class="flex flex-col">
+<h1 class="text-[#0d121b] text-sm font-bold leading-normal">Carlos Mendes</h1>
+<p class="text-[#4c669a] text-xs font-normal leading-normal">Gestor Financeiro</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 text-[#4c669a] group transition-colors" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform text-gray-500">apartment</span>
+<p class="text-sm font-medium leading-normal">Ativos</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 text-[#4c669a] group transition-colors" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform text-gray-500">group</span>
+<p class="text-sm font-medium leading-normal">Sócios</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary group transition-colors" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">description</span>
+<p class="text-sm font-bold leading-normal">Relatórios</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 text-[#4c669a] group transition-colors" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform text-gray-500">psychology</span>
+<p class="text-sm font-medium leading-normal">IA Insights</p>
+</a>
+</nav>
+</div>
+<div class="mt-auto">
+<div class="p-4 bg-gradient-to-br from-blue-50 to-white rounded-xl border border-blue-100">
+<p class="text-xs font-semibold text-blue-800 mb-1">Status do Sistema</p>
+<div class="flex items-center gap-2">
+<div class="size-2 rounded-full bg-green-500 animate-pulse"></div>
+<p class="text-xs text-blue-600">Sincronizado</p>
+</div>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex justify-center p-6 lg:p-10 bg-[#f8f9fc]">
+<div class="flex flex-col max-w-[1200px] w-full gap-8">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 text-[#4c669a] text-sm font-medium mb-1">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+<a class="hover:underline" href="#">Gestão de Financiamentos</a>
+<span>/</span>
+<span>Edifício Horizon</span>
+</div>
+<h1 class="text-[#0d121b] text-3xl font-black leading-tight tracking-[-0.033em]">Relatório Executivo</h1>
+<p class="text-[#4c669a] text-base">Análise consolidada - Edifício Horizon - Apto 1402</p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center justify-center gap-2 rounded-lg h-10 px-4 bg-white border border-[#cfd7e7] text-[#0d121b] text-sm font-bold shadow-sm hover:bg-gray-50 transition-colors">
+<span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>
+<span>Exportar PDF</span>
+</button>
+<button class="flex items-center justify-center gap-2 rounded-lg h-10 px-4 bg-white border border-[#cfd7e7] text-[#0d121b] text-sm font-bold shadow-sm hover:bg-gray-50 transition-colors">
+<span class="material-symbols-outlined text-[20px]">table_view</span>
+<span>Exportar Excel</span>
+</button>
+<button class="flex items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold shadow-sm hover:bg-blue-700 transition-colors">
+<span class="material-symbols-outlined text-[20px]">arrow_back</span>
+<span>Voltar à Gestão</span>
+</button>
+</div>
+</div>
+<section class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white rounded-xl border border-[#cfd7e7] p-6 shadow-sm">
+<div class="flex flex-col gap-1 md:col-span-1 md:border-r md:border-[#e7ebf3] pr-4">
+<span class="text-xs font-bold text-[#4c669a] uppercase tracking-wider">Saldo Devedor Total (Atual)</span>
+<div class="text-3xl font-black text-[#0d121b] tracking-tight">R$ 1.245.890,00</div>
+<div class="flex items-center gap-1 text-xs text-red-500 font-medium mt-1">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+                                +2.4% (Correção INCC)
+                            </div>
+</div>
+<div class="flex flex-col gap-1 md:pl-4">
+<span class="text-xs font-bold text-[#4c669a] uppercase tracking-wider">Total Já Quitado</span>
+<div class="text-xl font-bold text-[#0d121b]">R$ 458.200,00</div>
+<span class="text-xs text-gray-500">Fase 1 + Fase 2 (27%)</span>
+</div>
+<div class="flex flex-col gap-1 md:pl-4">
+<span class="text-xs font-bold text-[#4c669a] uppercase tracking-wider">Valor Total Original</span>
+<div class="text-xl font-bold text-[#0d121b]">R$ 1.650.000,00</div>
+<span class="text-xs text-gray-500">Contrato Base</span>
+</div>
+<div class="flex flex-col gap-1 md:pl-4">
+<span class="text-xs font-bold text-[#4c669a] uppercase tracking-wider">Prazo Restante</span>
+<div class="text-xl font-bold text-[#0d121b]">324 Meses</div>
+<span class="text-xs text-gray-500">~27 Anos</span>
+</div>
+</section>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="lg:col-span-2 flex flex-col gap-6">
+<div class="bg-white rounded-xl border border-[#cfd7e7] p-6 shadow-sm">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-lg font-bold text-[#0d121b]">Evolução do Saldo Devedor</h3>
+<div class="flex gap-2">
+<span class="flex items-center gap-1 text-xs font-medium text-gray-500"><span class="w-2 h-2 rounded-full bg-blue-500"></span>Principal</span>
+<span class="flex items-center gap-1 text-xs font-medium text-gray-500"><span class="w-2 h-2 rounded-full bg-orange-400"></span>Juros</span>
+</div>
+</div>
+<div class="relative h-64 w-full bg-white flex items-end justify-between px-2 gap-2">
+<div class="absolute inset-0 flex flex-col justify-between pointer-events-none text-[10px] text-gray-400">
+<div class="border-b border-gray-100 w-full h-0 flex items-center"><span>1.5M</span></div>
+<div class="border-b border-gray-100 w-full h-0 flex items-center"><span>1.0M</span></div>
+<div class="border-b border-gray-100 w-full h-0 flex items-center"><span>500k</span></div>
+<div class="border-b border-gray-100 w-full h-0 flex items-center"><span>0</span></div>
+</div>
+<svg class="absolute inset-0 h-full w-full" preserveAspectRatio="none" viewBox="0 0 100 100">
+<path class="chart-line" d="M0,20 Q25,30 50,45 T100,80" fill="none" stroke="#1152d4" stroke-width="2"></path>
+<path d="M0,20 Q25,30 50,45 T100,80 V100 H0 Z" fill="url(#blueGradient)" opacity="0.1"></path>
+<path d="M0,95 Q25,90 50,80 T100,60" fill="none" stroke="#fb923c" stroke-dasharray="2,2" stroke-width="2"></path>
+<defs>
+<linearGradient id="blueGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" style="stop-color:#1152d4;stop-opacity:0.2"></stop>
+<stop offset="100%" style="stop-color:#1152d4;stop-opacity:0"></stop>
+</linearGradient>
+</defs>
+</svg>
+<div class="absolute bottom-[-20px] left-0 w-full flex justify-between text-[10px] text-gray-400 px-2">
+<span>2024</span>
+<span>2028</span>
+<span>2032</span>
+<span>2036</span>
+<span>2040</span>
+<span>2050</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="bg-white rounded-xl border border-[#cfd7e7] p-6 shadow-sm flex flex-col justify-between">
+<h3 class="text-sm font-bold text-[#0d121b] mb-4">Composição dos Pagamentos</h3>
+<div class="flex items-center gap-6">
+<div class="relative size-32 rounded-full border-[12px] border-primary border-r-orange-400 border-b-primary flex items-center justify-center transform -rotate-45">
+<div class="flex flex-col items-center transform rotate-45">
+<span class="text-lg font-bold text-[#0d121b]">72%</span>
+<span class="text-[10px] text-gray-500">Amort.</span>
+</div>
+</div>
+<div class="flex flex-col gap-2 text-sm">
+<div class="flex items-center gap-2">
+<div class="size-3 rounded-full bg-primary"></div>
+<span class="text-gray-600">Amortização Principal</span>
+<span class="font-bold ml-auto">72%</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="size-3 rounded-full bg-orange-400"></div>
+<span class="text-gray-600">Juros Totais</span>
+<span class="font-bold ml-auto">28%</span>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-gradient-to-br from-indigo-50 to-white rounded-xl border border-indigo-100 p-6 shadow-sm relative overflow-hidden">
+<div class="absolute top-0 right-0 p-3 opacity-10">
+<span class="material-symbols-outlined text-6xl text-primary">psychology</span>
+</div>
+<div class="flex items-center gap-2 mb-3 text-indigo-700">
+<span class="material-symbols-outlined text-[20px]">auto_awesome</span>
+<h3 class="text-sm font-bold uppercase tracking-wider">IA Insight Financeiro</h3>
+</div>
+<p class="text-lg font-bold text-[#0d121b] mb-2">Potencial de Recomposição</p>
+<p class="text-sm text-gray-600 leading-relaxed mb-4">
+                                        A análise preditiva indica que com a taxa atual de amortização, haverá recomposição total do capital investido em <strong>3 anos e 2 meses</strong>. O risco de alavancagem é classificado como <strong>Baixo</strong>.
+                                    </p>
+<a class="text-xs font-bold text-primary hover:text-indigo-800 flex items-center gap-1 group" href="#">
+                                        VER ANÁLISE COMPLETA 
+                                        <span class="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-6">
+<div class="bg-white rounded-xl border border-[#cfd7e7] shadow-sm flex flex-col h-full">
+<div class="p-5 border-b border-[#cfd7e7]">
+<h3 class="text-lg font-bold text-[#0d121b]">Resumo por Fases</h3>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left text-sm">
+<thead class="bg-[#f8f9fc] text-xs font-bold text-[#4c669a] uppercase">
+<tr>
+<th class="px-5 py-3">Fase</th>
+<th class="px-5 py-3 text-right">Pago</th>
+<th class="px-5 py-3 text-right">Devido</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#e7ebf3]">
+<tr>
+<td class="px-5 py-3.5">
+<div class="flex flex-col">
+<span class="font-bold text-[#0d121b]">Fase 1</span>
+<span class="text-[10px] text-gray-500">Construtora</span>
+</div>
+</td>
+<td class="px-5 py-3.5 text-right font-medium text-green-700">R$ 250k</td>
+<td class="px-5 py-3.5 text-right font-medium text-gray-400">-</td>
+</tr>
+<tr>
+<td class="px-5 py-3.5">
+<div class="flex flex-col">
+<span class="font-bold text-[#0d121b]">Fase 2</span>
+<span class="text-[10px] text-gray-500">Bancária</span>
+</div>
+</td>
+<td class="px-5 py-3.5 text-right font-medium text-green-700">R$ 208k</td>
+<td class="px-5 py-3.5 text-right font-bold text-[#0d121b]">R$ 1.2M</td>
+</tr>
+</tbody>
+<tfoot class="bg-gray-50 border-t border-[#cfd7e7]">
+<tr>
+<td class="px-5 py-3 text-xs font-bold text-gray-600 uppercase">Total</td>
+<td class="px-5 py-3 text-right font-black text-[#0d121b]">R$ 458k</td>
+<td class="px-5 py-3 text-right font-black text-red-600">R$ 1.2M</td>
+</tr>
+</tfoot>
+</table>
+</div>
+<div class="p-4 mt-auto">
+<div class="bg-orange-50 border border-orange-100 rounded-lg p-3 text-xs text-orange-800 flex gap-2 items-start">
+<span class="material-symbols-outlined text-[16px] mt-0.5">warning</span>
+<p>Juros/Correção acumulados até o momento: <strong>R$ 42.350,00</strong></p>
+</div>
+</div>
+</div>
+<div class="bg-white rounded-xl border border-[#cfd7e7] shadow-sm flex flex-col h-full">
+<div class="p-5 border-b border-[#cfd7e7]">
+<h3 class="text-lg font-bold text-[#0d121b]">Divisão de Custos</h3>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left text-sm">
+<thead class="bg-[#f8f9fc] text-xs font-bold text-[#4c669a] uppercase">
+<tr>
+<th class="px-5 py-3">Sócio</th>
+<th class="px-5 py-3 text-center">%</th>
+<th class="px-5 py-3 text-right">Contribuído</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#e7ebf3]">
+<tr>
+<td class="px-5 py-3.5">
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDPAra3JOLuZ43P9xWGCN8dyx0x5a2yPlWe9q2h9NmAUVpMg0m40twinW0i9poIWdImPIe2ERdhKolMVJU4Zzvte0o_bK2RfEVkdDUaD2R6iYEzvlCRSAiF50eQ7nXdc1OhiVFlFQty3Po5GJOm3Vmv6oJCAtHe2V4QBWcdg6Em_Y3HOBIqH5fxP3bL0hyT5ZdNRAFBaRaGz-IsmdyB5VrKZv_jEVT3L3cvNEmVkOfmp1o4JRiWDc0RYidj9HC8ilfbRytDhdk0i3OQ");'></div>
+<span class="font-medium text-[#0d121b]">Carlos</span>
+</div>
+</td>
+<td class="px-5 py-3.5 text-center font-medium text-gray-500">40%</td>
+<td class="px-5 py-3.5 text-right font-bold text-[#0d121b]">R$ 183.280</td>
+</tr>
+<tr>
+<td class="px-5 py-3.5">
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-[10px] font-bold">AS</div>
+<span class="font-medium text-[#0d121b]">Ana S.</span>
+</div>
+</td>
+<td class="px-5 py-3.5 text-center font-medium text-gray-500">60%</td>
+<td class="px-5 py-3.5 text-right font-bold text-[#0d121b]">R$ 274.920</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 border-t border-[#cfd7e7] mt-auto bg-gray-50 rounded-b-xl">
+<div class="flex justify-between items-center text-sm">
+<span class="font-bold text-gray-500">TOTAL APORTADO</span>
+<span class="font-black text-primary text-base">R$ 458.200,00</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex justify-center text-xs text-gray-400 pb-4">
+                        Sistema Patrimonial PRO © 2024 - Todos os direitos reservados.
+                    </div>
+</div>
+</main>
+</div>
+</div>
+
+</body></html>

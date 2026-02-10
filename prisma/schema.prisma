@@ -1,0 +1,229 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Asset {
+  id            String   @id @default(uuid())
+  name          String
+  type          String   // Residencial, Comercial, Terreno, Industrial
+  
+  // Address
+  address       String?  // Full address string for display
+  zipCode       String?
+  street        String?
+  number        String?
+  complement    String?
+  neighborhood  String?
+  city          String?
+  state         String?
+  description   String?  // Full extracted description
+
+  // Characteristics
+  areaPrivative Decimal?
+  areaTotal     Decimal?
+  bedrooms      Int?
+  suites        Int?
+  bathrooms     Int?
+  parkingSpaces Int?
+
+  // Documentation
+  matricula         String?
+  iptu              String?
+  condominio        String? // Novo Campo
+  registryOffice    String?
+  acquisitionDate   String? // ISO Date string
+  irpfStatus        String? // Declarado, Pendente, Isento
+  acquisitionOrigin String?
+
+  // Financial
+  value                 Decimal @default(0) // Acquisition Value
+  marketValue           Decimal @default(0)
+  declaredValue         Decimal?
+  saleForecast          String?
+  suggestedRentalValue  Decimal?
+  rentalValue           Decimal @default(0)
+  
+  status        String   @default("Vago") // Locado, Vago, Em Reforma, Uso Próprio
+  image         String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  partners      AssetPartner[]
+  financing     Financing?
+  leases        Lease[]
+  contracts     Contract[]
+}
+
+model AssetPartner {
+  id          String @id @default(uuid())
+  assetId     String
+  asset       Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  
+  name        String // Storing directly for simplicity as per current frontend usage
+  initials    String
+  color       String
+  percentage  Decimal
+
+  @@index([assetId])
+}
+
+model Financing {
+  id                    String @id @default(uuid())
+  assetId               String @unique
+  asset                 Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  valorTotal            Decimal
+  subtotalConstrutora   Decimal
+  valorFinanciar        Decimal
+  valorQuitado          Decimal?
+  saldoDevedor          Decimal?
+  
+  dataAssinatura        String?
+  vencimentoConstrutora String?
+  vencimentoPrimeira    String?
+  prazoMeses            String?
+  jurosAnuais           String?
+  indexador             String?
+  sistemaAmortizacao    String?
+  taxaAdm               String?
+  seguros               String?
+  
+  // Complex nested objects stored as JSON
+  phases               String? // JSON string for checkpoits/phases
+  cashFlow             String? // JSON string for CashFlowItems
+}
+
+model Lease {
+  id              String @id @default(uuid())
+  assetId         String
+  asset           Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  
+  nomeInquilino   String
+  documentoInquilino String?
+  emailInquilino     String?
+  valorAluguel    Decimal
+  diaVencimento   Int
+  inicioVigencia  String?
+  fimContrato     String?
+  garantia        String?
+  indexador       String?
+  contractFile    String? // JSON or URL
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Invoice {
+  id              String   @id @default(uuid())
+  data            String?
+  cnpj_cpf_emissor String?
+  nome_emissor    String?
+  endereco_emissor String?
+  cidade          String?
+  estado          String?
+  valor_total     Decimal?
+  categoria       String?
+  status          String   @default("PENDENTE") // APROVADO, PENDENTE
+  source          String?  // Upload, Gmail
+  fileCopy        String?  // Base64 or URL
+  auditReason     String?
+  items           String?  // JSON string for line items
+  numero_nota      String?
+  serie_nota       String?
+  beneficiario     String?
+  nome_tomador     String?
+  cpf_cnpj_tomador String?
+  endereco_tomador String?
+  email_tomador    String?
+  telefone_emissor String?
+  telefone_tomador String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// --- RENTAL MANAGEMENT MODULE ---
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  document  String?  @unique // CPF or CNPJ
+  email     String?
+  phone     String?
+  createdAt DateTime @default(now())
+
+  contracts Contract[]
+  aliases   TenantAlias[]
+}
+
+model Contract {
+  id              String   @id @default(uuid())
+  contractNumber  String?  @unique // Human readable ID e.g. CTR-2026-001
+  assetId         String
+  asset           Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  startDate       DateTime
+  durationMonths  Int      @default(12)
+  baseValue       Decimal
+  currentValue    Decimal
+  adjustmentIndex String?  @default("IPCA")
+  dueDay          Int
+  penaltyPercent  Decimal  @default(10.0)
+  status          String   @default("active") // active, suspended, finished
+  lastAdjustment  DateTime?
+
+  payments        PaymentHistory[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model TenantAlias {
+  id        String   @id @default(uuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  aliasName String
+  lastUsed  DateTime?
+  confidence Float   @default(1.0)
+  createdAt DateTime @default(now())
+
+  @@unique([tenantId, aliasName])
+}
+
+model PaymentHistory {
+  id             String    @id @default(uuid())
+  contractId     String
+  contract       Contract  @relation(fields: [contractId], references: [id])
+  dueDate        DateTime
+  paymentDate    DateTime?
+  expectedValue  Decimal
+  paidValue      Decimal?
+  status         String    @default("pending") // pending, paid, partial, overdue
+  method         String    @default("PIX")
+  
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model SystemAuditLog {
+  id        String   @id @default(uuid())
+  action    String   // e.g., "CREATE", "UPDATE", "DELETE", "LEARN_ALIAS"
+  entity    String   // e.g., "Asset", "Contract", "TenantAlias"
+  entityId  String   // ID of the modified entity
+  actorName String   // Name of user (fixed as "Ricardo Silva" or "System" for MVP)
+  details   String?  // JSON or human-readable summary of change
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+}

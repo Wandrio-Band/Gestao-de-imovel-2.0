@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AssetManager AI - Portfólio</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#1152d4",
+              "primary-dark": "#0d42af",
+              "background-light": "#f6f6f8",
+              "background-dark": "#101622",
+              "surface-light": "#ffffff",
+              "surface-dark": "#151b2b",
+            },
+            fontFamily: {
+              "display": ["Inter", "sans-serif"],
+              "sans": ["Inter", "sans-serif"]
+            },
+            borderRadius: {
+                "DEFAULT": "0.25rem", 
+                "lg": "0.5rem", 
+                "xl": "0.75rem", 
+                "2xl": "1rem",
+                "3xl": "1.5rem",
+                "full": "9999px"
+            },
+            boxShadow: {
+                'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                'card': '0 0 0 1px rgba(0,0,0,0.03), 0 2px 8px rgba(0,0,0,0.04)',
+                'card-hover': '0 0 0 1px rgba(17, 82, 212, 0.1), 0 8px 30px rgba(0,0,0,0.08)'
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .tooltip-trigger:hover .tooltip-content {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white overflow-hidden h-screen flex w-full">
+<aside class="w-72 h-full bg-[#f8f9fc] dark:bg-[#151b2b] border-r border-[#e7ebf3] dark:border-slate-800 flex-shrink-0 hidden lg:flex flex-col justify-between p-6 overflow-y-auto">
+<div class="flex flex-col gap-8">
+<div class="flex gap-3 items-center">
+<div class="bg-primary/10 rounded-xl size-10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-2xl">grid_view</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-[#0d121b] dark:text-white text-base font-bold leading-normal">AssetManager</h1>
+<p class="text-[#4c669a] dark:text-slate-400 text-xs font-normal leading-normal">Gestão Imobiliária</p>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary" href="#">
+<span class="material-symbols-outlined icon-filled">apartment</span>
+<p class="text-sm font-bold leading-normal">Portfólio</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#4c669a] dark:text-slate-400 hover:bg-[#e7ebf3] dark:hover:bg-slate-800 transition-colors cursor-pointer" href="#">
+<span class="material-symbols-outlined">trending_up</span>
+<p class="text-sm font-medium leading-normal">Financeiro</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#4c669a] dark:text-slate-400 hover:bg-[#e7ebf3] dark:hover:bg-slate-800 transition-colors cursor-pointer" href="#">
+<span class="material-symbols-outlined">group</span>
+<p class="text-sm font-medium leading-normal">Sócios</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#4c669a] dark:text-slate-400 hover:bg-[#e7ebf3] dark:hover:bg-slate-800 transition-colors cursor-pointer" href="#">
+<span class="material-symbols-outlined">settings</span>
+<p class="text-sm font-medium leading-normal">Configurações</p>
+</a>
+</div>
+</div>
+<div class="flex items-center gap-3 pt-6 border-t border-[#e7ebf3] dark:border-slate-800">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border-2 border-white dark:border-slate-700 shadow-sm" data-alt="Portrait of the user, a professional manager" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCPL05HP3JYbmsrA_t8zc7TiD3eeaHSvBrD9JqLX1Z95CzH4hbpalrCL64oftBzpr0104eOqyNZEHLSQnIaNHoeUAvC8zHLbyIRiJL0PYflyA2Eh2SaBF4lpUqgYvARGIyQ7PLpqQ8H1YpTyLWsvAvGce62fgydKpUprUH86-fSUM9aR0cHlRBZIDJnRSovup5cUoguTqwMNcFBsbKL0DVzT_r9xPl5bcQsNODozlSXNCwC4DbajMy3WNjCA7De8zqy3gXVgBCJrktZ");'></div>
+<div class="flex flex-col">
+<p class="text-sm font-bold text-slate-900 dark:text-white">Ricardo Silva</p>
+<p class="text-xs text-slate-500">Admin</p>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex flex-col h-full min-w-0 overflow-hidden bg-white/50 dark:bg-[#101622]">
+<header class="flex items-center justify-between border-b border-[#e7ebf3] dark:border-slate-800 bg-white dark:bg-[#151b2b] px-6 py-4 z-10">
+<div class="flex items-center gap-4 text-[#0d121b] lg:hidden">
+<span class="material-symbols-outlined cursor-pointer">menu</span>
+<h2 class="text-[#0d121b] dark:text-white text-lg font-bold leading-tight">AssetManager AI</h2>
+</div>
+<div class="hidden lg:flex items-center gap-2 text-slate-400">
+<span class="material-symbols-outlined text-sm">home</span>
+<span class="text-xs">/</span>
+<span class="text-sm font-medium text-slate-800 dark:text-white">Portfólio</span>
+</div>
+<div class="flex flex-1 justify-end gap-4 items-center">
+<div class="flex gap-2">
+<button class="flex items-center justify-center rounded-lg size-10 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="flex items-center justify-center rounded-lg size-10 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined">help</span>
+</button>
+</div>
+</div>
+</header>
+<div class="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 scrollbar-hide">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div class="flex flex-col gap-1">
+<h1 class="text-[#0d121b] dark:text-white text-3xl md:text-4xl font-black tracking-tight">Portfólio de Ativos</h1>
+<p class="text-[#4c669a] dark:text-slate-400 text-base font-normal">Visão geral de performance e ocupação estratégica</p>
+</div>
+<button class="flex items-center justify-center gap-2 rounded-xl h-11 px-5 bg-primary hover:bg-primary-dark text-white text-sm font-bold shadow-soft hover:shadow-lg transition-all transform hover:-translate-y-0.5">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span>Adicionar Imóvel</span>
+</button>
+</div>
+<div class="flex flex-col xl:flex-row gap-4 xl:items-center justify-between bg-white dark:bg-[#151b2b] p-2 rounded-2xl border border-[#e7ebf3] dark:border-slate-800 shadow-sm sticky top-0 z-20">
+<div class="flex items-center bg-[#f8f9fc] dark:bg-slate-900 rounded-xl px-4 h-12 w-full xl:w-96 border border-transparent focus-within:border-primary/30 transition-colors">
+<span class="material-symbols-outlined text-[#4c669a]">search</span>
+<input class="w-full bg-transparent border-none focus:ring-0 text-sm font-medium text-slate-800 dark:text-white placeholder:text-[#4c669a] px-3" placeholder="Buscar por nome, endereço ou ID..."/>
+</div>
+<div class="flex gap-2 overflow-x-auto pb-2 xl:pb-0 scrollbar-hide px-2 items-center flex-1 justify-center">
+<button class="flex h-9 shrink-0 items-center justify-center px-4 rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-sm font-medium transition-all shadow-sm">
+                        Todos
+                    </button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-2 px-4 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm font-medium transition-all">
+<div class="size-2 rounded-full bg-emerald-500"></div>
+                        Alugado
+                    </button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-2 px-4 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm font-medium transition-all">
+<div class="size-2 rounded-full bg-primary"></div>
+                        Uso Próprio
+                    </button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-2 px-4 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm font-medium transition-all">
+<div class="size-2 rounded-full bg-amber-500"></div>
+                        Vazio
+                    </button>
+</div>
+<div class="flex items-center bg-[#f8f9fc] dark:bg-slate-900 rounded-lg p-1 border border-slate-200 dark:border-slate-800">
+<button class="p-1.5 rounded bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white" title="Visualização em Galeria">
+<span class="material-symbols-outlined text-[20px]">grid_view</span>
+</button>
+<a class="p-1.5 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors flex items-center justify-center" href="#" title="Alternar para Tabela">
+<span class="material-symbols-outlined text-[20px]">table_rows</span>
+</a>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+<div class="group relative flex flex-col bg-white dark:bg-[#151b2b] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-card hover:shadow-card-hover hover:border-primary/20 transition-all duration-300 overflow-visible">
+<div class="relative h-56 w-full overflow-hidden rounded-t-2xl">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="Modern high-rise apartment living room with city view" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAvysbfQdAhq1H6Dbweoc6Ou3IQGG601wQRsitSNzs66ymFds7ujwAV__9cua9c5BLqeJi4ZMOVH9gfMVsRrvIjwDKf0XqH6xZiyvnMwuilW7ooLfBXrntcpP2Yd5ZGS_1E9uxU5u1j-MKoLWHyfCwqHSQfoXNqeYQ0_4JQrzmlxGfhklf1TSrIuKGJ1P6nBNcIisPG4PQ7Ri5RimvWHKjGfT5htHuPHXL8RmklCucaXErxGyMwLEf9QtkuUBOv-sylehnHLqRq8Kk2');"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/10"></div>
+<div class="absolute top-4 left-4 flex gap-2">
+<div class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold text-slate-700 dark:text-slate-300 shadow-sm flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px]">apartment</span>
+                                Residencial
+                            </div>
+</div>
+<div class="absolute top-4 right-4">
+<div class="bg-emerald-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                                Alugado
+                            </div>
+</div>
+</div>
+<div class="flex flex-col flex-1 p-6 gap-5">
+<div>
+<h3 class="text-xl font-bold text-[#0d121b] dark:text-white leading-tight mb-1 group-hover:text-primary transition-colors">Edifício Horizon - Apt 402</h3>
+<div class="flex items-center gap-1 text-slate-500 dark:text-slate-400 text-sm font-medium">
+<span class="material-symbols-outlined text-[16px] text-slate-400">location_on</span>
+                                Jardins, São Paulo - SP
+                            </div>
+</div>
+<div class="flex justify-between items-end border-b border-slate-100 dark:border-slate-800 pb-4">
+<div class="flex flex-col gap-0.5">
+<span class="text-[10px] uppercase tracking-wider font-semibold text-slate-400">Valor de Mercado</span>
+<span class="text-lg font-bold text-slate-900 dark:text-white">R$ 2.500.000</span>
+</div>
+<div class="flex flex-col gap-0.5 text-right">
+<span class="text-[10px] uppercase tracking-wider font-semibold text-slate-400">Aluguel Atual</span>
+<span class="text-base font-bold text-emerald-600 dark:text-emerald-400">R$ 15.000</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<div class="tooltip-trigger relative group/tooltip">
+<button class="w-full flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 px-3 py-2.5 rounded-xl border border-slate-100 dark:border-slate-700 transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">pie_chart</span>
+<span class="text-xs font-bold text-slate-700 dark:text-slate-300">Cota: 100%</span>
+</div>
+<span class="material-symbols-outlined text-slate-300 text-[14px]">info</span>
+</button>
+<div class="tooltip-content absolute bottom-full left-0 mb-2 w-48 p-3 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 opacity-0 invisible transition-all z-20 pointer-events-none">
+<p class="text-xs font-semibold text-slate-500 mb-1">Composição Societária</p>
+<div class="flex items-center gap-2 mb-2">
+<div class="size-4 rounded-full bg-slate-200 bg-cover" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCPL05HP3JYbmsrA_t8zc7TiD3eeaHSvBrD9JqLX1Z95CzH4hbpalrCL64oftBzpr0104eOqyNZEHLSQnIaNHoeUAvC8zHLbyIRiJL0PYflyA2Eh2SaBF4lpUqgYvARGIyQ7PLpqQ8H1YpTyLWsvAvGce62fgydKpUprUH86-fSUM9aR0cHlRBZIDJnRSovup5cUoguTqwMNcFBsbKL0DVzT_r9xPl5bcQsNODozlSXNCwC4DbajMy3WNjCA7De8zqy3gXVgBCJrktZ')"></div>
+<span class="text-xs font-medium text-slate-900 dark:text-white">Ricardo Silva (100%)</span>
+</div>
+<a class="text-[10px] text-primary font-bold hover:underline block" href="#">Ver Detalhes Societários</a>
+</div>
+</div>
+<div class="tooltip-trigger relative group/tooltip">
+<button class="w-full flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 px-3 py-2.5 rounded-xl border border-slate-100 dark:border-slate-700 transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-red-500 text-[18px]">account_balance</span>
+<span class="text-xs font-bold text-slate-700 dark:text-slate-300">LTV: 18%</span>
+</div>
+<span class="material-symbols-outlined text-slate-300 text-[14px]">arrow_outward</span>
+</button>
+<div class="tooltip-content absolute bottom-full right-0 mb-2 w-56 p-3 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 opacity-0 invisible transition-all z-20 pointer-events-none">
+<p class="text-xs font-semibold text-slate-500 mb-2">Resumo da Dívida</p>
+<div class="flex justify-between items-center mb-1">
+<span class="text-xs text-slate-600">Saldo Devedor</span>
+<span class="text-xs font-bold text-red-600">R$ 450.000</span>
+</div>
+<div class="w-full bg-slate-100 h-1.5 rounded-full mt-1">
+<div class="bg-red-500 h-1.5 rounded-full" style="width: 18%"></div>
+</div>
+<a class="text-[10px] text-primary font-bold mt-2 block hover:underline" href="#">Ir para Gestão de Financiamentos</a>
+</div>
+</div>
+</div>
+<a class="block bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/20 dark:to-slate-900 rounded-xl p-3 border border-indigo-100 dark:border-indigo-800/50 shadow-sm relative group/ai hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-md transition-all" href="#">
+<div class="flex gap-3 items-start">
+<div class="bg-white dark:bg-indigo-900 p-1.5 rounded-lg shadow-sm text-primary">
+<span class="material-symbols-outlined text-[18px] block">smart_toy</span>
+</div>
+<div class="flex flex-col gap-0.5 flex-1">
+<div class="flex justify-between items-center">
+<p class="text-xs font-bold text-indigo-700 dark:text-indigo-300 group-hover/ai:text-primary transition-colors">Potencial de Valorização</p>
+<span class="material-symbols-outlined text-[14px] text-indigo-400 group-hover/ai:text-primary transition-colors">chevron_right</span>
+</div>
+<p class="text-xs text-slate-600 dark:text-slate-400 leading-snug">Estimado em <span class="font-bold text-emerald-600">+12%</span> no próximo ano.</p>
+</div>
+</div>
+</a>
+<div class="grid grid-cols-5 gap-2 mt-auto pt-2">
+<button class="col-span-1 flex items-center justify-center p-2 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/5 dark:text-slate-400 dark:hover:text-primary dark:hover:bg-slate-800 transition-colors" title="Editar Rápido">
+<span class="material-symbols-outlined text-[20px]">edit_note</span>
+</button>
+<button class="col-span-1 flex items-center justify-center p-2 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/5 dark:text-slate-400 dark:hover:text-primary dark:hover:bg-slate-800 transition-colors" title="Gerar Dossiê">
+<span class="material-symbols-outlined text-[20px]">description</span>
+</button>
+<a class="col-span-3 flex items-center justify-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold py-2 px-4 rounded-lg hover:opacity-90 transition-opacity shadow-sm" href="#">
+                                Ver Detalhes
+                            </a>
+</div>
+</div>
+</div>
+<div class="group relative flex flex-col bg-white dark:bg-[#151b2b] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-card hover:shadow-card-hover hover:border-amber-500/30 transition-all duration-300 overflow-visible">
+<div class="relative h-56 w-full overflow-hidden rounded-t-2xl">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="Commercial office building with glass facade" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAj_G_T1sX49MlFe0UUnndBbbSJ8z69H3tWK5U-f1j00K-pcFEgS3rByf_e1gNo8xPkZFz6-AuvE3b2fpBfY3uaVFij2aOcPhAGsa0pP0hHKm8gP4kKJGstnIftlTPx1_Agi7TcqJBipRZAaQCrLcgwsiLxDc7x-dGko_nCTPzO-KOrNTkVsGEguFXylA3l68lHhWEup3Cu1n0Ddu0iipJNovCrUpNh1hSCd8nndkZeGtXrTnl95OHMYzkd6VKE4Ptz0aDIA9LxrEbx');"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/10"></div>
+<div class="absolute top-4 left-4 flex gap-2">
+<div class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold text-slate-700 dark:text-slate-300 shadow-sm flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px]">domain</span>
+                                Comercial
+                            </div>
+</div>
+<div class="absolute top-4 right-4">
+<div class="bg-amber-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px]">warning</span>
+                                Vazio
+                            </div>
+</div>
+</div>
+<div class="flex flex-col flex-1 p-6 gap-5">
+<div>
+<h3 class="text-xl font-bold text-[#0d121b] dark:text-white leading-tight mb-1 group-hover:text-primary transition-colors">Centro Empresarial Tower</h3>
+<div class="flex items-center gap-1 text-slate-500 dark:text-slate-400 text-sm font-medium">
+<span class="material-symbols-outlined text-[16px] text-slate-400">location_on</span>
+                                Centro, Rio de Janeiro - RJ
+                            </div>
+</div>
+<div class="flex justify-between items-end border-b border-slate-100 dark:border-slate-800 pb-4">
+<div class="flex flex-col gap-0.5">
+<span class="text-[10px] uppercase tracking-wider font-semibold text-slate-400">Valor de Mercado</span>
+<span class="text-lg font-bold text-slate-900 dark:text-white">R$ 12.800.000</span>
+</div>
+<div class="flex flex-col gap-0.5 text-right">
+<span class="text-[10px] uppercase tracking-wider font-semibold text-slate-400">Aluguel Estimado</span>
+<span class="text-base font-bold text-slate-400 dark:text-slate-500">~ R$ 65.000</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<div class="tooltip-trigger relative group/tooltip">
+<button class="w-full flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 px-3 py-2.5 rounded-xl border border-slate-100 dark:border-slate-700 transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-purple-500 text-[18px]">pie_chart</span>
+<span class="text-xs font-bold text-slate-700 dark:text-slate-300">Cota: 25%</span>
+</div>
+<span class="material-symbols-outlined text-slate-300 text-[14px]">info</span>
+</button>
+<div class="tooltip-content absolute bottom-full left-0 mb-2 w-48 p-3 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 opacity-0 invisible transition-all z-20 pointer-events-none">
+<p class="text-xs font-semibold text-slate-500 mb-1">Seus Sócios</p>
+<div class="flex -space-x-2 overflow-hidden mb-2">
+<img alt="" class="inline-block h-6 w-6 rounded-full ring-2 ring-white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBelPrZ2HnchJ2hFPqr8yEVT99nmG6PPhZaTsECqUuPyYFp8yaZD80Bu-aAdxpAYA_jhp4GSoMenFSMb4T_Aievu2I-NvbE_iAVjtosyNM6Hlo9n-J0uE0RNTqa75ZwaJsGA_IzIsfAkStujyjKNV3dBB_Ui-vSvTg7o2bXKtt01oDJoMrqggQ1exrKKdvSVfXWIPeyGT1NUalKl9uNUzUuhORB--hsOsavCqniyYnDPY2O7zU8mPfch3IqY7DAytUVe85skPOvRGFS"/>
+<img alt="" class="inline-block h-6 w-6 rounded-full ring-2 ring-white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKjrFwSByDX1lhRC8kU98NCsDZznVR6hjj-Kbh124JSgDQeVa89Xkcg227kfkaAK38oTI6vUNuy9Zz6mWhMV6vRWsO1ir5yKYjb1Wm21uqU491SPwLaSM-8VPI98UWnYwnhN2mRlMzoQ2fChJmss1nwVNzYHyRQiYYTwXvqv2yI0UxHEOT5on2dNNWhR_5BICqwXLIMjwMc8JoLT9hART5OFpGjrkaXnE-JWYLOdFhZMu1zj3Qv--SeHZRyM_gl26rRnmaBGrV3eoD"/>
+<div class="h-6 w-6 rounded-full ring-2 ring-white bg-slate-100 flex items-center justify-center text-[8px] font-bold">+2</div>
+</div>
+<a class="text-[10px] text-primary font-bold hover:underline block" href="#">Gerenciar Sócios</a>
+</div>
+</div>
+<div class="tooltip-trigger relative group/tooltip">
+<button class="w-full flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 px-3 py-2.5 rounded-xl border border-slate-100 dark:border-slate-700 transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-emerald-500 text-[18px]">verified</span>
+<span class="text-xs font-bold text-emerald-600 dark:text-emerald-400">Quitado</span>
+</div>
+</button>
+<div class="tooltip-content absolute bottom-full right-0 mb-2 w-48 p-3 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 opacity-0 invisible transition-all z-20 pointer-events-none">
+<p class="text-xs font-semibold text-slate-500 mb-1">Status da Dívida</p>
+<p class="text-xs text-emerald-600 font-bold mb-2">Imóvel Quitado</p>
+<a class="text-[10px] text-primary font-bold hover:underline block" href="#">Ver Histórico</a>
+</div>
+</div>
+</div>
+<a class="block bg-gradient-to-br from-amber-50 to-white dark:from-amber-900/20 dark:to-slate-900 rounded-xl p-3 border border-amber-100 dark:border-amber-800/50 shadow-sm relative group/ai hover:border-amber-300 dark:hover:border-amber-500 hover:shadow-md transition-all" href="#">
+<div class="flex gap-3 items-start">
+<div class="bg-white dark:bg-amber-900 p-1.5 rounded-lg shadow-sm text-amber-600">
+<span class="material-symbols-outlined text-[18px] block">lightbulb</span>
+</div>
+<div class="flex flex-col gap-0.5 flex-1">
+<div class="flex justify-between items-center">
+<p class="text-xs font-bold text-amber-700 dark:text-amber-500 group-hover/ai:text-amber-600 transition-colors">Oportunidade</p>
+<span class="material-symbols-outlined text-[14px] text-amber-400 group-hover/ai:text-amber-600 transition-colors">chevron_right</span>
+</div>
+<p class="text-xs text-slate-600 dark:text-slate-400 leading-snug">Demanda alta para lajes. Sugestão: reduzir preço em 5%.</p>
+</div>
+</div>
+</a>
+<div class="grid grid-cols-5 gap-2 mt-auto pt-2">
+<button class="col-span-1 flex items-center justify-center p-2 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/5 dark:text-slate-400 dark:hover:text-primary dark:hover:bg-slate-800 transition-colors" title="Editar Rápido">
+<span class="material-symbols-outlined text-[20px]">edit_note</span>
+</button>
+<button class="col-span-1 flex items-center justify-center p-2 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/5 dark:text-slate-400 dark:hover:text-primary dark:hover:bg-slate-800 transition-colors" title="Gerar Dossiê">
+<span class="material-symbols-outlined text-[20px]">description</span>
+</button>
+<a class="col-span-3 flex items-center justify-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold py-2 px-4 rounded-lg hover:opacity-90 transition-opacity shadow-sm" href="#">
+                                Ver Detalhes
+                            </a>
+</div>
+</div>
+</div>
+<div class="group relative flex flex-col bg-white dark:bg-[#151b2b] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-card hover:shadow-card-hover hover:border-primary/20 transition-all duration-300 overflow-visible">
+<div class="relative h-56 w-full overflow-hidden rounded-t-2xl">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="Modern house exterior with pool" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDTCkq3Dr3cczKh571dZn1gK-wMKXOV4kS90qKwPBbmRpNqXfaeXlUk6H9Yr5j9LDbLXdEcKrw8O-0fz1pjuhEwwaYOuKahTe13QM-I8FVKYnbuSLiOKDdkmF8RrkW_pG9cerPUeZitFa3LjmBGMF61fFjyX3ZVirIi6jeuiFWqvznfaoWyJdgw68mYKQ_YTOrBPCh-OVGiyhbeZURp-i2m6SIjmPL_P0d0FdZYK66yj_ssDoKlIO-GPoJ0m_t8uMyvWtFb1Mzwkott');"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/10"></div>
+<div class="absolute top-4 left-4 flex gap-2">
+<div class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold text-slate-700 dark:text-slate-300 shadow-sm flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px]">house</span>
+                                Residencial
+                            </div>
+</div>
+<div class="absolute top-4 right-4">
+<div class="bg-primary text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px]">key</span>
+                                Uso Próprio
+                            </div>
+</div>
+</div>
+<div class="flex flex-col flex-1 p-6 gap-5">
+<div>
+<h3 class="text-xl font-bold text-[#0d121b] dark:text-white leading-tight mb-1 group-hover:text-primary transition-colors">Casa Alphaville</h3>
+<div class="flex items-center gap-1 text-slate-500 dark:text-slate-400 text-sm font-medium">
+<span class="material-symbols-outlined text-[16px] text-slate-400">location_on</span>
+                                Barueri, São Paulo - SP
+                            </div>
+</div>
+<div class="flex justify-between items-end border-b border-slate-100 dark:border-slate-800 pb-4">
+<div class="flex flex-col gap-0.5">
+<span class="text-[10px] uppercase tracking-wider font-semibold text-slate-400">Valor de Mercado</span>
+<span class="text-lg font-bold text-slate-900 dark:text-white">R$ 5.400.000</span>
+</div>
+<div class="flex flex-col gap-0.5 text-right">
+<span class="text-[10px] uppercase tracking-wider font-semibold text-slate-400">Aluguel Estimado</span>
+<span class="text-base font-bold text-slate-400 dark:text-slate-500">-</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<div class="tooltip-trigger relative group/tooltip">
+<button class="w-full flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 px-3 py-2.5 rounded-xl border border-slate-100 dark:border-slate-700 transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">pie_chart</span>
+<span class="text-xs font-bold text-slate-700 dark:text-slate-300">Cota: 50%</span>
+</div>
+<span class="material-symbols-outlined text-slate-300 text-[14px]">info</span>
+</button>
+<div class="tooltip-content absolute bottom-full left-0 mb-2 w-48 p-3 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 opacity-0 invisible transition-all z-20 pointer-events-none">
+<p class="text-xs font-semibold text-slate-500 mb-1">Sócios</p>
+<div class="flex items-center gap-2 mb-2">
+<div class="size-4 rounded-full bg-slate-200 bg-cover" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC3ssmHP290URGVeMVOnbeA5-T9CqgQ8X4cCrE3KIjePqjcZobSa6v7DpshCy4BMo-OCFwfE9TlBNl3xXtDwz0GUi0womi9GMmgbBNEO1vMqh6O4l01aaNujPTmL83WL4nKtKRVPbG5V5GMwiIdrkp32YN5UwaISYC4sVzl8RemM9-xVEbCIbBI6DgMBCYIk0zoNEzBq8OBWptGB8zqQduDsvqZr9Ht6dIs7OMk5L0_xJv1vnqr4JtlkpnUkqITaYLWN75gozq5mwsK')"></div>
+<span class="text-xs font-medium text-slate-900 dark:text-white">Ana B. (50%)</span>
+</div>
+<a class="text-[10px] text-primary font-bold hover:underline block" href="#">Ver Detalhes Societários</a>
+</div>
+</div>
+<div class="tooltip-trigger relative group/tooltip">
+<button class="w-full flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 px-3 py-2.5 rounded-xl border border-slate-100 dark:border-slate-700 transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-500 text-[18px]">account_balance</span>
+<span class="text-xs font-bold text-slate-700 dark:text-slate-300">R$ 1.2M</span>
+</div>
+<span class="material-symbols-outlined text-slate-300 text-[14px]">arrow_outward</span>
+</button>
+<div class="tooltip-content absolute bottom-full right-0 mb-2 w-56 p-3 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 opacity-0 invisible transition-all z-20 pointer-events-none">
+<p class="text-xs font-semibold text-slate-500 mb-1">Financiamento SFH</p>
+<div class="flex justify-between items-center mb-1">
+<span class="text-xs text-slate-600">Parcela Atual</span>
+<span class="text-xs font-bold">R$ 12.400</span>
+</div>
+<a class="text-[10px] text-primary font-bold mt-2 block hover:underline" href="#">Ir para Gestão de Financiamentos</a>
+</div>
+</div>
+</div>
+<a class="block bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3 border border-dashed border-slate-200 dark:border-slate-700 group/ai hover:border-slate-300 dark:hover:border-slate-500 transition-colors" href="#">
+<div class="flex gap-3 items-center">
+<span class="material-symbols-outlined text-slate-400 text-[18px]">analytics</span>
+<p class="text-xs text-slate-500 italic flex-1">Sem insights relevantes esta semana.</p>
+<span class="text-[10px] font-bold text-primary group-hover/ai:underline">Consultar IA</span>
+</div>
+</a>
+<div class="grid grid-cols-5 gap-2 mt-auto pt-2">
+<button class="col-span-1 flex items-center justify-center p-2 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/5 dark:text-slate-400 dark:hover:text-primary dark:hover:bg-slate-800 transition-colors" title="Editar Rápido">
+<span class="material-symbols-outlined text-[20px]">edit_note</span>
+</button>
+<button class="col-span-1 flex items-center justify-center p-2 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/5 dark:text-slate-400 dark:hover:text-primary dark:hover:bg-slate-800 transition-colors" title="Gerar Dossiê">
+<span class="material-symbols-outlined text-[20px]">description</span>
+</button>
+<a class="col-span-3 flex items-center justify-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold py-2 px-4 rounded-lg hover:opacity-90 transition-opacity shadow-sm" href="#">
+                                Ver Detalhes
+                            </a>
+</div>
+</div>
+</div>
+<div class="group relative flex flex-col justify-center items-center bg-[#f8f9fc] dark:bg-[#151b2b]/50 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-primary hover:bg-primary/5 cursor-pointer transition-all gap-5 min-h-[580px]">
+<div class="bg-white dark:bg-slate-800 rounded-full p-5 shadow-soft group-hover:scale-110 transition-transform group-hover:shadow-lg">
+<span class="material-symbols-outlined text-4xl text-primary">add_home</span>
+</div>
+<div class="text-center px-6">
+<h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">Adicionar Novo Ativo</h3>
+<p class="text-sm text-slate-500 max-w-[200px] mx-auto leading-relaxed">Importe dados automaticamente via integração bancária ou cadastre manualmente.</p>
+</div>
+<button class="mt-4 text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1 group-hover:underline underline-offset-4">
+                        Começar Cadastro
+                        <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<div class="flex justify-center py-6">
+<button class="text-sm font-semibold text-[#4c669a] hover:text-primary transition-colors flex items-center gap-2 bg-white dark:bg-slate-800 px-6 py-3 rounded-full shadow-sm border border-slate-200 dark:border-slate-700">
+                    Carregar mais imóveis
+                    <span class="material-symbols-outlined text-lg">expand_more</span>
+</button>
+</div>
+</div>
+</main>
+
+</body></html>

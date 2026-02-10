@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gestor Fiscal IA - Dashboard Analítico</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#111318] dark:text-white overflow-x-hidden min-h-screen flex flex-col">
+<header class="sticky top-0 z-50 w-full border-b border-[#f0f2f4] dark:border-gray-800 bg-white dark:bg-[#1a2230] px-6 py-3 shadow-sm">
+<div class="mx-auto max-w-7xl flex items-center justify-between">
+<div class="flex items-center gap-4 text-[#111318] dark:text-white">
+<div class="size-8 rounded bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-2xl">account_balance</span>
+</div>
+<h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">Gestor Fiscal IA</h2>
+</div>
+<div class="flex items-center gap-8">
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-[#616f89] dark:text-gray-400 text-sm font-medium hover:text-primary transition-colors" href="#">Histórico</a>
+<a class="text-primary text-sm font-bold leading-normal" href="#">Dashboard</a>
+<a class="text-[#616f89] dark:text-gray-400 text-sm font-medium hover:text-primary transition-colors" href="#">Sincronização Gmail</a>
+<a class="text-[#616f89] dark:text-gray-400 text-sm font-medium hover:text-primary transition-colors" href="#">Auditoria</a>
+</nav>
+<button class="flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary hover:bg-blue-700 text-white text-sm font-bold leading-normal tracking-[0.015em] transition-all shadow-md hover:shadow-lg">
+<span class="truncate">Importação Rápida</span>
+<span class="material-symbols-outlined ml-2 text-sm">upload</span>
+</button>
+</div>
+</div>
+</header>
+<main class="flex-1 w-full max-w-7xl mx-auto px-6 py-8">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+<div class="flex flex-col gap-1">
+<h1 class="text-4xl font-black leading-tight tracking-[-0.033em] text-[#111318] dark:text-white">Dashboard Analítico</h1>
+<p class="text-[#616f89] dark:text-gray-400 text-base font-normal">Visão geral das suas métricas fiscais e insights de IA</p>
+</div>
+<div class="flex flex-wrap gap-3">
+<button class="flex h-10 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-[#1a2230] border border-[#dbdfe6] dark:border-gray-700 px-4 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<p class="text-[#111318] dark:text-gray-200 text-sm font-medium">Categoria</p>
+<span class="material-symbols-outlined text-[#616f89] dark:text-gray-400 text-lg">expand_more</span>
+</button>
+<button class="flex h-10 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-[#1a2230] border border-[#dbdfe6] dark:border-gray-700 px-4 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<p class="text-[#111318] dark:text-gray-200 text-sm font-medium">Ano</p>
+<span class="material-symbols-outlined text-[#616f89] dark:text-gray-400 text-lg">expand_more</span>
+</button>
+<button class="flex h-10 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-[#1a2230] border border-[#dbdfe6] dark:border-gray-700 px-4 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<p class="text-[#111318] dark:text-gray-200 text-sm font-medium">Estado</p>
+<span class="material-symbols-outlined text-[#616f89] dark:text-gray-400 text-lg">expand_more</span>
+</button>
+<button class="flex h-10 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-[#1a2230] border border-[#dbdfe6] dark:border-gray-700 px-4 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<p class="text-[#111318] dark:text-gray-200 text-sm font-medium">Cidade</p>
+<span class="material-symbols-outlined text-[#616f89] dark:text-gray-400 text-lg">expand_more</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+<div class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-[#1a2230] border border-[#dbdfe6] dark:border-gray-700 shadow-sm relative overflow-hidden group">
+<div class="absolute right-0 top-0 p-6 opacity-10 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-8xl text-primary">payments</span>
+</div>
+<div class="relative z-10">
+<div class="flex items-center justify-between mb-4">
+<p class="text-[#616f89] dark:text-gray-400 text-sm font-semibold uppercase tracking-wider">Gasto Total</p>
+<span class="material-symbols-outlined text-[#616f89] dark:text-gray-500">more_horiz</span>
+</div>
+<p class="text-[#111318] dark:text-white text-4xl font-bold leading-tight tracking-tight mb-2">R$ 45.230,00</p>
+<div class="flex items-center gap-2">
+<span class="flex items-center justify-center rounded-full bg-[#e7f7ed] dark:bg-green-900/30 px-2 py-0.5 text-[#07883b] dark:text-green-400 text-xs font-bold">
+<span class="material-symbols-outlined text-sm mr-1">trending_up</span> 12%
+                    </span>
+<span class="text-[#616f89] dark:text-gray-500 text-sm">vs mês anterior</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-[#1a2230] border border-[#dbdfe6] dark:border-gray-700 shadow-sm relative overflow-hidden group">
+<div class="absolute right-0 top-0 p-6 opacity-10 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-8xl text-primary">description</span>
+</div>
+<div class="relative z-10">
+<div class="flex items-center justify-between mb-4">
+<p class="text-[#616f89] dark:text-gray-400 text-sm font-semibold uppercase tracking-wider">Total de Notas</p>
+<span class="material-symbols-outlined text-[#616f89] dark:text-gray-500">more_horiz</span>
+</div>
+<p class="text-[#111318] dark:text-white text-4xl font-bold leading-tight tracking-tight mb-2">1.245</p>
+<div class="flex items-center gap-2">
+<span class="flex items-center justify-center rounded-full bg-[#e7f7ed] dark:bg-green-900/30 px-2 py-0.5 text-[#07883b] dark:text-green-400 text-xs font-bold">
+<span class="material-symbols-outlined text-sm mr-1">trending_up</span> 5%
+                    </span>
+<span class="text-[#616f89] dark:text-gray-500 text-sm">vs mês anterior</span>
+</div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<div class="flex flex-col rounded-xl border border-[#dbdfe6] dark:border-gray-700 bg-white dark:bg-[#1a2230] shadow-sm p-6">
+<div class="flex justify-between items-center mb-6">
+<div>
+<p class="text-[#111318] dark:text-white text-lg font-bold leading-normal">Distribuição por Categoria</p>
+<p class="text-[#616f89] dark:text-gray-400 text-sm font-normal leading-normal">Ano Fiscal 2023</p>
+</div>
+<button class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors">
+<span class="material-symbols-outlined text-gray-500">download</span>
+</button>
+</div>
+<div class="grid gap-y-6 grid-cols-[auto_1fr] items-center">
+<div class="flex items-center gap-2 pr-4">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<p class="text-[#111318] dark:text-gray-300 text-sm font-medium leading-normal w-24">Serviços</p>
+</div>
+<div class="h-8 flex-1 w-full bg-[#f0f2f4] dark:bg-gray-700 rounded-r-lg relative overflow-hidden">
+<div class="absolute top-0 left-0 h-full bg-primary rounded-r-lg" style="width: 65%;"></div>
+<span class="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500 dark:text-gray-300">65%</span>
+</div>
+<div class="flex items-center gap-2 pr-4">
+<div class="w-2 h-2 rounded-full bg-blue-400"></div>
+<p class="text-[#111318] dark:text-gray-300 text-sm font-medium leading-normal w-24">Software</p>
+</div>
+<div class="h-8 flex-1 w-full bg-[#f0f2f4] dark:bg-gray-700 rounded-r-lg relative overflow-hidden">
+<div class="absolute top-0 left-0 h-full bg-blue-400 rounded-r-lg" style="width: 45%;"></div>
+<span class="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500 dark:text-gray-300">45%</span>
+</div>
+<div class="flex items-center gap-2 pr-4">
+<div class="w-2 h-2 rounded-full bg-indigo-400"></div>
+<p class="text-[#111318] dark:text-gray-300 text-sm font-medium leading-normal w-24">Hardware</p>
+</div>
+<div class="h-8 flex-1 w-full bg-[#f0f2f4] dark:bg-gray-700 rounded-r-lg relative overflow-hidden">
+<div class="absolute top-0 left-0 h-full bg-indigo-400 rounded-r-lg" style="width: 15%;"></div>
+<span class="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500 dark:text-gray-300">15%</span>
+</div>
+<div class="flex items-center gap-2 pr-4">
+<div class="w-2 h-2 rounded-full bg-cyan-400"></div>
+<p class="text-[#111318] dark:text-gray-300 text-sm font-medium leading-normal w-24">Escritório</p>
+</div>
+<div class="h-8 flex-1 w-full bg-[#f0f2f4] dark:bg-gray-700 rounded-r-lg relative overflow-hidden">
+<div class="absolute top-0 left-0 h-full bg-cyan-400 rounded-r-lg" style="width: 25%;"></div>
+<span class="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500 dark:text-gray-300">25%</span>
+</div>
+<div class="flex items-center gap-2 pr-4">
+<div class="w-2 h-2 rounded-full bg-teal-400"></div>
+<p class="text-[#111318] dark:text-gray-300 text-sm font-medium leading-normal w-24">Viagens</p>
+</div>
+<div class="h-8 flex-1 w-full bg-[#f0f2f4] dark:bg-gray-700 rounded-r-lg relative overflow-hidden">
+<div class="absolute top-0 left-0 h-full bg-teal-400 rounded-r-lg" style="width: 10%;"></div>
+<span class="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500 dark:text-gray-300">10%</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col rounded-xl border border-[#dbdfe6] dark:border-gray-700 bg-white dark:bg-[#1a2230] shadow-sm p-6">
+<div class="flex justify-between items-center mb-6">
+<div>
+<p class="text-[#111318] dark:text-white text-lg font-bold leading-normal">Evolução Mensal</p>
+<p class="text-[#616f89] dark:text-gray-400 text-sm font-normal leading-normal">Tendência de Despesas 2023</p>
+</div>
+<div class="flex gap-2">
+<button class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-xs font-bold rounded-md">1M</button>
+<button class="px-3 py-1 bg-primary text-white text-xs font-bold rounded-md">6M</button>
+<button class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-xs font-bold rounded-md">1A</button>
+</div>
+</div>
+<div class="flex-1 flex items-end justify-between gap-2 md:gap-4 h-[250px] pt-4 px-2">
+<div class="flex flex-col items-center gap-2 h-full justify-end flex-1 group">
+<div class="w-full bg-primary/20 dark:bg-primary/20 rounded-t-sm group-hover:bg-primary/40 transition-all relative flex items-end" style="height: 35%;">
+<div class="w-full bg-primary h-1 rounded-t-sm opacity-50"></div>
+</div>
+<p class="text-[#616f89] dark:text-gray-400 text-xs font-bold">Jan</p>
+</div>
+<div class="flex flex-col items-center gap-2 h-full justify-end flex-1 group">
+<div class="w-full bg-primary/30 dark:bg-primary/20 rounded-t-sm group-hover:bg-primary/50 transition-all relative flex items-end" style="height: 65%;">
+<div class="w-full bg-primary h-1 rounded-t-sm opacity-60"></div>
+</div>
+<p class="text-[#616f89] dark:text-gray-400 text-xs font-bold">Fev</p>
+</div>
+<div class="flex flex-col items-center gap-2 h-full justify-end flex-1 group">
+<div class="w-full bg-primary/40 dark:bg-primary/30 rounded-t-sm group-hover:bg-primary/60 transition-all relative flex items-end" style="height: 45%;">
+<div class="w-full bg-primary h-1 rounded-t-sm opacity-70"></div>
+</div>
+<p class="text-[#616f89] dark:text-gray-400 text-xs font-bold">Mar</p>
+</div>
+<div class="flex flex-col items-center gap-2 h-full justify-end flex-1 group">
+<div class="w-full bg-primary dark:bg-primary rounded-t-sm group-hover:bg-blue-700 transition-all relative flex items-end shadow-lg shadow-blue-500/20" style="height: 90%;">
+<div class="w-full bg-white/20 h-1 rounded-t-sm"></div>
+</div>
+<p class="text-[#111318] dark:text-white text-xs font-bold">Abr</p>
+</div>
+<div class="flex flex-col items-center gap-2 h-full justify-end flex-1 group">
+<div class="w-full bg-primary/20 dark:bg-primary/20 rounded-t-sm group-hover:bg-primary/40 transition-all relative flex items-end" style="height: 25%;">
+<div class="w-full bg-primary h-1 rounded-t-sm opacity-50"></div>
+</div>
+<p class="text-[#616f89] dark:text-gray-400 text-xs font-bold">Mai</p>
+</div>
+<div class="flex flex-col items-center gap-2 h-full justify-end flex-1 group">
+<div class="w-full bg-primary/50 dark:bg-primary/40 rounded-t-sm group-hover:bg-primary/70 transition-all relative flex items-end" style="height: 55%;">
+<div class="w-full bg-primary h-1 rounded-t-sm opacity-80"></div>
+</div>
+<p class="text-[#616f89] dark:text-gray-400 text-xs font-bold">Jun</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+
+</body></html>

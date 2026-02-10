@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Histórico e Detalhes de Notas - Gestor Fiscal IA</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #334155;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white h-screen overflow-hidden flex flex-col">
+<header class="flex shrink-0 items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-slate-800 bg-white dark:bg-[#151b2b] px-6 py-3 z-20">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3 text-slate-900 dark:text-white">
+<div class="size-8 text-primary">
+<svg class="w-full h-full" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M39.5563 34.1455V13.8546C39.5563 15.708 36.8773 17.3437 32.7927 18.3189C30.2914 18.916 27.263 19.2655 24 19.2655C20.737 19.2655 17.7086 18.916 15.2073 18.3189C11.1227 17.3437 8.44365 15.708 8.44365 13.8546V34.1455C8.44365 35.9988 11.1227 37.6346 15.2073 38.6098C17.7086 39.2069 20.737 39.5564 24 39.5564C27.263 39.5564 30.2914 39.2069 32.7927 38.6098C36.8773 37.6346 39.5563 35.9988 39.5563 34.1455Z" fill="currentColor"></path>
+<path clip-rule="evenodd" d="M10.4485 13.8519C10.4749 13.9271 10.6203 14.246 11.379 14.7361C12.298 15.3298 13.7492 15.9145 15.6717 16.3735C18.0007 16.9296 20.8712 17.2655 24 17.2655C27.1288 17.2655 29.9993 16.9296 32.3283 16.3735C34.2508 15.9145 35.702 15.3298 36.621 14.7361C37.3796 14.246 37.5251 13.9271 37.5515 13.8519C37.5287 13.7876 37.4333 13.5973 37.0635 13.2931C36.5266 12.8516 35.6288 12.3647 34.343 11.9175C31.79 11.0295 28.1333 10.4437 24 10.4437C19.8667 10.4437 16.2099 11.0295 13.657 11.9175C12.3712 12.3647 11.4734 12.8516 10.9365 13.2931C10.5667 13.5973 10.4713 13.7876 10.4485 13.8519ZM37.5563 18.7877C36.3176 19.3925 34.8502 19.8839 33.2571 20.2642C30.5836 20.9025 27.3973 21.2655 24 21.2655C20.6027 21.2655 17.4164 20.9025 14.7429 20.2642C13.1498 19.8839 11.6824 19.3925 10.4436 18.7877V34.1275C10.4515 34.1545 10.5427 34.4867 11.379 35.027C12.298 35.6207 13.7492 36.2054 15.6717 36.6644C18.0007 37.2205 20.8712 37.5564 24 37.5564C27.1288 37.5564 29.9993 37.2205 32.3283 36.6644C34.2508 36.2054 35.702 35.6207 36.621 35.027C37.4573 34.4867 37.5485 34.1546 37.5563 34.1275V18.7877ZM41.5563 13.8546V34.1455C41.5563 36.1078 40.158 37.5042 38.7915 38.3869C37.3498 39.3182 35.4192 40.0389 33.2571 40.5551C30.5836 41.1934 27.3973 41.5564 24 41.5564C20.6027 41.5564 17.4164 41.1934 14.7429 40.5551C12.5808 40.0389 10.6502 39.3182 9.20848 38.3869C7.84205 37.5042 6.44365 36.1078 6.44365 34.1455L6.44365 13.8546C6.44365 12.2684 7.37223 11.0454 8.39581 10.2036C9.43325 9.3505 10.8137 8.67141 12.343 8.13948C15.4203 7.06909 19.5418 6.44366 24 6.44366C28.4582 6.44366 32.5797 7.06909 35.657 8.13948C37.1863 8.67141 38.5667 9.3505 39.6042 10.2036C40.6278 11.0454 41.5563 12.2684 41.5563 13.8546Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">Gestor Fiscal IA</h2>
+</div>
+<nav class="flex items-center gap-6 md:gap-9">
+<a class="text-slate-500 dark:text-slate-400 text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Painel</a>
+<a class="text-primary text-sm font-bold leading-normal border-b-2 border-primary pb-0.5" href="#">Faturas</a>
+<a class="text-slate-500 dark:text-slate-400 text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Relatórios</a>
+<a class="text-slate-500 dark:text-slate-400 text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Configurações</a>
+</nav>
+</div>
+<div class="flex flex-1 justify-end gap-6 items-center">
+<label class="flex flex-col min-w-40 !h-10 max-w-64 hidden md:flex">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+<div class="text-slate-500 dark:text-slate-400 flex border-none bg-background-light dark:bg-slate-800 items-center justify-center pl-4 rounded-l-lg border-r-0">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-0 border-none bg-background-light dark:bg-slate-800 focus:border-none h-full placeholder:text-slate-400 px-3 rounded-l-none border-l-0 text-sm font-normal leading-normal" placeholder="Busca Global" value=""/>
+</div>
+</label>
+<div class="flex items-center gap-2">
+<button class="size-8 flex items-center justify-center rounded-full bg-background-light dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors relative">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+<span class="absolute top-1.5 right-2 size-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-800"></span>
+</button>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-9 ring-2 ring-slate-100 dark:ring-slate-700" data-alt="User profile avatar showing a smiling person" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDRbrh0X14UNSk3h2ZtSuq3476F1pp9txPFrW3NtnyQR2qo82EhNNEeYEbngsAiL3ek37BbcgRDt1lQ4_cYUHAkUMbMweG4L3_EwBAUeBusPsR3SA0PdxET-hRMm3romNIBvnmolXsSY9QLeXECjALbKKwGeQU3MvsB3ALVJeeNf2bAD_tDnLSJp055CBvSO5FnjrnJGU7gTHE7W1HcLUBYAro4XJGVI5lWndmaldTd8tg8I78zB67USNQetqWbzwshLvVNq9qye0k");'></div>
+</div>
+</div>
+</header>
+<main class="flex flex-1 w-full overflow-hidden">
+<aside class="w-full md:w-[420px] bg-white dark:bg-[#151b2b] border-r border-slate-200 dark:border-slate-800 flex flex-col z-10 shadow-xl md:shadow-none">
+<div class="px-5 pt-6 pb-2">
+<div class="flex items-center justify-between mb-4">
+<h1 class="text-slate-900 dark:text-white text-2xl font-bold leading-tight">Faturas</h1>
+<button class="text-primary hover:bg-primary/10 p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined">add_circle</span>
+</button>
+</div>
+<div class="mb-4">
+<label class="flex flex-col w-full">
+<div class="flex w-full items-stretch rounded-lg shadow-sm">
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/20 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 h-10 placeholder:text-slate-400 px-3 pl-10 text-sm font-normal leading-normal transition-all" placeholder="Buscar emissor, ID ou valor..." value=""/>
+<div class="text-slate-400 absolute mt-2.5 ml-3 pointer-events-none">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</div>
+</div>
+</label>
+</div>
+<div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+<button class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-full bg-slate-900 dark:bg-white px-4 hover:opacity-90 transition-opacity">
+<p class="text-white dark:text-slate-900 text-xs font-semibold leading-normal">Tudo</p>
+</button>
+<button class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+<p class="text-slate-600 dark:text-slate-300 text-xs font-medium leading-normal">Aprovado</p>
+</button>
+<button class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+<p class="text-slate-600 dark:text-slate-300 text-xs font-medium leading-normal">Pendente</p>
+</button>
+<button class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+<p class="text-slate-600 dark:text-slate-300 text-xs font-medium leading-normal">Sinalizado</p>
+</button>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto px-3 pb-4 space-y-1">
+<div class="group flex flex-col gap-2 p-3 rounded-xl bg-primary/5 dark:bg-primary/20 border border-primary/20 cursor-pointer relative overflow-hidden transition-all">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+<div class="flex justify-between items-start pl-2">
+<div class="flex items-center gap-3">
+<div class="flex items-center justify-center rounded-lg bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shrink-0 size-10 text-primary">
+<span class="material-symbols-outlined text-[20px]">domain</span>
+</div>
+<div>
+<p class="text-slate-900 dark:text-white text-sm font-bold leading-tight">Tech Solutions Ltd</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs font-normal mt-0.5">NF #10234</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-slate-900 dark:text-white text-sm font-bold">R$ 1.250,00</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs">24 Out</p>
+</div>
+</div>
+<div class="flex justify-between items-center pl-2 mt-1">
+<div class="flex items-center gap-1.5 text-xs font-medium text-amber-600 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded-md border border-amber-100 dark:border-amber-800">
+<span class="material-symbols-outlined text-[14px]">warning</span>
+                            Risco de Duplicidade
+                        </div>
+</div>
+</div>
+<div class="group flex flex-col gap-2 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-3">
+<div class="flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 shrink-0 size-10 text-slate-500">
+<span class="material-symbols-outlined text-[20px]">storefront</span>
+</div>
+<div>
+<p class="text-slate-900 dark:text-white text-sm font-semibold leading-tight">Office Supplies Co.</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs font-normal mt-0.5">NF #9921</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-slate-900 dark:text-white text-sm font-semibold">R$ 342,50</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs">23 Out</p>
+</div>
+</div>
+<div class="flex justify-between items-center mt-1">
+<div class="flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-md border border-green-100 dark:border-green-800">
+<span class="size-1.5 rounded-full bg-green-500 mr-1"></span>
+                            Aprovado
+                        </div>
+</div>
+</div>
+<div class="group flex flex-col gap-2 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-3">
+<div class="flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 shrink-0 size-10 text-slate-500">
+<span class="material-symbols-outlined text-[20px]">cloud_upload</span>
+</div>
+<div>
+<p class="text-slate-900 dark:text-white text-sm font-semibold leading-tight">Amazon Web Services</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs font-normal mt-0.5">NF #AWS-2201</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-slate-900 dark:text-white text-sm font-semibold">R$ 89,00</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs">22 Out</p>
+</div>
+</div>
+<div class="flex justify-between items-center mt-1">
+<div class="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded-md border border-amber-100 dark:border-amber-800">
+<span class="size-1.5 rounded-full bg-amber-500 mr-1"></span>
+                            Revisão Pendente
+                        </div>
+</div>
+</div>
+<div class="group flex flex-col gap-2 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-3">
+<div class="flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 shrink-0 size-10 text-slate-500">
+<span class="material-symbols-outlined text-[20px]">local_shipping</span>
+</div>
+<div>
+<p class="text-slate-900 dark:text-white text-sm font-semibold leading-tight">FedEx Logistics</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs font-normal mt-0.5">NF #FX-9982</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-slate-900 dark:text-white text-sm font-semibold">R$ 1.105,20</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs">20 Out</p>
+</div>
+</div>
+<div class="flex justify-between items-center mt-1">
+<div class="flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-md border border-green-100 dark:border-green-800">
+<span class="size-1.5 rounded-full bg-green-500 mr-1"></span>
+                            Aprovado
+                        </div>
+</div>
+</div>
+</div>
+</aside>
+<section class="flex-1 flex flex-col bg-background-light dark:bg-background-dark overflow-hidden relative">
+<div class="flex items-center justify-between px-8 py-4 bg-white/50 dark:bg-[#151b2b]/50 backdrop-blur-sm sticky top-0 z-10 border-b border-slate-200 dark:border-slate-800">
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<h2 class="text-xl font-bold text-slate-900 dark:text-white">Nota Fiscal #10234</h2>
+<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Serviço</span>
+</div>
+<span class="text-sm text-slate-500">Recebido em 24 de Out, 2023 via E-mail</span>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                        Original
+                    </button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg border border-red-200 dark:border-red-900/50 bg-white dark:bg-slate-800 text-red-600 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+<span class="material-symbols-outlined text-[18px]">block</span>
+                        Rejeitar
+                    </button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-blue-600 shadow-sm transition-colors">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+                        Aprovar
+                    </button>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto p-6 md:p-8">
+<div class="max-w-[1200px] mx-auto h-full flex flex-col gap-6">
+<div class="flex items-start gap-4 p-4 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-900/10 dark:border-amber-900/30">
+<span class="material-symbols-outlined text-amber-600 mt-0.5">warning</span>
+<div class="flex-1">
+<h3 class="text-sm font-bold text-amber-800 dark:text-amber-500">Potencial Duplicata Detectada</h3>
+<p class="text-sm text-amber-700 dark:text-amber-600 mt-1">Esta nota fiscal tem o mesmo valor e emissor que a Nota Fiscal #9821 processada em 10 de Out. Por favor, verifique antes de aprovar.</p>
+</div>
+<button class="text-amber-800 dark:text-amber-500 hover:text-amber-900 text-sm font-medium underline">Ver Original</button>
+</div>
+<div class="flex flex-col lg:flex-row gap-6 h-full min-h-[500px]">
+<div class="flex-1 flex flex-col gap-6">
+<div class="bg-white dark:bg-[#151b2b] rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+<div class="flex justify-between items-center mb-4">
+<h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">store</span>
+                                        Dados do Emissor
+                                    </h3>
+<span class="text-xs font-mono text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded">100% Confiança</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
+<div>
+<p class="text-xs uppercase tracking-wide text-slate-400 font-semibold mb-1">Nome da Empresa</p>
+<p class="text-slate-900 dark:text-white font-medium">Tech Solutions Ltd</p>
+</div>
+<div>
+<p class="text-xs uppercase tracking-wide text-slate-400 font-semibold mb-1">CNPJ</p>
+<p class="text-slate-900 dark:text-white font-medium font-mono">12.345.678/0001-90</p>
+</div>
+<div class="md:col-span-2">
+<p class="text-xs uppercase tracking-wide text-slate-400 font-semibold mb-1">Endereço</p>
+<p class="text-slate-900 dark:text-white font-medium">123 Innovation Drive, Tech City, CA 94000</p>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-[#151b2b] rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm flex-1">
+<div class="flex justify-between items-center mb-4">
+<h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">receipt_long</span>
+                                        Dados da Nota
+                                    </h3>
+<button class="text-primary text-sm font-medium hover:underline">Editar</button>
+</div>
+<div class="space-y-6">
+<div class="grid grid-cols-2 gap-4">
+<div>
+<p class="text-xs uppercase tracking-wide text-slate-400 font-semibold mb-1">Data de Emissão</p>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400 text-[18px]">calendar_today</span>
+<p class="text-slate-900 dark:text-white font-medium">24 Out, 2023</p>
+</div>
+</div>
+<div>
+<p class="text-xs uppercase tracking-wide text-slate-400 font-semibold mb-1">Data de Vencimento</p>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400 text-[18px]">event</span>
+<p class="text-slate-900 dark:text-white font-medium">24 Nov, 2023</p>
+</div>
+</div>
+</div>
+<div class="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-100 dark:border-slate-700">
+<div class="flex justify-between items-end mb-2">
+<p class="text-xs uppercase tracking-wide text-slate-400 font-semibold">Valor Total</p>
+<p class="text-2xl font-bold text-slate-900 dark:text-white">R$ 1.250,00</p>
+</div>
+<div class="w-full h-px bg-slate-200 dark:bg-slate-700 my-2"></div>
+<div class="flex justify-between text-sm">
+<span class="text-slate-500">Subtotal</span>
+<span class="text-slate-700 dark:text-slate-300">R$ 1.150,00</span>
+</div>
+<div class="flex justify-between text-sm mt-1">
+<span class="text-slate-500">Imposto (8%)</span>
+<span class="text-slate-700 dark:text-slate-300">R$ 100,00</span>
+</div>
+</div>
+<div>
+<p class="text-xs uppercase tracking-wide text-slate-400 font-semibold mb-2">Categoria</p>
+<div class="flex flex-wrap gap-2">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                                Assinatura de Software
+                                            </span>
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300">
+                                                Depto TI
+                                            </span>
+<button class="text-xs text-primary underline ml-1">+ Adicionar Tag</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="w-full lg:w-[45%] h-full flex flex-col rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm bg-slate-100 dark:bg-slate-900">
+<div class="flex items-center justify-between px-4 py-2 bg-white dark:bg-[#151b2b] border-b border-slate-200 dark:border-slate-800">
+<h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300">Visualização do Documento</h4>
+<div class="flex gap-2">
+<button class="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><span class="material-symbols-outlined text-[18px]">zoom_out</span></button>
+<button class="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><span class="material-symbols-outlined text-[18px]">zoom_in</span></button>
+<button class="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><span class="material-symbols-outlined text-[18px]">open_in_new</span></button>
+</div>
+</div>
+<div class="relative flex-1 bg-slate-200 dark:bg-slate-900 flex items-center justify-center overflow-hidden">
+<div class="absolute inset-4 bg-white shadow-lg flex flex-col items-center justify-center opacity-90" data-alt="Abstract representation of a digital invoice document with text lines and layout" style="background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 20px 20px;">
+<div class="w-3/4 h-[80%] border border-slate-100 bg-white p-8 shadow-sm flex flex-col gap-4">
+<div class="w-1/3 h-8 bg-slate-200 rounded animate-pulse"></div>
+<div class="flex justify-between mt-4">
+<div class="w-1/4 h-4 bg-slate-100 rounded"></div>
+<div class="w-1/4 h-4 bg-slate-100 rounded"></div>
+</div>
+<div class="w-full h-px bg-slate-100 my-2"></div>
+<div class="space-y-3">
+<div class="w-full h-3 bg-slate-50 rounded"></div>
+<div class="w-full h-3 bg-slate-50 rounded"></div>
+<div class="w-2/3 h-3 bg-slate-50 rounded"></div>
+</div>
+<div class="mt-auto self-end w-1/4 h-6 bg-slate-200 rounded"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+
+</body></html>
