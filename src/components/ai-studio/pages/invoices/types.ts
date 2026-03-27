@@ -23,6 +23,22 @@ export interface Invoice {
     telefone_tomador?: string;
     serie_nota?: string;
     beneficiario?: string;
+
+    // Structured Address - Emissor
+    cep_emissor?: string;
+    logradouro_emissor?: string;
+    numero_emissor?: string;
+    bairro_emissor?: string;
+    complemento_emissor?: string;
+
+    // Structured Address - Tomador
+    cep_tomador?: string;
+    logradouro_tomador?: string;
+    numero_tomador?: string;
+    bairro_tomador?: string;
+    complemento_tomador?: string;
+    cidade_tomador?: string;
+    estado_tomador?: string;
 }
 
 export interface GmailMessage {
@@ -33,6 +49,7 @@ export interface GmailMessage {
     isDuplicate: boolean;
     rawEmail: any;
     aiInput?: any;
+    fullBody?: string;
 }
 
 // Helper Constants

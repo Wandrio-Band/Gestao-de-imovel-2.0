@@ -16,8 +16,11 @@ export async function GET(request: Request) {
         });
 
         if (!res.ok) {
-            const err = await res.json();
-            return NextResponse.json({ error: err }, { status: res.status });
+            const errText = await res.text();
+            let parsedErr;
+            try { parsedErr = JSON.parse(errText); } catch (e) { parsedErr = errText; }
+            console.error(`Gmail API Error:`, parsedErr);
+            return NextResponse.json({ error: parsedErr }, { status: res.status });
         }
 
         const data = await res.json();

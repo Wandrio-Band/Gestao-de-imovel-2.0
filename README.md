@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Asset Manager Studio
+## Gestão de Imóveis 2.0
 
-## Getting Started
+O **Asset Manager Studio** é um sistema avançado de gestão patrimonial projetado para centralizar e automatizar a administração de ativos imobiliários, inquilinos e documentos fiscais.
 
-First, run the development server:
+### 🧩 Módulos Principais
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+*   **🏠 Gestão de Imóveis**: Controle patrimonial completo, visão geral de ativos, taxas de ocupação e gestão de participação societária.
+*   **👥 Gestão de Inquilinos**: Administração de locatários, contratos de aluguel, controle de vigência e histórico de pagamentos.
+*   **📑 Controle de Notas**: Gestão centralizada de notas fiscais e recibos, com extração inteligente de dados via IA e integração com Gmail.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 🚀 Stack Tecnológica
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+*   **Framework**: [Next.js 16 (App Router)](https://nextjs.org/)
+*   **Interface**: [React 19](https://react.dev/) & [Tailwind CSS v4](https://tailwindcss.com/)
+*   **Banco de Dados**: [Prisma 6](https://www.prisma.io/) (SQLite)
+*   **IA**: [Google Gemini API](https://ai.google.dev/)
+*   **Autenticação**: [Auth.js v5](https://authjs.dev/)
+*   **Componentes**: [Radix UI](https://www.radix-ui.com/) & [Lucide React](https://lucide.dev/)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 🛠️ Configuração e Instalação
 
-## Learn More
+Siga os passos abaixo para rodar o projeto localmente:
 
-To learn more about Next.js, take a look at the following resources:
+1.  **Instalar dependências**:
+    ```bash
+    npm install
+    ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2.  **Configurar variáveis de ambiente**:
+    Crie um arquivo `.env` baseado no `.env.example` com suas chaves da Gemini API e Google Cloud.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3.  **Rodar o servidor de desenvolvimento**:
+    ```bash
+    npm run dev
+    ```
+    Acesse: [http://localhost:3000](http://localhost:3000)
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+*Desenvolvido com Antigravity*

@@ -1,6 +1,6 @@
 const { GoogleGenAI, Type } = require("@google/genai");
 
-const API_KEY = "AIzaSyB2ZW5L-AjlD5lDXb7Fu1cr16biB2vJhq8";
+const API_KEY = process.env.GEMINI_API_KEY || "SUA_CHAVE_AQUI";
 
 async function testOldSDK() {
     console.log("🔍 Testando SDK @google/genai...\n");

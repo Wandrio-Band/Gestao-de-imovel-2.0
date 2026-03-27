@@ -1,150 +1,85 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+import { NextRequest, NextResponse } from 'next/server';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-export async function POST(req: Request) {
+const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+const CATEGORIES = ["Saúde", "Educação", "Reforma", "Eletrônicos", "Outros"];
+
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 2000; // 2 seconds
+
+async function sleep(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export async function POST(request: NextRequest) {
     try {
-        console.log("🚀 [AI Extract] POST Request received with @google/genai");
-        const body = await req.json();
-        const { file, text } = body;
-
-        console.log("📝 [AI Extract] Payload details:", {
-            hasFile: !!file,
-            fileType: file?.mimeType,
-            hasText: !!text,
-            textSize: text?.length
-        });
-
-        const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+        const body = await request.json();
+        const { content, isFile, mimeType } = body;
 
         if (!apiKey) {
-            console.error("❌ [AI Extract] GEMINI_API_KEY is missing!");
-            return NextResponse.json({ error: "Configuração incompleta: GEMINI_API_KEY ausente." }, { status: 500 });
+            return NextResponse.json({ error: 'API Key não configurada' }, { status: 500 });
         }
 
-        const ai = new GoogleGenAI({ apiKey });
-
-        const prompt = `ATENÇÃO: Extração Fiscal de Nota Fiscal de Serviços (NFS-e) ou Comprovante.
-         Se houver "=== ANEXO XML DETECTADO ===", USE O CONTEUDO DO XML COMO FONTE PRINCIPAL.
-         
-         OBJETIVO: Extrair metadados para controle financeiro e IRPF.
-         
-         1. BENEFICIÁRIO (CRÍTICO - IRPF):
-            - O campo 'beneficiario' refere-se ao PACIENTE, ALUNO ou DEPENDENTE que utilizou o serviço.
-            - DEVE SER ESTRITAMENTE UM DOS SEGUINTES NOMES (se encontrado):
-              A) "Wândrio Bandeira dos Anjos"
-              B) "Lucas Massad Bandeira"
-              C) "Raquel Dutra Massad"
-              D) "Ana Júlia Massad Bandeira"
-            - Se encontrar "Lucas" ou "Lucas Massad", retorne "Lucas Massad Bandeira".
-            - Se encontrar "Raquel" ou "Raquel Dutra", retorne "Raquel Dutra Massad".
-            - Se encontrar "Ana Júlia", "Ana Julia" ou "Júlia Massad", retorne "Ana Júlia Massad Bandeira".
-            - Se encontrar "Wândrio" ou "Wandrio", retorne "Wândrio Bandeira dos Anjos".
-            - Procure em "Discriminação dos Serviços", "Informações Complementares" ou "Observações".
-            - Se não encontrar menção a esses nomes, deixe vazio (null).
-         
-         2. DADOS CADASTRAIS:
+        const prompt = `Analise este documento de Nota Fiscal/Recibo. Seja extremamente preciso.
+            Extraia os seguintes campos com foco total no contexto brasileiro:
             - TOMADOR: Nome completo, CPF/CNPJ, Endereço, Email e Telefone.
             - EMISSOR: Nome, CNPJ, Telefone.
             - DATA: Formato DD/MM/YYYY.
             - VALOR TOTAL: Valor líquido ou total da nota.
 
-         CATEGORIA DEVE SER UMA DAS: Saúde, Educação, Reforma, Eletrônicos, Outros.`;
+         CATEGORIA DEVE SER UMA DAS: ${CATEGORIES.join(', ')}.
+         
+         Devolva APENAS o JSON estrito. Não use blocos de código markdown (\`\`\`json). Retorne estritamente o objeto: 
+         { "is_invoice": boolean, "invalidation_reason": string, "data": "DD/MM/YYYY", "cnpj_cpf_emissor": "", "nome_emissor": "", "endereco_emissor": "", "cep_emissor": "", "logradouro_emissor": "", "numero_emissor": "", "bairro_emissor": "", "complemento_emissor": "", "telefone_emissor": "", "cidade": "", "estado": "", "valor_total": "", "categoria": "", "numero_nota": "", "serie_nota": "", "beneficiario": "", "nome_tomador": "", "cpf_cnpj_tomador": "", "endereco_tomador": "", "cep_tomador": "", "logradouro_tomador": "", "numero_tomador": "", "bairro_tomador": "", "complemento_tomador": "", "cidade_tomador": "", "estado_tomador": "", "email_tomador": "", "telefone_tomador": "", "items": [{ "descricao": "", "quantidade": "", "valor": "", "unidade": "", "categoria": "" }] }`;
 
-        console.log("🤖 [AI Extract] Calling Gemini 3 Flash Preview...");
+        const parts = isFile
+            ? [{ text: prompt }, { inlineData: { mimeType, data: content } }]
+            : [{ text: `${prompt}\n\nCONTENT:\n${content}` }];
 
-        const contents = file
-            ? [{
-                role: 'user',
-                parts: [
-                    { text: prompt },
-                    { inlineData: { mimeType: file.mimeType, data: file.data } }
-                ]
-            }]
-            : [{
-                role: 'user',
-                parts: [{ text: `${prompt}\n\nCONTENT:\n${text}` }]
-            }];
-
-        const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
-            contents: contents as any,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: Type.OBJECT,
-                    properties: {
-                        data: { type: Type.STRING },
-                        cnpj_cpf_emissor: { type: Type.STRING },
-                        nome_emissor: { type: Type.STRING },
-                        endereco_emissor: { type: Type.STRING },
-                        telefone_emissor: { type: Type.STRING },
-                        cidade: { type: Type.STRING },
-                        estado: { type: Type.STRING },
-                        valor_total: { type: Type.STRING },
-                        categoria: { type: Type.STRING },
-                        numero_nota: { type: Type.STRING },
-                        serie_nota: { type: Type.STRING },
-                        beneficiario: { type: Type.STRING },
-                        nome_tomador: { type: Type.STRING },
-                        cpf_cnpj_tomador: { type: Type.STRING },
-                        endereco_tomador: { type: Type.STRING },
-                        email_tomador: { type: Type.STRING },
-                        telefone_tomador: { type: Type.STRING },
-                        items: {
-                            type: Type.ARRAY,
-                            items: {
-                                type: Type.OBJECT,
-                                properties: {
-                                    descricao: { type: Type.STRING },
-                                    quantidade: { type: Type.STRING },
-                                    valor: { type: Type.STRING },
-                                    unidade: { type: Type.STRING }
-                                }
-                            }
-                        }
-                    },
-                    required: ['data', 'nome_emissor', 'valor_total', 'categoria']
-                }
-            }
+        let lastError = null;
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({
+            model: "gemini-1.5-flash"
         });
 
-        // Use .text directly as in ImportIRPF.tsx
-        const responseText = response.text || "{}";
-        console.log("✅ [AI Extract] Response received from Gemini 3:", responseText.substring(0, 100) + "...");
+        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+            try {
+                const result = await model.generateContent(parts);
+                const text = result.response.text();
 
-        try {
-            const parsed = JSON.parse(responseText);
-            return NextResponse.json(parsed);
-        } catch (parseError) {
-            console.error("❌ [AI Extract] JSON Parse Error. Raw text:", responseText);
-            return NextResponse.json({
-                error: "Falha ao processar resposta da IA: JSON inválido.",
-                raw: responseText.substring(0, 500)
-            }, { status: 500 });
+                if (!text) {
+                    return NextResponse.json({ error: 'Sem dados da IA' }, { status: 500 });
+                }
+
+                let parsed;
+                try {
+                    parsed = JSON.parse(text);
+                } catch (e) {
+                    return NextResponse.json({ error: 'JSON inválido', rawText: text }, { status: 500 });
+                }
+
+                return NextResponse.json(parsed);
+
+            } catch (err: any) {
+                console.error(`Attempt ${attempt + 1} GenerativeAI Error:`, err);
+                lastError = { status: err.status || 500, text: err.message, details: err };
+
+                if (attempt < MAX_RETRIES - 1) {
+                    await sleep(RETRY_DELAY * (attempt + 1));
+                }
+            }
         }
+
+        let errorJson = { error: 'Falha na API Gemini após múltiplas tentativas' };
+        if (lastError) {
+            errorJson = { ...errorJson, message: lastError.text, details: lastError.details };
+            return NextResponse.json(errorJson, { status: lastError.status });
+        }
+
+        return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+
     } catch (error: any) {
-        const errorDetails = {
-            message: error.message,
-            stack: error.stack,
-            cause: error.cause,
-            status: error.status,
-            name: error.name,
-            timestamp: new Date().toISOString(),
-            lib: "@google/genai"
-        };
-        console.error("❌ [AI Extract] Server Error Details:", errorDetails);
-
-        try {
-            fs.appendFileSync(path.join(process.cwd(), 'ai-error.log'), JSON.stringify(errorDetails, null, 2) + '\n---\n');
-        } catch (logError) {
-            console.error("Failed to write to ai-error.log", logError);
-        }
-
-        return NextResponse.json({
-            error: error.message || "Erro interno no servidor de IA",
-            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-        }, { status: 500 });
+        console.error('AI Extract Route Critical Error:', error);
+        return NextResponse.json({ error: error.message || 'Erro interno' }, { status: 500 });
     }
 }

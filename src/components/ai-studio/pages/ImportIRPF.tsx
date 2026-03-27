@@ -137,22 +137,28 @@ export const ImportIRPF: React.FC<ImportIRPFProps> = ({ onNavigate, onUpdateAsse
         setProgress(40);
         setProgressStatus('Enviando para Auditoria IA (Gemini 3.0)...');
 
-        try {
-            // Read API Key from Next.js environment
-            const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+        // Read API Key from Next.js environment
+        const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 
-            if (!apiKey) {
-                console.warn("API Key missing, using mock data for demo.");
-                throw new Error("API Key missing");
-            }
+        if (!apiKey) {
+            console.warn("API Key missing, using mock data for demo.");
+            throw new Error("API Key missing");
+        }
 
-            const ai = new GoogleGenAI({ apiKey });
+        const MAX_RETRIES = 3;
+        const RETRY_DELAY = 2000;
 
-            const slicedText = text.length > 50000 ? text.slice(-50000) : text;
+        const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-3-flash-preview',
-                contents: `DOCUMENTO: Declaração de Imposto de Renda Pessoa Física (IRPF) - Receita Federal do Brasil
+        let lastError = null;
+        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+            try {
+                const ai = new GoogleGenAI({ apiKey });
+                const slicedText = text.length > 50000 ? text.slice(-50000) : text;
+
+                const response = await ai.models.generateContent({
+                    model: 'gemini-3-flash-preview',
+                    contents: `DOCUMENTO: Declaração de Imposto de Renda Pessoa Física (IRPF) - Receita Federal do Brasil
 
 TAREFA: Analise o texto abaixo e extraia TODOS os IMÓVEIS declarados na seção "BENS E DIREITOS" (códigos 11-19).
 
@@ -185,8 +191,8 @@ TEXTO DO PDF:
 ${slicedText}
 
 OBS: Se não encontrar a seção "BENS E DIREITOS" explicitamente, procure por qualquer menção a imóveis, apartamentos, terrenos ou propriedades declaradas. Retorne TODOS os imóveis encontrados, mesmo que parcialmente preenchidos.`,
-                config: {
-                    systemInstruction: `Você é um AUDITOR FISCAL ESPECIALIZADO em extração de dados de Declaração de IRPF da Receita Federal do Brasil.
+                    config: {
+                        systemInstruction: `Você é um AUDITOR FISCAL ESPECIALIZADO em extração de dados de Declaração de IRPF da Receita Federal do Brasil.
 
 MISSÃO: Extrair TODOS os imóveis da seção "BENS E DIREITOS" com MÁXIMA PRECISÃO.
 
@@ -196,70 +202,82 @@ REGRAS OBRIGATÓRIAS:
 3. Se campo não disponível, deixe string vazia (não omita)
 4. Extraia ENDEREÇO COMPLETO: separe rua, número, complemento, bairro
 5. Area em m²: extraia APENAS NÚMEROS do texto (ex: "102,7 m²" → 102.7, "área de 200m2" → 200). Se houver fração ideal, ignore e pegue a área privativa ou total do imóvel.`,
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: Type.ARRAY,
-                        items: {
-                            type: Type.OBJECT,
-                            properties: {
-                                id_declaracao: { type: Type.STRING },
-                                descricao: { type: Type.STRING },
-                                descricao_resumida: { type: Type.STRING },
-                                valor_ir_atual: { type: Type.NUMBER },
-                                matricula: { type: Type.STRING },
-                                iptu: { type: Type.STRING },
-                                logradouro: { type: Type.STRING },
-                                numero: { type: Type.STRING },
-                                complemento: { type: Type.STRING },
-                                bairro: { type: Type.STRING },
-                                municipio: { type: Type.STRING },
-                                uf: { type: Type.STRING },
-                                cep: { type: Type.STRING },
-                                area_total: { type: Type.NUMBER },
-                                cartorio: { type: Type.STRING },
-                                data_aquisicao: { type: Type.STRING },
-                                origem_aquisicao: { type: Type.STRING }
-                            },
-                            required: ['id_declaracao', 'descricao', 'descricao_resumida', 'valor_ir_atual', 'municipio', 'uf']
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: Type.ARRAY,
+                            items: {
+                                type: Type.OBJECT,
+                                properties: {
+                                    id_declaracao: { type: Type.STRING },
+                                    descricao: { type: Type.STRING },
+                                    descricao_resumida: { type: Type.STRING },
+                                    valor_ir_atual: { type: Type.NUMBER },
+                                    matricula: { type: Type.STRING },
+                                    iptu: { type: Type.STRING },
+                                    logradouro: { type: Type.STRING },
+                                    numero: { type: Type.STRING },
+                                    complemento: { type: Type.STRING },
+                                    bairro: { type: Type.STRING },
+                                    municipio: { type: Type.STRING },
+                                    uf: { type: Type.STRING },
+                                    cep: { type: Type.STRING },
+                                    area_total: { type: Type.NUMBER },
+                                    cartorio: { type: Type.STRING },
+                                    data_aquisicao: { type: Type.STRING },
+                                    origem_aquisicao: { type: Type.STRING }
+                                },
+                                required: ['id_declaracao', 'descricao', 'descricao_resumida', 'valor_ir_atual', 'municipio', 'uf']
+                            }
                         }
                     }
-                }
-            });
-
-            setProgress(70);
-            setProgressStatus('Estruturando dados...');
-
-            const jsonText = response.text || "[]";
-            const data = JSON.parse(jsonText);
-
-            // DEBUG: Log extracted data to console
-            console.log('🔍 GEMINI EXTRACTED DATA:', data);
-            console.log('📊 Total items extracted:', data.length);
-            if (data.length > 0) {
-                console.log('📍 First item sample:', {
-                    municipio: data[0].municipio,
-                    uf: data[0].uf,
-                    cep: data[0].cep,
-                    logradouro: data[0].logradouro,
-                    bairro: data[0].bairro
                 });
+
+                setProgress(70);
+                setProgressStatus('Estruturando dados...');
+
+                const jsonText = response.text || "[]";
+                const data = JSON.parse(jsonText);
+
+                // DEBUG: Log extracted data to console
+                console.log('🔍 GEMINI EXTRACTED DATA:', data);
+                console.log('📊 Total items extracted:', data.length);
+                if (data.length > 0) {
+                    console.log('📍 First item sample:', {
+                        municipio: data[0].municipio,
+                        uf: data[0].uf,
+                        cep: data[0].cep,
+                        logradouro: data[0].logradouro,
+                        bairro: data[0].bairro
+                    });
+                }
+
+                return data;
+
+            } catch (error: any) {
+                console.error(`=== ERRO GEMINI (Tentativa ${attempt + 1}) ===`);
+                console.error(error);
+                lastError = error;
+
+                // Only retry on 503 or 429
+                const isRetryable = error?.message?.includes('overloaded') || error?.status === 503 || error?.code === 503 || error?.status === 429 || error?.code === 429;
+
+                if (!isRetryable) {
+                    break;
+                }
+
+                if (attempt < MAX_RETRIES - 1) {
+                    setProgressStatus(`Gemini ocupado. Re-tentando em ${RETRY_DELAY / 1000}s... (Tentativa ${attempt + 1})`);
+                    await sleep(RETRY_DELAY * (attempt + 1));
+                }
             }
-
-            return data;
-
-        } catch (error: any) {
-            console.error("=== ERRO GEMINI ===");
-            console.error(error);
-            console.error("=== FIM ERRO ===");
-
-            // Check if it's a 503 overload error
-            if (error?.message?.includes('overloaded') || error?.code === 503) {
-                throw new Error("API Gemini está temporariamente sobrecarregada. Por favor, aguarde alguns segundos e tente novamente.");
-            }
-
-            // For other errors, throw with details
-            throw new Error(`Erro ao processar PDF com Gemini: ${error?.message || 'Erro desconhecido'}`);
         }
+
+        // If we reach here, all retries failed
+        if (lastError?.message?.includes('overloaded') || lastError?.code === 503) {
+            throw new Error("API Gemini está temporariamente sobrecarregada após múltiplas tentativas. Por favor, aguarde alguns segundos e tente novamente.");
+        }
+
+        throw new Error(`Erro ao processar PDF com Gemini: ${lastError?.message || 'Erro desconhecido'}`);
     };
 
     // --- Step C: Reconciliação (Heurística) ---

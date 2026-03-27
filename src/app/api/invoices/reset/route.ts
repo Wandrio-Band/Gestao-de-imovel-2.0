@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma'; // Assuming standard path, will verify if needed
+import { prisma } from '@/lib/prisma';
 
 export async function DELETE() {
     try {

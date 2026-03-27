@@ -1,6 +1,6 @@
 const { GoogleGenAI } = require("@google/genai");
 
-const API_KEY = "AIzaSyB2ZW5L-AjlD5lDXb7Fu1cr16biB2vJhq8";
+const API_KEY = process.env.GEMINI_API_KEY || "SUA_CHAVE_AQUI";
 
 async function testModelsSDK() {
     console.log("🔍 Testando modelos com @google/genai...\n");

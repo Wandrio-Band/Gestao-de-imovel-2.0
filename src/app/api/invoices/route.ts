@@ -1,36 +1,18 @@
+
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import fs from 'fs';
-import path from 'path';
 
 export async function GET() {
     try {
-        console.log("🔍 [Invoices API] GET requested");
-        console.log("📂 [Invoices API] Current CWD:", process.cwd());
-
-        const dbPath = process.env.DATABASE_URL?.replace('file:', '');
-        if (dbPath) {
-            const absoluteDbPath = path.isAbsolute(dbPath) ? dbPath : path.join(process.cwd(), dbPath);
-            console.log("🗄️ [Invoices API] Checking DB path:", absoluteDbPath);
-            console.log("❓ [Invoices API] File exists?", fs.existsSync(absoluteDbPath));
-            if (fs.existsSync(absoluteDbPath)) {
-                const stats = fs.statSync(absoluteDbPath);
-                console.log("📊 [Invoices API] DB File size:", stats.size);
-            }
-        }
-
+        console.log("Fetching invoices GET route hit");
         const invoices = await prisma.invoice.findMany({
             orderBy: { createdAt: 'desc' }
         });
-        console.log(`✅ [Invoices API] Found ${invoices.length} invoices`);
+        console.log("Invoices fetched successfully", invoices.length);
         return NextResponse.json(invoices);
     } catch (error: any) {
-        console.error("❌ [Invoices API] GET Error:", error);
-        return NextResponse.json({
-            error: 'Error fetching invoices',
-            details: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-        }, { status: 500 });
+        console.error("CRITICAL ERROR IN /api/invoices GET:", error);
+        return NextResponse.json({ error: 'Error fetching invoices', details: error.message }, { status: 500 });
     }
 }
 
