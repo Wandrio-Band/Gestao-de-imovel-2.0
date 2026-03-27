@@ -1,26 +1,30 @@
 import { NextResponse } from 'next/server';
+import { extractBearerToken, apiError, handleApiError } from '@/lib/api-utils';
 
 export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
     try {
-        const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+        const token = extractBearerToken(request);
 
         if (!token) {
-            return NextResponse.json({ error: 'Missing Authorization header' }, { status: 401 });
+            return apiError('Token de autorizacao ausente ou invalido', 401, 'UNAUTHORIZED');
         }
 
-        const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${params.id}`, {
+        const messageId = encodeURIComponent(params.id);
+        const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}`, {
             headers: { Authorization: `Bearer ${token}` }
         });
 
         if (!res.ok) {
-            const err = await res.json();
-            return NextResponse.json({ error: err }, { status: res.status });
+            const errText = await res.text();
+            let parsedErr;
+            try { parsedErr = JSON.parse(errText); } catch { parsedErr = { message: 'Gmail API error' }; }
+            return NextResponse.json({ error: parsedErr }, { status: res.status });
         }
 
         const data = await res.json();
         return NextResponse.json(data);
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error) {
+        return handleApiError(error, 'Gmail Message Detail');
     }
 }

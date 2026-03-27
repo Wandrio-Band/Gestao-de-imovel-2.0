@@ -46,7 +46,7 @@ export default function ContractsClient({ initialContracts, initialAssets }: Con
             valorAluguel: contract.currentValue ? contract.currentValue.toString() : '0', // Fix: use currentValue
             diaVencimento: 'Dia 5', // Default or need to fetch
             tipoGarantia: '',
-            inicioVigencia: contract.startDate instanceof Date ? contract.startDate.toISOString().split('T')[0] : (typeof contract.startDate === 'string' ? contract.startDate.split('T')[0] : ''),
+            inicioVigencia: contract.startDate instanceof Date ? contract.startDate.toISOString().split('T')[0] : (typeof contract.startDate === 'string' ? (contract.startDate as string).split('T')[0] : ''),
             fimContrato: '',
             indexador: 'IPCA'
         });

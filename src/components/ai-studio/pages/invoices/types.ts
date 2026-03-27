@@ -66,3 +66,12 @@ export interface InvoiceStats {
     byCat: [string, number][];
     count: number;
 }
+
+export const BENEFICIARIES = [
+    { value: 'Wandrio Bandeira dos Anjos', label: 'Wandrio' },
+    { value: 'Lucas Massad Bandeira', label: 'Lucas' },
+    { value: 'Raquel Dutra Massad', label: 'Raquel' },
+    { value: 'Ana Julia Massad Bandeira', label: 'Ana Julia' },
+];
+
+export const CATEGORIES = ["Saude", "Educacao", "Reforma", "Eletronicos", "Outros"];

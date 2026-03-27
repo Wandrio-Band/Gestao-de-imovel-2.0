@@ -12,21 +12,29 @@ export const AuditTab: React.FC<AuditTabProps> = ({ invoices, onApprove, onDelet
     const pendingInvoices = useMemo(() => invoices.filter(i => i.status === 'PENDENTE' || i.status === 'DUPLICATA' || !!i.auditReason), [invoices]);
 
     React.useEffect(() => {
-        if (!selectedId && pendingInvoices.length > 0) setSelectedId(pendingInvoices[0].id);
-        else if (selectedId && !pendingInvoices.find(i => i.id === selectedId)) setSelectedId(pendingInvoices[0]?.id || null);
-    }, [pendingInvoices, selectedId]);
+        if (!selectedId && pendingInvoices.length > 0) {
+            setSelectedId(pendingInvoices[0].id);
+        } else if (selectedId && !pendingInvoices.find(i => i.id === selectedId)) {
+            setSelectedId(pendingInvoices[0]?.id || null);
+        }
+    }, [pendingInvoices]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const selectedInvoice = useMemo(() => pendingInvoices.find(i => i.id === selectedId) || pendingInvoices[0], [pendingInvoices, selectedId]);
 
     const originalInvoice = useMemo(() => {
         if (!selectedInvoice) return null;
-        const clean = (c: any) => String(c || '').replace(/\D/g, '');
+        const clean = (c: string | undefined) => String(c || '').replace(/\D/g, '');
         const nCNPJ = clean(selectedInvoice.cnpj_cpf_emissor);
-        const nVal = parseFloat(selectedInvoice.valor_total as any || 0).toFixed(2);
+        const nVal = parseFloat(String(selectedInvoice.valor_total || 0)).toFixed(2);
+        const nDate = String(selectedInvoice.data || '').trim();
         return invoices.find(inv => {
             if (inv.status !== 'APROVADO' || inv.id === selectedInvoice.id) return false;
-            if (parseFloat(inv.valor_total as any || 0).toFixed(2) !== nVal) return false;
-            return nCNPJ && clean(inv.cnpj_cpf_emissor) === nCNPJ;
+            const invVal = parseFloat(String(inv.valor_total || 0)).toFixed(2);
+            if (invVal !== nVal) return false;
+            if (!nCNPJ || clean(inv.cnpj_cpf_emissor) !== nCNPJ) return false;
+            // Also match date to avoid false positives
+            if (nDate && inv.data && String(inv.data).trim() !== nDate) return false;
+            return true;
         });
     }, [selectedInvoice, invoices]);
 

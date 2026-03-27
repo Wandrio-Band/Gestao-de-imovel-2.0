@@ -4,11 +4,16 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 interface DashboardTabProps {
     invoices: Invoice[];
-    filters: any;
-    setFilters: (f: any) => void;
+    stats: { total: number; count: number; byCat: [string, number][] };
+    filters: Record<string, string>;
+    onFilterChange: (key: string, value: string) => void;
+    availableFilters: { categories: string[]; years: string[]; states: string[]; cities: string[]; issuers: string[] };
+    onDelete: (id: string) => void;
+    onApprove: (id: string) => void;
+    onUpdate: (id: string, data: any) => Promise<void>;
 }
 
-export const DashboardTab: React.FC<DashboardTabProps> = ({ invoices, filters, setFilters }) => {
+export const DashboardTab: React.FC<DashboardTabProps> = ({ invoices }) => {
     // --- LÓGICA DE DADOS ---
     const formatMoney = (v: any) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
 
@@ -34,7 +39,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({ invoices, filters, s
     }, [invoices]);
 
     const chartData = useMemo(() => {
-        // Simple timeline for last 12 months
+        const currentYear = String(new Date().getFullYear());
         const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
         return months.map((m, i) => ({
             name: m,
@@ -42,8 +47,10 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({ invoices, filters, s
                 .filter(inv => {
                     if (!inv.data) return false;
                     const parts = inv.data.split('/');
+                    if (parts.length < 3) return false;
                     const month = parseInt(parts[1]) - 1;
-                    return month === i && inv.status === 'APROVADO';
+                    const year = parts[2];
+                    return month === i && year === currentYear && inv.status === 'APROVADO';
                 })
                 .reduce((acc, inv) => acc + (Number(inv.valor_total) || 0), 0)
         }));
@@ -159,7 +166,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({ invoices, filters, s
                                         dataKey="value"
                                     >
                                         {stats.byCat.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} cornerRadius={4} />
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Pie>
                                     <Tooltip formatter={(v: any) => formatMoney(v)} />

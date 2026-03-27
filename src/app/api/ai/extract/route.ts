@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { aiExtractSchema } from '@/lib/validations';
+import { apiError, handleApiError, handleValidationError, ALLOWED_MIME_TYPES } from '@/lib/api-utils';
 
-const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-const CATEGORIES = ["Saúde", "Educação", "Reforma", "Eletrônicos", "Outros"];
-
+const CATEGORIES = ["Saude", "Educacao", "Reforma", "Eletronicos", "Outros"];
 const MAX_RETRIES = 3;
-const RETRY_DELAY = 2000; // 2 seconds
+const RETRY_DELAY = 2000;
 
 async function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -14,33 +14,42 @@ async function sleep(ms: number) {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { content, isFile, mimeType } = body;
 
+        const parsed = aiExtractSchema.safeParse(body);
+        if (!parsed.success) {
+            return handleValidationError(parsed.error);
+        }
+
+        const { content, isFile, mimeType } = parsed.data;
+
+        const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
-            return NextResponse.json({ error: 'API Key não configurada' }, { status: 500 });
+            return apiError('API Key nao configurada', 500, 'CONFIG_ERROR');
+        }
+
+        if (isFile && mimeType && !ALLOWED_MIME_TYPES.includes(mimeType)) {
+            return apiError(`Tipo de arquivo nao suportado: ${mimeType}`, 400, 'INVALID_MIME');
         }
 
         const prompt = `Analise este documento de Nota Fiscal/Recibo. Seja extremamente preciso.
             Extraia os seguintes campos com foco total no contexto brasileiro:
-            - TOMADOR: Nome completo, CPF/CNPJ, Endereço, Email e Telefone.
+            - TOMADOR: Nome completo, CPF/CNPJ, Endereco, Email e Telefone.
             - EMISSOR: Nome, CNPJ, Telefone.
             - DATA: Formato DD/MM/YYYY.
-            - VALOR TOTAL: Valor líquido ou total da nota.
+            - VALOR TOTAL: Valor liquido ou total da nota.
 
          CATEGORIA DEVE SER UMA DAS: ${CATEGORIES.join(', ')}.
-         
-         Devolva APENAS o JSON estrito. Não use blocos de código markdown (\`\`\`json). Retorne estritamente o objeto: 
+
+         Devolva APENAS o JSON estrito. Nao use blocos de codigo markdown (\`\`\`json). Retorne estritamente o objeto:
          { "is_invoice": boolean, "invalidation_reason": string, "data": "DD/MM/YYYY", "cnpj_cpf_emissor": "", "nome_emissor": "", "endereco_emissor": "", "cep_emissor": "", "logradouro_emissor": "", "numero_emissor": "", "bairro_emissor": "", "complemento_emissor": "", "telefone_emissor": "", "cidade": "", "estado": "", "valor_total": "", "categoria": "", "numero_nota": "", "serie_nota": "", "beneficiario": "", "nome_tomador": "", "cpf_cnpj_tomador": "", "endereco_tomador": "", "cep_tomador": "", "logradouro_tomador": "", "numero_tomador": "", "bairro_tomador": "", "complemento_tomador": "", "cidade_tomador": "", "estado_tomador": "", "email_tomador": "", "telefone_tomador": "", "items": [{ "descricao": "", "quantidade": "", "valor": "", "unidade": "", "categoria": "" }] }`;
 
         const parts = isFile
-            ? [{ text: prompt }, { inlineData: { mimeType, data: content } }]
+            ? [{ text: prompt }, { inlineData: { mimeType: mimeType!, data: content } }]
             : [{ text: `${prompt}\n\nCONTENT:\n${content}` }];
 
-        let lastError = null;
+        let lastError: { status: number; text: string } | null = null;
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash"
-        });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
             try {
@@ -48,21 +57,23 @@ export async function POST(request: NextRequest) {
                 const text = result.response.text();
 
                 if (!text) {
-                    return NextResponse.json({ error: 'Sem dados da IA' }, { status: 500 });
+                    return apiError('Sem dados retornados pela IA', 502, 'AI_EMPTY_RESPONSE');
                 }
 
                 let parsed;
                 try {
                     parsed = JSON.parse(text);
-                } catch (e) {
-                    return NextResponse.json({ error: 'JSON inválido', rawText: text }, { status: 500 });
+                } catch {
+                    return apiError('Resposta da IA em formato invalido', 502, 'AI_INVALID_JSON');
                 }
 
                 return NextResponse.json(parsed);
 
-            } catch (err: any) {
-                console.error(`Attempt ${attempt + 1} GenerativeAI Error:`, err);
-                lastError = { status: err.status || 500, text: err.message, details: err };
+            } catch (err: unknown) {
+                const errMsg = err instanceof Error ? err.message : 'Unknown AI error';
+                const errStatus = (err as { status?: number })?.status || 502;
+                console.error(`[AI Extract] Attempt ${attempt + 1} failed:`, errMsg);
+                lastError = { status: errStatus, text: errMsg };
 
                 if (attempt < MAX_RETRIES - 1) {
                     await sleep(RETRY_DELAY * (attempt + 1));
@@ -70,16 +81,9 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        let errorJson = { error: 'Falha na API Gemini após múltiplas tentativas' };
-        if (lastError) {
-            errorJson = { ...errorJson, message: lastError.text, details: lastError.details };
-            return NextResponse.json(errorJson, { status: lastError.status });
-        }
+        return apiError('Falha na API Gemini apos multiplas tentativas', lastError?.status || 502, 'AI_RETRY_EXHAUSTED');
 
-        return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
-
-    } catch (error: any) {
-        console.error('AI Extract Route Critical Error:', error);
-        return NextResponse.json({ error: error.message || 'Erro interno' }, { status: 500 });
+    } catch (error) {
+        return handleApiError(error, 'AI Extract');
     }
 }

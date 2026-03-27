@@ -125,7 +125,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = () => {
 
                         <div className="bg-gray-900 rounded-xl p-6 overflow-x-auto">
                             <pre className="text-xs font-mono text-green-400 whitespace-pre-wrap">
-                                {formatDetails(selectedDetail.details)}
+                                {formatDetails(selectedDetail.details || '')}
                             </pre>
                         </div>
 

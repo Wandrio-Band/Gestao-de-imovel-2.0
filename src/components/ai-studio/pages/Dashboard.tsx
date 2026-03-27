@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAssetContext } from '@/context/AssetContext';
-import ImportIRPFHybrid from './ImportIRPFHybrid';
+import ImportIRPFHybrid from './ImportIRPF';
 import { EmptyState } from '@/components/EmptyState';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';

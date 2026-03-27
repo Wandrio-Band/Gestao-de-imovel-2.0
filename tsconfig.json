@@ -38,6 +38,10 @@
   ],
   "exclude": [
     "node_modules",
-    "sistema-patrimonial-pro (1)"
+    "sistema-patrimonial-pro (1)",
+    "playwright.config.ts",
+    "tests",
+    "tools",
+    "list_models.ts"
   ]
 }

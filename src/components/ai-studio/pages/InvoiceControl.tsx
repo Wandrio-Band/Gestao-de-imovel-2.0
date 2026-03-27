@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Script from 'next/script';
-import { Invoice, InvoiceStats, GmailMessage } from './invoices/types';
+import { Invoice, InvoiceStats, GmailMessage, CATEGORIES } from './invoices/types';
 import { DashboardTab } from './invoices/DashboardTab';
 import { HistoryTab } from './invoices/HistoryTab';
 import { GmailTab } from './invoices/GmailTab';
@@ -10,9 +10,7 @@ import { AuditTab } from './invoices/AuditTab';
 
 declare global { interface Window { google: any; } }
 
-const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
-const CATEGORIES = ["Saúde", "Educação", "Reforma", "Eletrônicos", "Outros"];
 
 const normalizeDate = (dateStr?: string): string => {
     if (!dateStr) return new Date().toLocaleDateString('pt-BR');
@@ -64,8 +62,9 @@ export const InvoiceControl: React.FC = () => {
         const fetchInvoices = async () => {
             try {
                 const res = await fetch('/api/invoices', { cache: 'no-store', headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' } });
-                if (!res.ok) throw new Error("F" + "alha ao buscar notas");
-                const data = await res.json();
+                if (!res.ok) throw new Error("Falha ao buscar notas");
+                const json = await res.json();
+                const data = Array.isArray(json) ? json : (json.data || []);
                 const normalized: Invoice[] = data.map((d: any) => ({
                     ...d,
                     data: normalizeDate(d.data),
@@ -89,7 +88,8 @@ export const InvoiceControl: React.FC = () => {
         };
         const saved = localStorage.getItem('gmail_token');
         if (saved) setGmailToken(saved);
-        setTimeout(initGoogle, 1000);
+        const timer = setTimeout(initGoogle, 1000);
+        return () => clearTimeout(timer);
     }, []);
 
     const handleConnectGmail = () => {
@@ -231,20 +231,41 @@ export const InvoiceControl: React.FC = () => {
             localStorage.setItem('imported_gmail_ids', JSON.stringify([...imp, msg.id]));
             setGmailMessages(p => p.filter(m => m.id !== msg.id));
             triggerRefresh();
-        } catch (e) { }
+        } catch (e: any) {
+            setError(`Erro ao importar: ${e.message || 'Falha desconhecida'}`);
+        }
         setIsProcessing(false);
     };
 
-    const handleDelete = async (id: string) => { if (confirm("Excluir?")) { try { await fetch(`/api/invoices/${id}`, { method: 'DELETE' }); triggerRefresh(); } catch (e) { } } };
-    const handleApprove = async (id: string) => { try { await fetch(`/api/invoices/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'APROVADO' }) }); triggerRefresh(); } catch (e) { } };
-    const handleUpdate = async (id: string, data: any) => { try { await fetch(`/api/invoices/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); triggerRefresh(); } catch (e) { } };
+    const handleDelete = async (id: string) => {
+        if (!confirm("Tem certeza que deseja excluir esta nota fiscal?")) return;
+        try {
+            const res = await fetch(`/api/invoices/${id}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Falha ao excluir');
+            triggerRefresh();
+        } catch (e: any) { setError(`Erro ao excluir: ${e.message}`); }
+    };
+    const handleApprove = async (id: string) => {
+        try {
+            const res = await fetch(`/api/invoices/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'APROVADO' }) });
+            if (!res.ok) throw new Error('Falha ao aprovar');
+            triggerRefresh();
+        } catch (e: any) { setError(`Erro ao aprovar: ${e.message}`); }
+    };
+    const handleUpdate = async (id: string, data: any) => {
+        try {
+            const res = await fetch(`/api/invoices/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+            if (!res.ok) throw new Error('Falha ao atualizar');
+            triggerRefresh();
+        } catch (e: any) { setError(`Erro ao atualizar: ${e.message}`); }
+    };
 
     const availableFilters = useMemo(() => ({
         categories: Array.from(new Set([...CATEGORIES, ...invoices.map(i => i.categoria || 'Outros')])).sort(),
         years: Array.from(new Set(invoices.map(i => i.data?.split('/').pop() || ''))).filter(y => !!y).sort().reverse(),
-        states: Array.from(new Set(invoices.map(i => i.estado).filter(s => !!s))),
-        cities: Array.from(new Set(invoices.map(i => i.cidade).filter(c => !!c))).sort(),
-        issuers: Array.from(new Set(invoices.map(i => i.nome_emissor).filter(e => !!e))).sort()
+        states: Array.from(new Set(invoices.map(i => i.estado).filter((s): s is string => !!s))),
+        cities: Array.from(new Set(invoices.map(i => i.cidade).filter((c): c is string => !!c))).sort(),
+        issuers: Array.from(new Set(invoices.map(i => i.nome_emissor).filter((e): e is string => !!e))).sort()
     }), [invoices]);
 
     const filteredInvoices = useMemo(() => invoices.filter(inv => (filters.category === "Todas" || inv.categoria === filters.category) && (filters.year === "Todos" || inv.data?.endsWith(filters.year)) && (filters.state === "Todos" || inv.estado === filters.state) && (filters.issuer === "Todos" || inv.nome_emissor === filters.issuer)), [invoices, filters]);
@@ -276,7 +297,7 @@ export const InvoiceControl: React.FC = () => {
                                 try {
                                     const ext = await extractWithAI({ base64: reader.result as string, type: file.type }, true);
                                     await fetch('/api/invoices', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...ext, valor_total: normalizeValue(ext.valor_total), data: normalizeDate(ext.data), status: 'APROVADO', source: 'Upload', fileCopy: reader.result as string }) });
-                                } catch (e) { } r(null);
+                                } catch (e: any) { setError(`Erro no upload: ${e.message || 'Falha ao processar arquivo'}`); } r(null);
                             });
                         }
                         triggerRefresh(); setIsProcessing(false);

@@ -5,7 +5,7 @@ export async function logAudit(
     entity: string,
     entityId: string,
     details: any,
-    actorName: string = 'Ricardo Silva' // Default user for MVP
+    actorName: string = 'Sistema'
 ) {
     try {
         await prisma.systemAuditLog.create({

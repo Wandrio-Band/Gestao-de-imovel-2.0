@@ -8,7 +8,7 @@ export interface AuditLogEntry {
     entity: string;
     entityId: string;
     actorName: string;
-    details: string; // JSON string
+    details: string | null;
     createdAt: Date;
 }
 

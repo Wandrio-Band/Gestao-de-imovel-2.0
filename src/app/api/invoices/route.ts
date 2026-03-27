@@ -1,57 +1,80 @@
-
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { invoiceCreateSchema } from '@/lib/validations';
+import { handleApiError, handleValidationError, parseIntParam } from '@/lib/api-utils';
+import { logAudit } from '@/lib/audit';
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
-        console.log("Fetching invoices GET route hit");
-        const invoices = await prisma.invoice.findMany({
-            orderBy: { createdAt: 'desc' }
-        });
-        console.log("Invoices fetched successfully", invoices.length);
-        return NextResponse.json(invoices);
-    } catch (error: any) {
-        console.error("CRITICAL ERROR IN /api/invoices GET:", error);
-        return NextResponse.json({ error: 'Error fetching invoices', details: error.message }, { status: 500 });
+        const { searchParams } = new URL(request.url);
+        const page = parseIntParam(searchParams.get('page'), 1, 1, 1000);
+        const limit = parseIntParam(searchParams.get('limit'), 50, 1, 100);
+        const skip = (page - 1) * limit;
+
+        const [invoices, total] = await Promise.all([
+            prisma.invoice.findMany({
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take: limit,
+            }),
+            prisma.invoice.count()
+        ]);
+
+        return NextResponse.json({ data: invoices, total, page, limit });
+    } catch (error) {
+        return handleApiError(error, 'Invoices GET');
     }
 }
 
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        console.log("Creating Invoice with data:", JSON.stringify(body, null, 2));
+
+        const parsed = invoiceCreateSchema.safeParse(body);
+        if (!parsed.success) {
+            return handleValidationError(parsed.error);
+        }
+
+        const data = parsed.data;
+        const items = data.items
+            ? (typeof data.items === 'string' ? data.items : JSON.stringify(data.items))
+            : null;
 
         const invoice = await prisma.invoice.create({
             data: {
-                data: body.data,
-                cnpj_cpf_emissor: body.cnpj_cpf_emissor,
-                nome_emissor: body.nome_emissor,
-                endereco_emissor: body.endereco_emissor,
-                cidade: body.cidade,
-                estado: body.estado,
-                valor_total: body.valor_total,
-                categoria: body.categoria,
-                status: body.status || 'PENDENTE',
-                source: body.source,
-                fileCopy: body.fileCopy,
-                auditReason: body.auditReason,
-                items: body.items ? JSON.stringify(body.items) : null,
-                numero_nota: body.numero_nota,
-                nome_tomador: body.nome_tomador,
-                cpf_cnpj_tomador: body.cpf_cnpj_tomador,
-                // Missing fields added:
-                serie_nota: body.serie_nota,
-                beneficiario: body.beneficiario,
-                endereco_tomador: body.endereco_tomador,
-                email_tomador: body.email_tomador,
-                telefone_emissor: body.telefone_emissor,
-                telefone_tomador: body.telefone_tomador
+                data: data.data,
+                cnpj_cpf_emissor: data.cnpj_cpf_emissor,
+                nome_emissor: data.nome_emissor,
+                endereco_emissor: data.endereco_emissor,
+                cidade: data.cidade,
+                estado: data.estado,
+                valor_total: data.valor_total != null ? String(data.valor_total) : undefined,
+                categoria: data.categoria,
+                status: data.status,
+                source: data.source,
+                fileCopy: data.fileCopy,
+                auditReason: data.auditReason,
+                items,
+                numero_nota: data.numero_nota,
+                serie_nota: data.serie_nota,
+                beneficiario: data.beneficiario,
+                nome_tomador: data.nome_tomador,
+                cpf_cnpj_tomador: data.cpf_cnpj_tomador,
+                endereco_tomador: data.endereco_tomador,
+                email_tomador: data.email_tomador,
+                telefone_emissor: data.telefone_emissor,
+                telefone_tomador: data.telefone_tomador
             }
         });
-        console.log("Invoice created successfully:", invoice.id);
+
+        await logAudit('CREATE', 'Invoice', invoice.id, {
+            nome_emissor: data.nome_emissor,
+            valor_total: data.valor_total,
+            source: data.source
+        });
+
         return NextResponse.json(invoice);
-    } catch (error: any) {
-        console.error("Error creating invoice:", error);
-        return NextResponse.json({ error: `Error creating invoice: ${error.message}` }, { status: 500 });
+    } catch (error) {
+        return handleApiError(error, 'Invoices POST');
     }
 }
