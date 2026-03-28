@@ -21,7 +21,7 @@ export const AdjustmentDashboard: React.FC<Props> = ({ assets, igpmHistory, ipca
     const rentedAssets = assets.filter(a => a.status === 'Locado' && a.leaseDetails);
 
     useEffect(() => {
-        const results: any = {};
+        const results: Record<string, AdjustmentResult & { nextDate: Date }> = {};
         rentedAssets.forEach(asset => {
             if (!asset.leaseDetails) return;
 

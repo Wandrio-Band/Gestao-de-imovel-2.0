@@ -26,7 +26,7 @@ export const Sidebar: React.FC = () => {
                             : 'text-gray-500 hover:bg-gray-100 scale-100'
                             }`}
                     >
-                        <span className={`material-symbols-outlined ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-600'}`}>{icon}</span>
+                        <span className={`material-symbols-outlined ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-600'}`} aria-hidden="true">{icon}</span>
                         <span className="font-bold text-sm">{label}</span>
                     </button>
                 </Link>
@@ -52,10 +52,10 @@ export const Sidebar: React.FC = () => {
     };
 
     return (
-        <div className="w-64 h-full bg-white border-r border-gray-100 flex flex-col flex-shrink-0 animate-fade-in text-[#0d121b]">
+        <aside className="w-64 h-full bg-white border-r border-gray-100 flex flex-col flex-shrink-0 animate-fade-in text-[#0d121b]" aria-label="Menu principal">
             <div className="p-6 flex items-center gap-3">
                 <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white">
-                    <span className="material-symbols-outlined text-lg">domain</span>
+                    <span className="material-symbols-outlined text-lg" aria-hidden="true">domain</span>
                 </div>
                 <div className="flex flex-col">
                     <span className="font-extrabold text-sm tracking-tight text-gray-900">ASSET<span className="text-primary">MANAGER</span></span>
@@ -63,9 +63,9 @@ export const Sidebar: React.FC = () => {
                 </div>
             </div>
 
-            <nav className="flex-1 px-4 py-6 overflow-y-auto no-scrollbar">
-                <div className="mb-6">
-                    <p className="px-4 text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2">Principal</p>
+            <nav className="flex-1 px-4 py-6 overflow-y-auto no-scrollbar" aria-label="Navegação do sistema">
+                <div className="mb-6" role="group" aria-label="Principal">
+                    <p className="px-4 text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2" aria-hidden="true">Principal</p>
                     <NavItem href="/" icon="dashboard" label="Dashboard" />
                     <NavItem
                         href="/properties"
@@ -81,8 +81,8 @@ export const Sidebar: React.FC = () => {
                     <NavItem href="/holdings" icon="pie_chart" label="Sócios & Cotas" />
                 </div>
 
-                <div className="mb-6">
-                    <p className="px-4 text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2">Financeiro</p>
+                <div className="mb-6" role="group" aria-label="Financeiro">
+                    <p className="px-4 text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2" aria-hidden="true">Financeiro</p>
                     <NavItem
                         href="/financing"
                         icon="payments"
@@ -98,8 +98,8 @@ export const Sidebar: React.FC = () => {
                     <NavItem href="/ai-assistant" icon="smart_toy" label="Assistente IA" />
                 </div>
 
-                <div>
-                    <p className="px-4 text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2">Documentos</p>
+                <div role="group" aria-label="Documentos">
+                    <p className="px-4 text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2" aria-hidden="true">Documentos</p>
                     <NavItem href="/reports" icon="description" label="Relatórios"
                         subItems={[
                             { href: '/reports', label: 'Relatório Executivo' },
@@ -110,15 +110,15 @@ export const Sidebar: React.FC = () => {
             </nav>
 
             <div className="p-4 border-t border-gray-100">
-                <button className="flex items-center gap-3 px-4 py-2 w-full rounded-lg hover:bg-gray-50 transition-colors group">
-                    <img src="https://picsum.photos/id/64/100/100" className="w-8 h-8 rounded-full border-2 border-white shadow-sm" alt="User" />
+                <button className="flex items-center gap-3 px-4 py-2 w-full rounded-lg hover:bg-gray-50 transition-colors group" aria-label="Menu do usuário Ricardo Silva">
+                    <img src="https://picsum.photos/id/64/100/100" className="w-8 h-8 rounded-full border-2 border-white shadow-sm" alt="Foto do perfil de Ricardo Silva" />
                     <div className="flex flex-col items-start">
                         <span className="text-xs font-bold text-gray-800">Ricardo Silva</span>
                         <span className="text-[10px] text-gray-400 font-medium">Administrador</span>
                     </div>
-                    <span className="material-symbols-outlined ml-auto text-gray-300 text-sm">expand_more</span>
+                    <span className="material-symbols-outlined ml-auto text-gray-300 text-sm" aria-hidden="true">expand_more</span>
                 </button>
             </div>
-        </div>
+        </aside>
     );
 };

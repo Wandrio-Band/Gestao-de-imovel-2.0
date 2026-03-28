@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Asset, ViewState, AmortizationResult } from '../types';
+import { formatMoney } from '@/lib/formatters';
 import { AmortizationModal } from './Forms/AmortizationModal';
 import { FinancingModal } from './Forms/FinancingModal';
 
@@ -30,9 +31,7 @@ export const DebtDetails: React.FC<DebtDetailsProps> = ({ asset, onNavigate, onS
     }
 
     const fin = asset.financingDetails;
-    const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
-
-    const handleSaveConditions = (newData: any) => {
+    const handleSaveConditions = (newData: Record<string, unknown>) => {
         if (asset && onUpdateAsset) {
             const updatedAsset = {
                 ...asset,
@@ -74,7 +73,7 @@ export const DebtDetails: React.FC<DebtDetailsProps> = ({ asset, onNavigate, onS
                         onClick={() => onNavigate('consolidated_statement', asset)}
                         className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 hover:bg-gray-50 shadow-sm flex items-center gap-2 transition-colors"
                     >
-                         <span className="material-symbols-outlined text-sm">picture_as_pdf</span> Extrato Consolidado
+                         <span className="material-symbols-outlined text-sm">payments</span> Painel de Pagamentos
                     </button>
                 </div>
             </div>
@@ -88,7 +87,7 @@ export const DebtDetails: React.FC<DebtDetailsProps> = ({ asset, onNavigate, onS
                              <span className="material-symbols-outlined text-9xl">account_balance_wallet</span>
                          </div>
                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 relative z-10">SALDO DEVEDOR ATUAL</p>
-                         <h2 className="text-4xl font-black text-white mb-2 relative z-10">{formatCurrency(fin.saldoDevedor || 0)}</h2>
+                         <h2 className="text-4xl font-black text-white mb-2 relative z-10">{formatMoney(fin.saldoDevedor || 0)}</h2>
                          <div className="flex items-center gap-2 relative z-10 mb-6">
                              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                              <span className="text-xs font-bold text-gray-300">Atualizado hoje</span>
@@ -116,7 +115,7 @@ export const DebtDetails: React.FC<DebtDetailsProps> = ({ asset, onNavigate, onS
                         </div>
                         <div className="flex justify-between items-end mb-2">
                             <div>
-                                <p className="text-2xl font-black text-gray-900">{formatCurrency(fin.phases?.mensais?.unitario || 0)}</p>
+                                <p className="text-2xl font-black text-gray-900">{formatMoney(fin.phases?.mensais?.unitario || 0)}</p>
                                 <p className="text-xs text-gray-400 font-medium">Parcela 14/360</p>
                             </div>
                             <button className="px-4 py-2 bg-black text-white rounded-lg text-xs font-bold shadow-md hover:bg-gray-800 transition-colors">

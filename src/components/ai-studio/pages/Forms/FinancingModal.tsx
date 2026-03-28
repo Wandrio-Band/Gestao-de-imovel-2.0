@@ -1,23 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { DatePicker } from '../../components/DatePicker';
 import { FinancingDetails } from '../../types';
+import { formatDecimal as formatCurrency } from '@/lib/formatters';
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: any) => void;
+  onSave: (data: Record<string, unknown>) => void;
   assetName?: string;
   initialData?: FinancingDetails;
 }
-
-// Helper para formatar moeda BRL para exibição
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'decimal',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-};
 
 // Helper para formatar apenas o número (sem R$) para inputs
 const formatNumber = (value: number) => {
@@ -59,12 +51,20 @@ export const FinancingModal: React.FC<ModalProps> = ({ isOpen, onClose, onSave, 
 
   const [subtotalConstrutora, setSubtotalConstrutora] = useState(0);
 
+  // Helper para formatar valor carregado do banco (pode vir como número ou string não formatada)
+  const ensureFormatted = (val: string | number | undefined | null): string => {
+      if (!val) return '';
+      if (typeof val === 'string' && val.includes(',')) return val; // já formatado
+      const num = typeof val === 'number' ? val : parseCurrency(String(val));
+      return num > 0 ? formatNumber(num) : '';
+  };
+
   // Preencher dados se initialData for fornecido
   useEffect(() => {
       if (isOpen && initialData) {
           setFormData({
-              valorTotal: initialData.valorTotal || '',
-              valorFinanciar: initialData.valorFinanciar || '', 
+              valorTotal: ensureFormatted(initialData.valorTotal),
+              valorFinanciar: ensureFormatted(initialData.valorFinanciar),
               dataAssinatura: initialData.dataAssinatura || '',
               vencimentoConstrutora: initialData.vencimentoConstrutora || '',
               vencimentoPrimeira: initialData.vencimentoPrimeira || '',
@@ -427,12 +427,13 @@ export const FinancingModal: React.FC<ModalProps> = ({ isOpen, onClose, onSave, 
                  </div>
 
                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                         <label className="text-[10px] font-bold text-gray-500 uppercase block mb-2">VENC. 1ª PARC. (BANCO)</label>
-                         <div className="bg-white border border-gray-300 hover:border-gray-400 rounded-xl p-3 flex justify-between items-center cursor-pointer transition-all shadow-sm">
-                             <span className="text-sm font-bold text-gray-900">{formData.vencimentoPrimeira ? formData.vencimentoPrimeira.split('-').reverse().join('/') : '--/--/----'}</span>
-                             <span className="material-symbols-outlined text-gray-400 text-sm">calendar_today</span>
-                         </div>
+                    <div className="bg-white p-1 rounded-xl">
+                        <DatePicker
+                           label="VENC. 1ª PARC. (BANCO)"
+                           value={formData.vencimentoPrimeira}
+                           onChange={(val) => setFormData(prev => ({ ...prev, vencimentoPrimeira: val }))}
+                           placeholder="dd/mm/aaaa"
+                        />
                     </div>
                     <div>
                         <label className="text-[10px] font-bold text-gray-500 uppercase block mb-2">PRAZO TOTAL (MESES)</label>

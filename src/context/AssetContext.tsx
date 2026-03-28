@@ -1,3 +1,29 @@
+/**
+ * @fileoverview Contexto global para gerenciamento de estado de ativos imobiliários.
+ * 
+ * Este módulo fornece um Context React que centraliza o gerenciamento de:
+ * 1. Navegação entre visualizações (dashboard, assets, financial, etc)
+ * 2. Lista de ativos com operações CRUD
+ * 3. Seleção de ativo em foco
+ * 4. Resultados de simulações de amortização
+ * 5. Relatórios salvos
+ * 
+ * Ciclo de vida:
+ * - AssetProvider: Wrapper que fornece contexto para toda a árvore de componentes
+ * - useAssetContext: Hook para consumir o contexto em componentes filhos
+ * 
+ * State tree:
+ * ```
+ * AssetContext
+ * ├── currentView: ViewState (dashboard | assets_list | asset_new | ...)
+ * ├── assets: Asset[] (lista de ativos)
+ * ├── selectedAsset: Asset | null (ativo em foco)
+ * ├── simulationResult: AmortizationResult | null (resultado de simulação)
+ * ├── savedReports: AmortizationResult[] (simulações salvas em memória)
+ * └── handlers: funções para atualizar estado
+ * ```
+ */
+
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
@@ -6,6 +32,34 @@ import { ViewState, Asset, AmortizationResult } from '@/components/ai-studio/typ
 import { getAssets, saveAsset, deleteAsset } from '@/app/actions/assets';
 import toast from 'react-hot-toast';
 
+/**
+ * @typedef {Object} AssetContextType
+ * @description Interface do contexto com todo estado e handlers de ativos.
+ * 
+ * @property {ViewState} currentView - Visualização ativa (dashboard, assets_list, etc)
+ * @property {Function} setCurrentView - Setter para currentView
+ * 
+ * @property {Asset[]} assets - Array de todos os ativos carregados
+ * @property {Function} setAssets - Setter para substituir lista completa de ativos
+ * 
+ * @property {Asset | null} selectedAsset - Ativo selecionado para edição/visualização
+ * @property {Function} setSelectedAsset - Setter para ativo selecionado
+ * 
+ * @property {AmortizationResult | null} simulationResult - Resultado de simulação de amortização
+ * @property {Function} setSimulationResult - Setter para resultado de simulação
+ * 
+ * @property {AmortizationResult[]} savedReports - Simulações salvas em memória (localStorage pode ser adicionado)
+ * @property {Function} setSavedReports - Setter para lista de relatórios salvos
+ * 
+ * @property {Function} handleNavigate - Navega para visualização e define ativo se necessário
+ * @property {Function} handleSimulationComplete - Marca simulação como completa e navega
+ * @property {Function} handleSaveReport - Salva relatório de simulação
+ * @property {Function} handleDeleteReport - Deleta relatório salvo
+ * @property {Function} handleViewSavedReport - Carrega relatório salvo para visualização
+ * @property {Function} handleUpdateAsset - Atualiza um ativo com otimismo
+ * @property {Function} handleUpdateAssetsBulk - Atualiza múltiplos ativos
+ * @property {Function} handleDeleteAsset - Deleta um ativo
+ */
 interface AssetContextType {
     currentView: ViewState;
     setCurrentView: (view: ViewState) => void;
@@ -29,6 +83,35 @@ interface AssetContextType {
 
 const AssetContext = createContext<AssetContextType | undefined>(undefined);
 
+/**
+ * Provider que encapsula a aplicação e fornece contexto de ativos.
+ * 
+ * @component
+ * @param {Object} props - Props do componente
+ * @param {ReactNode} props.children - Componentes filhos que consumirão o contexto
+ * @returns {ReactNode} JSX com contexto fornecido
+ * 
+ * @description
+ * Responsabilidades:
+ * 1. Carrega lista inicial de ativos ao montar
+ * 2. Sincroniza currentView com pathname via useEffect
+ * 3. Fornece handlers para operações CRUD de ativos
+ * 4. Implementa otimismo (atualiza UI antes de confirmar servidor)
+ * 5. Gerencia simulações de amortização e relatórios
+ * 
+ * Padrão de atualização otimista:
+ * - Atualiza estado local (setAssets)
+ * - Exibe toast de carregamento
+ * - Faz requisição ao servidor
+ * - Se sucesso: recarrega dados do servidor para garantir consistência
+ * - Se erro: faz rollback ao estado anterior
+ * 
+ * @example
+ * <AssetProvider>
+ *   <Dashboard />
+ *   <AssetList />
+ * </AssetProvider>
+ */
 export function AssetProvider({ children }: { children: ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
@@ -65,8 +148,8 @@ export function AssetProvider({ children }: { children: ReactNode }) {
         else if (pathname === '/financial') setCurrentView('financial_overview');
         else if (pathname === '/financial/schedule') setCurrentView('financial_schedule');
         else if (pathname === '/financial/debt') setCurrentView('debt_management');
-        else if (pathname.startsWith('/financial/details')) setCurrentView('financing_details');
         else if (pathname.startsWith('/financial/debt/details')) setCurrentView('debt_details');
+        else if (pathname.startsWith('/financial/details')) setCurrentView('financing_details');
         else if (pathname === '/partners') setCurrentView('audit');
         else if (pathname === '/reports') setCurrentView('report_executive');
         else if (pathname === '/reports/individual') setCurrentView('report_individual');
@@ -77,6 +160,19 @@ export function AssetProvider({ children }: { children: ReactNode }) {
         else if (pathname === '/financial/consolidated') setCurrentView('consolidated_statement');
     }, [pathname]);
 
+    /**
+     * Navega para visualização especificada e opcionalmente seleciona um ativo.
+     * 
+     * @function handleNavigate
+     * @param {ViewState} view - Visualização destino
+     * @param {Asset} [asset] - Ativo opcional para selecionar
+     * 
+     * @description
+     * 1. Atualiza currentView imediatamente (otimismo)
+     * 2. Se ativo fornecido, tenta buscar versão fresca do banco
+     * 3. Se nova asset, limpa seleção
+     * 4. Realiza router.push para rota correspondente
+     */
     const handleNavigate = (view: ViewState, asset?: Asset) => {
         // Update local state first (optimistic)
         setCurrentView(view);
@@ -115,11 +211,21 @@ export function AssetProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    /**
+     * Marca simulação como completa e navega para visualização de resultado.
+     * @function handleSimulationComplete
+     * @param {AmortizationResult} result - Resultado da simulação
+     */
     const handleSimulationComplete = (result: AmortizationResult) => {
         setSimulationResult(result);
         setCurrentView('amortization_result');
     };
 
+    /**
+     * Salva relatório de simulação na memória e navega para lista.
+     * @function handleSaveReport
+     * @param {AmortizationResult} report - Relatório para salvar
+     */
     const handleSaveReport = (report: AmortizationResult) => {
         const newReport = { ...report, id: Date.now().toString() };
         setSavedReports(prev => [newReport, ...prev]);
@@ -127,17 +233,48 @@ export function AssetProvider({ children }: { children: ReactNode }) {
         handleNavigate('saved_simulations');
     };
 
+    /**
+     * Deleta relatório salvo após confirmação do usuário.
+     * @function handleDeleteReport
+     * @param {string} id - ID do relatório para deletar
+     */
     const handleDeleteReport = (id: string) => {
         if (window.confirm('Tem certeza que deseja excluir esta simulação?')) {
             setSavedReports(prev => prev.filter(r => r.id !== id));
         }
     };
 
+    /**
+     * Carrega relatório salvo para visualização.
+     * @function handleViewSavedReport
+     * @param {AmortizationResult} report - Relatório para visualizar
+     */
     const handleViewSavedReport = (report: AmortizationResult) => {
         setSimulationResult(report);
         setCurrentView('amortization_result');
     };
 
+    /**
+     * Atualiza um ativo com padrão otimista (UI → Servidor → Validação).
+     * 
+     * @async
+     * @function handleUpdateAsset
+     * @param {Asset} updatedAsset - Ativo com dados atualizados
+     * 
+     * @description
+     * Padrão de atualização otimista:
+     * 1. Armazena estado anterior para rollback
+     * 2. Atualiza estado local imediatamente
+     * 3. Exibe toast de carregamento
+     * 4. Realiza requisição ao servidor
+     * 5. Se sucesso:
+     *    - Recarrega dados completos do servidor
+     *    - Exibe toast de sucesso
+     * 6. Se erro:
+     *    - Faz rollback ao estado anterior
+     *    - Exibe toast de erro
+     *    - Registra erro no console
+     */
     const handleUpdateAsset = async (updatedAsset: Asset) => {
         // Store previous state for potential rollback
         const previousAssets = [...assets];
@@ -179,6 +316,17 @@ export function AssetProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    /**
+     * Atualiza múltiplos ativos em lote.
+     * 
+     * @async
+     * @function handleUpdateAssetsBulk
+     * @param {Asset[]} updatedAssets - Array de ativos para atualizar
+     * 
+     * @description
+     * Nota: Implementação atual itera sobre cada ativo.
+     * Para produção, considerar criar ação de bulk update no servidor.
+     */
     const handleUpdateAssetsBulk = async (updatedAssets: Asset[]) => {
         setAssets(updatedAssets);
         // Persist each modified asset
@@ -188,6 +336,21 @@ export function AssetProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    /**
+     * Deleta um ativo com padrão otimista.
+     * 
+     * @async
+     * @function handleDeleteAsset
+     * @param {string} id - ID do ativo para deletar
+     * @throws {Promise<void>}
+     * 
+     * @description
+     * Mesmo padrão otimista que handleUpdateAsset:
+     * 1. Remove do estado local
+     * 2. Realiza requisição DELETE ao servidor
+     * 3. Se sucesso: recarrega lista completa
+     * 4. Se erro: faz rollback
+     */
     const handleDeleteAsset = async (id: string) => {
         // Store previous state for potential rollback
         const previousAssets = [...assets];
@@ -249,6 +412,19 @@ export function AssetProvider({ children }: { children: ReactNode }) {
     );
 }
 
+/**
+ * Hook para consumir o contexto de ativos em componentes filhos.
+ * 
+ * @hook
+ * @returns {AssetContextType} Contexto com estado e handlers
+ * @throws {Error} Se usado fora de um AssetProvider
+ * 
+ * @example
+ * function MyComponent() {
+ *   const { assets, handleUpdateAsset } = useAssetContext();
+ *   // ...
+ * }
+ */
 export function useAssetContext() {
     const context = useContext(AssetContext);
     if (context === undefined) {

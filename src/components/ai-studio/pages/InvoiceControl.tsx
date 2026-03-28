@@ -7,33 +7,12 @@ import { DashboardTab } from './invoices/DashboardTab';
 import { HistoryTab } from './invoices/HistoryTab';
 import { GmailTab } from './invoices/GmailTab';
 import { AuditTab } from './invoices/AuditTab';
+import { formatMoney, normalizeDate, normalizeValue } from '@/lib/formatters';
 
-declare global { interface Window { google: any; } }
+declare global { interface Window { google: Record<string, unknown>; } }
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
-const normalizeDate = (dateStr?: string): string => {
-    if (!dateStr) return new Date().toLocaleDateString('pt-BR');
-    let clean = dateStr.trim();
-    if (/^\d{2}\/\d{2}\/\d{2}$/.test(clean)) { const [d, m, y] = clean.split('/'); return `${d}/${m}/20${y}`; }
-    if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) { const [y, m, d] = clean.split('-'); return `${d}/${m}/${y}`; }
-    if (/^\d{4}\/\d{2}\/\d{2}$/.test(clean)) { const [y, m, d] = clean.split('/'); return `${d}/${m}/${y}`; }
-    return clean;
-};
-
-const formatMoney = (v: any) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
-
-function normalizeValue(val: string | number | undefined): number {
-    if (!val) return 0;
-    if (typeof val === 'number') return val;
-    let clean = val.toString().replace(/[R$\s]/g, '');
-    if (clean.includes(',') && (!clean.includes('.') || clean.lastIndexOf(',') > clean.lastIndexOf('.'))) {
-        clean = clean.replace(/\./g, '').replace(',', '.');
-    } else {
-        clean = clean.replace(/,/g, '');
-    }
-    return parseFloat(clean) || 0;
-}
 
 export const InvoiceControl: React.FC = () => {
     const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -65,14 +44,14 @@ export const InvoiceControl: React.FC = () => {
                 if (!res.ok) throw new Error("Falha ao buscar notas");
                 const json = await res.json();
                 const data = Array.isArray(json) ? json : (json.data || []);
-                const normalized: Invoice[] = data.map((d: any) => ({
+                const normalized: Invoice[] = data.map((d: Record<string, unknown>) => ({
                     ...d,
                     data: normalizeDate(d.data),
                     valor_total: d.valor_total ? Number(d.valor_total) : 0,
                     items: typeof d.items === 'string' ? JSON.parse(d.items || '[]') : (d.items || [])
                 }));
                 setInvoices(normalized);
-            } catch (e) { setError("Erro ao carregar dados locais."); }
+            } catch { setError("Erro ao carregar dados locais."); }
         };
         fetchInvoices();
     }, [refreshSignal]);
@@ -82,12 +61,25 @@ export const InvoiceControl: React.FC = () => {
             if (window.google && CLIENT_ID) {
                 tokenClient.current = window.google.accounts.oauth2.initTokenClient({
                     client_id: CLIENT_ID, scope: 'https://www.googleapis.com/auth/gmail.readonly',
-                    callback: (resp: any) => { if (resp?.access_token) { setGmailToken(resp.access_token); localStorage.setItem('gmail_token', resp.access_token); fetchGmail(resp.access_token); } },
+                    callback: async (resp: { access_token: string }) => {
+                        if (resp?.access_token) {
+                            setGmailToken(resp.access_token);
+                            // Store token in httpOnly cookie via server
+                            await fetch('/api/gmail/token', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ token: resp.access_token })
+                            });
+                            fetchGmail(resp.access_token);
+                        }
+                    },
                 });
             }
         };
-        const saved = localStorage.getItem('gmail_token');
-        if (saved) setGmailToken(saved);
+        // Check if token exists in cookie
+        fetch('/api/gmail/token').then(r => r.json()).then(data => {
+            if (data.hasToken) setGmailToken('cookie-stored');
+        }).catch(() => {});
         const timer = setTimeout(initGoogle, 1000);
         return () => clearTimeout(timer);
     }, []);
@@ -97,9 +89,10 @@ export const InvoiceControl: React.FC = () => {
         if (tokenClient.current) tokenClient.current.requestAccessToken({ prompt: 'select_account' });
     };
 
-    const handleDisconnectGmail = () => {
+    const handleDisconnectGmail = async () => {
         if (window.google && gmailToken) window.google.accounts.oauth2.revoke(gmailToken, () => { });
-        setGmailToken(null); setGmailMessages([]); localStorage.removeItem('gmail_token');
+        setGmailToken(null); setGmailMessages([]);
+        await fetch('/api/gmail/token', { method: 'DELETE' });
     };
 
     const fetchGmail = async (token: string) => {
@@ -119,7 +112,7 @@ export const InvoiceControl: React.FC = () => {
                 const imported = JSON.parse(localStorage.getItem('imported_gmail_ids') || '[]');
 
                 // Filter already processed messages to save API calls
-                const pendingMessages = data.messages.filter((m: any) => !ignored.includes(m.id) && !imported.includes(m.id));
+                const pendingMessages = data.messages.filter((m: { id: string; [key: string]: unknown }) => !ignored.includes(m.id) && !imported.includes(m.id));
                 const processed: GmailMessage[] = [];
 
                 // Process in chunks of 5 using Promise.all for parallelism
@@ -128,22 +121,22 @@ export const InvoiceControl: React.FC = () => {
                     const chunk = pendingMessages.slice(i, i + chunkSize);
                     setProcessingMsg(`Analisando lotes de e-mails (${i + 1} a ${Math.min(i + chunkSize, pendingMessages.length)} de ${pendingMessages.length})...`);
 
-                    const chunkPromises = chunk.map(async (m: any) => {
+                    const chunkPromises = chunk.map(async (m: { id: string; [key: string]: unknown }) => {
                         try {
                             const dRes = await fetch(`/api/gmail/messages/${m.id}`, { headers: { Authorization: `Bearer ${token}` } });
                             if (!dRes.ok) return null;
                             const d = await dRes.json();
 
                             const b64Dec = (s: string) => { try { return decodeURIComponent(escape(atob(s.replace(/-/g, '+').replace(/_/g, '/')))); } catch (e) { return ""; } };
-                            const getTxt = (p: any): string => {
+                            const getTxt = (p: { body?: { data?: string }; parts?: unknown[]; mimeType?: string }): string => {
                                 if (p.body?.data && p.mimeType === 'text/plain') return b64Dec(p.body.data);
-                                if (p.parts) return p.parts.map(getTxt).join('');
+                                if (p.parts) return (p.parts as { body?: { data?: string }; parts?: unknown[]; mimeType?: string }[]).map(getTxt).join('');
                                 return "";
                             };
 
                             let body = getTxt(d.payload) || d.snippet || "";
                             let aiInput = null;
-                            const findAtt = (parts: any[]): any => {
+                            const findAtt = (parts: Record<string, unknown>[]): Record<string, unknown> | undefined => {
                                 for (const p of parts) {
                                     if (p.body?.attachmentId && (p.mimeType === 'application/pdf' || p.mimeType.startsWith('image/'))) return p;
                                     if (p.parts) { const r = findAtt(p.parts); if (r) return r; }
@@ -165,8 +158,8 @@ export const InvoiceControl: React.FC = () => {
                                 if (ext.is_invoice) {
                                     return {
                                         id: d.id,
-                                        subject: d.payload.headers.find((h: any) => h.name === 'Subject')?.value,
-                                        date: d.payload.headers.find((h: any) => h.name === 'Date')?.value,
+                                        subject: d.payload.headers.find((h: { name: string; value: string }) => h.name === 'Subject')?.value,
+                                        date: d.payload.headers.find((h: { name: string; value: string }) => h.name === 'Date')?.value,
                                         extracted: ext,
                                         isDuplicate: !!findDuplicate(ext),
                                         rawEmail: d,
@@ -174,10 +167,10 @@ export const InvoiceControl: React.FC = () => {
                                         fullBody: body
                                     } as GmailMessage;
                                 }
-                            } catch (aiErr: any) {
+                            } catch (aiErr: unknown) {
                                 console.error(`AI Extraction failed for email ${m.id}:`, aiErr);
                             }
-                        } catch (msgErr: any) {
+                        } catch (msgErr: unknown) {
                             console.error(`Error processing email ${m.id}:`, msgErr);
                         }
                         return null;
@@ -189,14 +182,14 @@ export const InvoiceControl: React.FC = () => {
 
                 setGmailMessages(processed);
             }
-        } catch (e: any) {
+        } catch (e: unknown) {
             console.error("Gmail fetch error:", e);
-            setError(`Erro ao sincronizar: ${e.message}`);
+            setError(`Erro ao sincronizar: ${(e as Error).message}`);
         }
         setIsProcessing(false);
     };
 
-    const extractWithAI = async (input: any, isFile = true) => {
+    const extractWithAI = async (input: string | Record<string, unknown>, isFile = true) => {
         const res = await fetch('/api/ai/extract', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: isFile ? input.base64.split(',')[1] : input.text, isFile, mimeType: isFile ? input.type : 'text/plain' }) });
         const data = await res.json();
         if (!res.ok) {
@@ -206,8 +199,8 @@ export const InvoiceControl: React.FC = () => {
         return data;
     };
 
-    const findDuplicate = (newData: any) => {
-        const clean = (c: any) => String(c || '').replace(/\D/g, '');
+    const findDuplicate = (newData: Record<string, unknown>) => {
+        const clean = (c: string | number | null | undefined) => String(c || '').replace(/\D/g, '');
         const nCNPJ = clean(newData.cnpj_cpf_emissor);
         const nVal = normalizeValue(newData.valor_total).toFixed(2);
         const nNum = String(newData.numero_nota || '').trim();
@@ -231,8 +224,8 @@ export const InvoiceControl: React.FC = () => {
             localStorage.setItem('imported_gmail_ids', JSON.stringify([...imp, msg.id]));
             setGmailMessages(p => p.filter(m => m.id !== msg.id));
             triggerRefresh();
-        } catch (e: any) {
-            setError(`Erro ao importar: ${e.message || 'Falha desconhecida'}`);
+        } catch (e: unknown) {
+            setError(`Erro ao importar: ${(e as Error).message || 'Falha desconhecida'}`);
         }
         setIsProcessing(false);
     };
@@ -243,21 +236,21 @@ export const InvoiceControl: React.FC = () => {
             const res = await fetch(`/api/invoices/${id}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('Falha ao excluir');
             triggerRefresh();
-        } catch (e: any) { setError(`Erro ao excluir: ${e.message}`); }
+        } catch (e: unknown) { setError(`Erro ao excluir: ${(e as Error).message}`); }
     };
     const handleApprove = async (id: string) => {
         try {
             const res = await fetch(`/api/invoices/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'APROVADO' }) });
             if (!res.ok) throw new Error('Falha ao aprovar');
             triggerRefresh();
-        } catch (e: any) { setError(`Erro ao aprovar: ${e.message}`); }
+        } catch (e: unknown) { setError(`Erro ao aprovar: ${(e as Error).message}`); }
     };
-    const handleUpdate = async (id: string, data: any) => {
+    const handleUpdate = async (id: string, data: Record<string, unknown>) => {
         try {
             const res = await fetch(`/api/invoices/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
             if (!res.ok) throw new Error('Falha ao atualizar');
             triggerRefresh();
-        } catch (e: any) { setError(`Erro ao atualizar: ${e.message}`); }
+        } catch (e: unknown) { setError(`Erro ao atualizar: ${(e as Error).message}`); }
     };
 
     const availableFilters = useMemo(() => ({
@@ -297,7 +290,7 @@ export const InvoiceControl: React.FC = () => {
                                 try {
                                     const ext = await extractWithAI({ base64: reader.result as string, type: file.type }, true);
                                     await fetch('/api/invoices', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...ext, valor_total: normalizeValue(ext.valor_total), data: normalizeDate(ext.data), status: 'APROVADO', source: 'Upload', fileCopy: reader.result as string }) });
-                                } catch (e: any) { setError(`Erro no upload: ${e.message || 'Falha ao processar arquivo'}`); } r(null);
+                                } catch (e: unknown) { setError(`Erro no upload: ${(e as Error).message || 'Falha ao processar arquivo'}`); } r(null);
                             });
                         }
                         triggerRefresh(); setIsProcessing(false);

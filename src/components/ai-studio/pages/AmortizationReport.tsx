@@ -49,7 +49,7 @@ export const AmortizationReport: React.FC<Props> = ({ result, onBack, onSave }) 
 
     // 3. Table Data (Detailed)
     const generateTableRows = () => {
-        const rows: any[] = [];
+        const rows: Array<Record<string, string | number>> = [];
         const years = [2024, 2025, 2030, 2035];
         let balance = result.original.balance;
 

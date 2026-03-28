@@ -4,7 +4,7 @@ import { DatePicker } from '../../components/DatePicker';
 interface ModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (data: any) => void;
+    onSave: (data: Record<string, unknown>) => void;
 }
 
 // Helper para formatar apenas o número (sem R$)
@@ -68,7 +68,7 @@ export const LeaseModal: React.FC<ModalProps> = ({ isOpen, onClose, onSave }) =>
 
                 // Sort items by Y (desc) then X (asc) to ensure reading order
                 // usually pdfjs returns them correctly but not always
-                const items = textContent.items.map((item: any) => ({
+                const items = textContent.items.map((item: { str: string; transform: number[]; width: number; height: number }) => ({
                     str: item.str,
                     x: item.transform[4],
                     y: item.transform[5],
@@ -103,10 +103,8 @@ export const LeaseModal: React.FC<ModalProps> = ({ isOpen, onClose, onSave }) =>
                 fullText += pageText + "\n";
             }
 
-            console.log("📄 PDF Extracted Text Preview:", fullText.slice(0, 500)); // Debug log
-
             // Extract data using regex patterns
-            const extractedData: any = {
+            const extractedData: Record<string, string | number | null> = {
                 nomeInquilino: '',
                 documentoInquilino: '',
                 emailInquilino: '',
@@ -130,23 +128,13 @@ export const LeaseModal: React.FC<ModalProps> = ({ isOpen, onClose, onSave }) =>
                 let name = nomeMatch[1].trim();
                 locatarioIndex = nomeMatch.index || 0;
 
-                console.log("🔍 Name Match Debug:", {
-                    fullMatch: nomeMatch[0],
-                    capturedName: name,
-                    index: locatarioIndex
-                });
-
                 // Cleanup common OCR/Regex noise
                 name = name.replace(/^[:\.\s-]+/, '');
 
                 // Filter out likely legal text mismatches
                 if (name.length < 60 && !name.toLowerCase().includes("não terá") && !name.toLowerCase().includes("deverá")) {
                     extractedData.nomeInquilino = name;
-                } else {
-                    console.log("⚠️ Valid regex match, but filtered by heuristics:", name);
                 }
-            } else {
-                console.log("❌ No Tenant Name found via regex.");
             }
 
             // 2. CPF/CNPJ (Context Aware)
@@ -157,7 +145,6 @@ export const LeaseModal: React.FC<ModalProps> = ({ isOpen, onClose, onSave }) =>
                 const cpfMatch = textAfterName.match(/(\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2})/);
                 if (cpfMatch) {
                     extractedData.documentoInquilino = cpfMatch[1];
-                    console.log("✅ CPF/CNPJ Found (Context-Aware):", cpfMatch[1]);
                 }
             }
 
@@ -168,10 +155,7 @@ export const LeaseModal: React.FC<ModalProps> = ({ isOpen, onClose, onSave }) =>
                 const emailMatch = textAfterName.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]+)/);
                 if (emailMatch) {
                     extractedData.emailInquilino = emailMatch[1];
-                    console.log("✅ Email Found (Context-Aware):", emailMatch[1]);
                 }
-            } else {
-                console.log("⚠️ Skipping Email search to avoid Landlord email.");
             }
 
             // 4. Valor do aluguel (Improved Regex - Lazy Match)
@@ -249,7 +233,6 @@ export const LeaseModal: React.FC<ModalProps> = ({ isOpen, onClose, onSave }) =>
                         const endYear = endDate.getFullYear();
                         extractedData.fimContrato = `${endYear}-${endMonth}-${endDay}`;
 
-                        console.log(`✅ Calculated End Date based on Duration (${months} months):`, extractedData.fimContrato);
                     }
                 }
             }

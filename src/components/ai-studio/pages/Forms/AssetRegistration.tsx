@@ -77,6 +77,8 @@ export const AssetRegistration: React.FC<AssetRegistrationProps> = ({ onNavigate
         areaTotal, setAreaTotal,
         matricula, setMatricula,
         iptu, setIptu,
+        iptuValue, setIptuValue,
+        iptuFrequency, setIptuFrequency,
         condominio, setCondominio,
         registryOffice, setRegistryOffice,
         acquisitionDate, setAcquisitionDate,
@@ -322,6 +324,17 @@ export const AssetRegistration: React.FC<AssetRegistrationProps> = ({ onNavigate
                                     <div>
                                         <label className="block text-[10px] font-bold text-blue-900 uppercase tracking-wider mb-1 ml-1">Inscrição (IPTU)</label>
                                         <input type="text" value={iptu} onChange={(e) => setIptu(e.target.value)} className="w-full bg-white border border-gray-200 rounded-lg p-2 text-xs font-medium text-gray-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none placeholder-gray-300" placeholder="000.000-0" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-blue-900 uppercase tracking-wider mb-1 ml-1">Valor IPTU (R$)</label>
+                                        <input type="text" value={iptuValue} onChange={handleCurrencyInput(setIptuValue)} className="w-full bg-white border border-gray-200 rounded-lg p-2 text-xs font-medium text-gray-900 text-right focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none placeholder-gray-300" placeholder="0,00" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-blue-900 uppercase tracking-wider mb-1 ml-1">Frequência IPTU</label>
+                                        <select value={iptuFrequency} onChange={(e) => setIptuFrequency(e.target.value)} className="w-full bg-white border border-gray-200 rounded-lg p-2 text-xs font-medium text-gray-900 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none">
+                                            <option value="monthly">Mensal</option>
+                                            <option value="annual">Anual</option>
+                                        </select>
                                     </div>
                                     <div>
                                         <label className="block text-[10px] font-bold text-blue-900 uppercase tracking-wider mb-1 ml-1">Condomínio (R$)</label>

@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { extractBearerToken, apiError, handleApiError } from '@/lib/api-utils';
+import { extractGmailToken, apiError, handleApiError } from '@/lib/api-utils';
 
 export async function GET(req: NextRequest) {
     try {
         const searchParams = req.nextUrl.searchParams;
         const messageId = searchParams.get('messageId');
         const attachmentId = searchParams.get('attachmentId');
-        const token = extractBearerToken(req);
+        const cookieHeader = req.headers.get('cookie');
+        const token = extractGmailToken(req, cookieHeader);
 
         if (!messageId || !attachmentId) {
             return apiError('Parametros messageId e attachmentId obrigatorios', 400, 'MISSING_PARAMS');
@@ -25,7 +26,6 @@ export async function GET(req: NextRequest) {
         );
 
         if (!res.ok) {
-            const errText = await res.text();
             return apiError(`Erro ao buscar anexo: ${res.status}`, res.status, 'GMAIL_API_ERROR');
         }
 

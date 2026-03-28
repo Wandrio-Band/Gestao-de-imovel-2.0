@@ -76,7 +76,7 @@ export const DatabaseBackup: React.FC<DatabaseBackupProps> = ({ currentAssets, o
             }));
 
             // Sheet 2: Partners (ownership percentages)
-            const partnersData: any[] = [];
+            const partnersData: Record<string, unknown>[] = [];
             currentAssets.forEach(asset => {
                 if (asset.partners && asset.partners.length > 0) {
                     asset.partners.forEach(partner => {
@@ -93,7 +93,7 @@ export const DatabaseBackup: React.FC<DatabaseBackupProps> = ({ currentAssets, o
             });
 
             // Sheet 3: Financing (financial details)
-            const financingData: any[] = [];
+            const financingData: Record<string, unknown>[] = [];
             currentAssets.forEach(asset => {
                 if (asset.financingDetails) {
                     const f = asset.financingDetails;
@@ -121,7 +121,7 @@ export const DatabaseBackup: React.FC<DatabaseBackupProps> = ({ currentAssets, o
             });
 
             // Sheet 4: Leases (rental details)
-            const leasesData: any[] = [];
+            const leasesData: Record<string, unknown>[] = [];
             currentAssets.forEach(asset => {
                 if (asset.leaseDetails) {
                     const l = asset.leaseDetails;
@@ -172,8 +172,8 @@ export const DatabaseBackup: React.FC<DatabaseBackupProps> = ({ currentAssets, o
 
             toast.success(`Backup Excel criado! ${currentAssets.length} ativos exportados em 4 planilhas.`);
             setShowExportDropdown(false);
-        } catch (error: any) {
-            toast.error(`Erro ao gerar Excel: ${error.message}`);
+        } catch (error: unknown) {
+            toast.error(`Erro ao gerar Excel: ${(error as Error).message}`);
             console.error('Excel export error:', error);
         }
     };
@@ -202,19 +202,19 @@ export const DatabaseBackup: React.FC<DatabaseBackupProps> = ({ currentAssets, o
                 if (!assetsSheet) {
                     throw new Error('Sheet "Assets" não encontrada no arquivo Excel');
                 }
-                const assetsData: any[] = XLSX.utils.sheet_to_json(assetsSheet);
+                const assetsData: Record<string, unknown>[] = XLSX.utils.sheet_to_json(assetsSheet);
 
                 // Read Partners sheet
                 const partnersSheet = workbook.Sheets['Partners'];
-                const partnersData: any[] = partnersSheet ? XLSX.utils.sheet_to_json(partnersSheet) : [];
+                const partnersData: Record<string, unknown>[] = partnersSheet ? XLSX.utils.sheet_to_json(partnersSheet) : [];
 
                 // Read Financing sheet
                 const financingSheet = workbook.Sheets['Financing'];
-                const financingData: any[] = financingSheet ? XLSX.utils.sheet_to_json(financingSheet) : [];
+                const financingData: Record<string, unknown>[] = financingSheet ? XLSX.utils.sheet_to_json(financingSheet) : [];
 
                 // Read Leases sheet
                 const leasesSheet = workbook.Sheets['Leases'];
-                const leasesData: any[] = leasesSheet ? XLSX.utils.sheet_to_json(leasesSheet) : [];
+                const leasesData: Record<string, unknown>[] = leasesSheet ? XLSX.utils.sheet_to_json(leasesSheet) : [];
 
                 // Reconstruct Asset objects
                 assetsToImport = assetsData.map(row => {
@@ -329,8 +329,8 @@ export const DatabaseBackup: React.FC<DatabaseBackupProps> = ({ currentAssets, o
             } else {
                 throw new Error('Falha na importação');
             }
-        } catch (error: any) {
-            toast.error(`Erro: ${error.message}`, { id: toastId });
+        } catch (error: unknown) {
+            toast.error(`Erro: ${(error as Error).message}`, { id: toastId });
             console.error('Import error:', error);
         } finally {
             setImporting(false);

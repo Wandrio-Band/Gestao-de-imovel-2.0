@@ -1,9 +1,25 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 import { revalidatePath } from 'next/cache';
 import stringSimilarity from 'string-similarity';
 import { logAudit } from '@/lib/audit';
+import { requireAuth } from '@/lib/auth-guard';
+import { conciliationSchema, pixEntrySchema } from '@/lib/action-schemas';
+import { DEFAULT_IPCA_RATE } from '@/lib/constants';
+
+/**
+ * @module actions/rental
+ * @description Server Actions para o módulo de gestão de aluguéis.
+ * Inclui conciliação PIX (matching de extratos bancários com inquilinos),
+ * reajuste automático de contratos por IPCA, importação de contratos via PDF/OCR,
+ * e gestão de aliases aprendidos.
+ * 
+ * O sistema de conciliação usa duas estratégias de matching:
+ * 1. **Exact match**: busca na tabela TenantAlias (nomes já aprendidos)
+ * 2. **Fuzzy match**: string-similarity com threshold de 0.3 nos nomes dos inquilinos
+ */
 
 // Types
 export interface PixEntry {
@@ -28,9 +44,33 @@ export interface ConciliationResult {
 }
 
 /**
- * Process a list of bank statement entries to find tenant matches.
+ * Processa uma lista de entradas de extrato bancário e sugere matches com inquilinos.
+ * 
+ * Para cada entrada PIX:
+ * 1. Busca match exato na tabela TenantAlias (aliases já aprendidos)
+ * 2. Se não encontrou, usa fuzzy matching (string-similarity) com threshold > 0.3
+ * 3. Retorna sugestão com nível de confiança e tipo de match
+ * 
+ * Otimização: pré-busca todos os inquilinos com aliases e contratos ativos em uma query.
+ * 
+ * @param {PixEntry[]} entries - Lista de lançamentos PIX do extrato bancário
+ * @returns {Promise<ConciliationResult[]>} Lista de resultados com sugestões de match
+ * 
+ * @example
+ * const results = await processConciliation([
+ *   { date: '2026-03-15', amount: 2500, description: 'JOAO DA SILVA PIX' }
+ * ]);
+ * // results[0].suggestion?.matchType === 'FUZZY_SUGGESTION'
+ * // results[0].suggestion?.confidence === 0.85
  */
 export async function processConciliation(entries: PixEntry[]): Promise<ConciliationResult[]> {
+    await requireAuth();
+
+    const validation = conciliationSchema.safeParse(entries);
+    if (!validation.success) {
+        return [];
+    }
+
     const results: ConciliationResult[] = [];
 
     // Pre-fetch all tenants and aliases to avoid N+1 queries
@@ -102,13 +142,31 @@ export async function processConciliation(entries: PixEntry[]): Promise<Concilia
 }
 
 /**
- * Confirm a payment match: records the payment and learns the alias.
+ * Confirma um pagamento e aprende o alias do pagador para futura conciliação.
+ * 
+ * Fluxo:
+ * 1. Registra o pagamento na tabela PaymentHistory (status: 'paid', método: 'PIX')
+ * 2. Cria ou atualiza o alias na tabela TenantAlias (upsert por tenantId + aliasName)
+ * 3. Registra ação no log de auditoria
+ * 
+ * @param {string} tenantId - UUID do inquilino confirmado
+ * @param {string|undefined} contractId - UUID do contrato (opcional se inquilino sem contrato ativo)
+ * @param {PixEntry} pixEntry - Dados do lançamento PIX original
+ * @returns {Promise<{success: boolean, error?: string}>} Resultado da operação
  */
 export async function confirmPaymentAndLearn(
     tenantId: string,
     contractId: string | undefined,
     pixEntry: PixEntry
 ) {
+    const session = await requireAuth();
+    const actorName = session.user?.name || session.user?.email || 'Unknown';
+
+    const entryValidation = pixEntrySchema.safeParse(pixEntry);
+    if (!entryValidation.success) {
+        return { success: false, error: 'Dados do PIX inválidos' };
+    }
+
     try {
         // 1. Record Payment
         if (contractId) {
@@ -160,21 +218,34 @@ export async function confirmPaymentAndLearn(
             'CONCILIATION',
             'Contract',
             contractId || tenantId,
-            { amount: pixEntry.amount, learnedAlias: !existingAlias, description: pixEntry.description }
+            { amount: pixEntry.amount, learnedAlias: !existingAlias, description: pixEntry.description },
+            actorName
         );
 
         return { success: true };
     } catch (e) {
-        console.error('Error confirming payment:', e);
+        logger.error('Error confirming payment:', e);
         return { success: false, error: e };
     }
 }
 
 /**
- * Check and apply annual rent adjustments based on IPCA.
- * Allows simulating the Cron Job.
+ * Verifica e aplica reajustes anuais de aluguel baseados no IPCA.
+ * 
+ * Regras de elegibilidade:
+ * - Contrato deve estar ativo (status: 'active')
+ * - Mês atual deve ser o mês de aniversário do contrato (startDate.month === currentMonth)
+ * - Contrato deve ter pelo menos 1 ano de vigência
+ * - Não pode ter sido reajustado no ano corrente (lastAdjustment.year !== currentYear)
+ * 
+ * @returns {Promise<{success: boolean, updatedCount?: number, error?: unknown}>}
+ * 
+ * @remarks
+ * - IPCA está SIMULADO com valor fixo de 4.5% — em produção, usar fetchIndexHistory() do serviço BCB
+ * - Não atualiza o Asset.rentalValue automaticamente (apenas Contract.currentValue)
  */
 export async function checkAndApplyAdjustments() {
+    await requireAuth();
     try {
         const today = new Date();
         const currentMonth = today.getMonth() + 1; // 1-12
@@ -199,9 +270,24 @@ export async function checkAndApplyAdjustments() {
                 const lastAdjYear = contract.lastAdjustment ? contract.lastAdjustment.getFullYear() : 0;
                 if (lastAdjYear === today.getFullYear()) continue;
 
-                // SIMULATED IPCA FETCH
-                // In production, fetch from BCB API
-                const ipcaAcumulado = 0.045; // 4.5%
+                // TODO: Futura integração com API do BCB para taxa IPCA real
+                // Busca IPCA real da API do BCB (com fallback para taxa padrão)
+                let ipcaAcumulado = DEFAULT_IPCA_RATE;
+                try {
+                    const indexHistory = await fetchIndexHistory('IPCA', 24);
+                    if (indexHistory.length > 0) {
+                        const adjustment = calculateRentAdjustment(
+                            Number(contract.currentValue),
+                            contract.lastAdjustmentDate || contract.startDate,
+                            indexHistory
+                        );
+                        if (!adjustment.error) {
+                            ipcaAcumulado = adjustment.accumulatedFactor - 1;
+                        }
+                    }
+                } catch (bcbError) {
+                    logger.warn('Falha ao buscar IPCA do BCB, usando taxa padrão:', bcbError);
+                }
 
                 const newValue = Number(contract.currentValue) * (1 + ipcaAcumulado);
 
@@ -234,16 +320,34 @@ export async function checkAndApplyAdjustments() {
         revalidatePath('/assets');
         return { success: true, updatedCount };
     } catch (e) {
-        console.error('Error applying adjustments:', e);
+        logger.error('Error applying adjustments:', e);
         return { success: false, error: e };
     }
 }
 
 /**
- * Import Contract Data (simulating OCR).
- * Creates Tenant and Contract from "OCR" data.
+ * Importa dados de contrato extraídos via IA/OCR e cria Tenant + Contract no banco.
+ * 
+ * Pressupõe que a extração via Gemini AI já foi feita pela UI e os dados
+ * chegam estruturados. Cria o inquilino se não existir (busca por documento).
+ * 
+ * @param {PDFImportData} data - Dados estruturados do contrato extraído
+ * @returns {Promise<{success: boolean, contractId?: string, error?: unknown}>}
  */
-export async function importContractFromPDF(data: any) {
+export interface PDFImportData {
+    tenantName: string;
+    tenantDocument: string;
+    tenantEmail?: string;
+    tenantPhone?: string;
+    assetId: string;
+    startDate: string;
+    rentValue: number;
+    dueDay?: number;
+    penaltyPercent?: number;
+}
+
+export async function importContractFromPDF(data: PDFImportData) {
+    await requireAuth();
     // This function assumes the UI or another service already called the AI/OCR 
     // and returns structured data to be saved.
 
@@ -283,15 +387,19 @@ export async function importContractFromPDF(data: any) {
 
         return { success: true, contractId: contract.id };
     } catch (e) {
-        console.error('Error importing contract:', e);
+        logger.error('Error importing contract:', e);
         return { success: false, error: e };
     }
 }
 
 /**
- * Get all learned aliases for management UI.
+ * Retorna todos os aliases aprendidos pelo sistema de conciliação PIX.
+ * Usado na tela de configuração (/conciliacao/config) para gerenciamento.
+ * 
+ * @returns {Promise<Array>} Lista de aliases com nome do inquilino, ordenada por último uso
  */
 export async function getTenantAliases() {
+    await requireAuth();
     try {
         const aliases = await prisma.tenantAlias.findMany({
             include: {
@@ -303,15 +411,20 @@ export async function getTenantAliases() {
         });
         return aliases;
     } catch (e) {
-        console.error('Error fetching aliases:', e);
+        logger.error('Error fetching aliases:', e);
         return [];
     }
 }
 
 /**
- * Delete a learned alias.
+ * Remove um alias aprendido da tabela TenantAlias.
+ * Útil quando o sistema aprendeu um nome incorreto durante a conciliação.
+ * 
+ * @param {string} aliasId - UUID do alias a remover
+ * @returns {Promise<{success: boolean, error?: unknown}>}
  */
 export async function deleteAlias(aliasId: string) {
+    await requireAuth();
     try {
         await prisma.tenantAlias.delete({
             where: { id: aliasId }
@@ -319,7 +432,7 @@ export async function deleteAlias(aliasId: string) {
         revalidatePath('/conciliacao/config');
         return { success: true };
     } catch (e) {
-        console.error('Error deleting alias:', e);
+        logger.error('Error deleting alias:', e);
         return { success: false, error: e };
     }
 }

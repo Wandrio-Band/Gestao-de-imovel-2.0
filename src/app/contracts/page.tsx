@@ -3,8 +3,8 @@ import { getAssets } from '@/app/actions/assets';
 import ContractsClient from './client';
 
 export default async function ContractsPage() {
-    const contracts = await getContracts();
+    const result = await getContracts();
     const assets = await getAssets();
 
-    return <ContractsClient initialContracts={contracts} initialAssets={assets} />;
+    return <ContractsClient initialResult={result} initialAssets={assets} />;
 }

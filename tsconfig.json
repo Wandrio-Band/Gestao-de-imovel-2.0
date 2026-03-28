@@ -40,6 +40,7 @@
     "node_modules",
     "sistema-patrimonial-pro (1)",
     "playwright.config.ts",
+    "e2e",
     "tests",
     "tools",
     "list_models.ts"

@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { ViewState, Asset, ReconciliationItem, IRPFExtractedAsset } from '../types';
-import { GoogleGenAI, Type } from "@google/genai";
+// GoogleGenAI moved to server-side /api/ai/irpf-extract route
 import * as pdfjsLib from 'pdfjs-dist';
 import { IRPFReviewCardList } from './IRPFReviewCardList';
 import { IRPFItemReviewModal } from './IRPFItemReviewModal';
@@ -53,15 +53,9 @@ export const ImportIRPF: React.FC<ImportIRPFProps> = ({ onNavigate, onUpdateAsse
                     setSelectedPartner(parsed.selectedPartner || PARTNERS[0]);
                     setStep('review');
 
-                    console.log('🔄 Restored IRPF import state:', {
-                        items: parsed.reconciliationList?.length || 0,
-                        partner: parsed.selectedPartner,
-                        age: Math.round(age / 1000 / 60) + ' minutes ago'
-                    });
                 } else {
                     // Clear old data
                     localStorage.removeItem(STORAGE_KEY);
-                    console.log('🗑️ Cleared old IRPF import state (> 24hrs)');
                 }
             } catch (e) {
                 console.error('Failed to restore IRPF state:', e);
@@ -79,20 +73,17 @@ export const ImportIRPF: React.FC<ImportIRPFProps> = ({ onNavigate, onUpdateAsse
                 timestamp: Date.now()
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
-            console.log('💾 Saved IRPF import state:', reconciliationList.length, 'items');
         }
     }, [reconciliationList, selectedPartner, step]);
 
-    // Safe initialization of PDF Worker
+    // Safe initialization of PDF Worker (uses local bundled worker to avoid version mismatch)
     useEffect(() => {
         try {
-            const workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.530/build/pdf.worker.min.mjs`;
-            const lib = pdfjsLib as any;
-            if (lib.GlobalWorkerOptions) {
-                lib.GlobalWorkerOptions.workerSrc = workerSrc;
-            } else if (lib.default && lib.default.GlobalWorkerOptions) {
-                lib.default.GlobalWorkerOptions.workerSrc = workerSrc;
-            }
+            const workerSrc = new URL(
+                'pdfjs-dist/build/pdf.worker.min.mjs',
+                import.meta.url
+            ).toString();
+            pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
         } catch (e) {
             console.warn("Could not initialize PDF Worker", e);
         }
@@ -100,9 +91,7 @@ export const ImportIRPF: React.FC<ImportIRPFProps> = ({ onNavigate, onUpdateAsse
 
     // --- Step A: Extração de Texto (Client-side) ---
     const extractTextFromPDF = async (file: File): Promise<string> => {
-        console.log('📄 Iniciando extração PDF:', file.name);
         const arrayBuffer = await file.arrayBuffer();
-        console.log('📦 ArrayBuffer size:', arrayBuffer.byteLength);
 
         // Handle generic import structure
         const lib = (pdfjsLib as any).default || pdfjsLib;
@@ -111,7 +100,6 @@ export const ImportIRPF: React.FC<ImportIRPFProps> = ({ onNavigate, onUpdateAsse
         let fullText = '';
 
         const numPages = pdf.numPages;
-        console.log('📖 Total páginas:', numPages);
         for (let i = 1; i <= numPages; i++) {
             setProgress(Math.round((i / numPages) * 30)); // 0-30%
             setProgressStatus(`Lendo página ${i} de ${numPages}...`);
@@ -119,7 +107,7 @@ export const ImportIRPF: React.FC<ImportIRPFProps> = ({ onNavigate, onUpdateAsse
             const page = await pdf.getPage(i);
             const textContent = await page.getTextContent();
             const pageText = textContent.items
-                .map((item: any) => item.str)
+                .map((item: { str: string }) => item.str)
                 .join(' ')
                 .replace(/\0/g, '')           // Remove caracteres nulos
                 .replace(/\s+/g, ' ')          // Normaliza espaços múltiplos
@@ -127,157 +115,30 @@ export const ImportIRPF: React.FC<ImportIRPFProps> = ({ onNavigate, onUpdateAsse
             fullText += pageText + '\n';
         }
 
-        console.log('✅ Texto extraído - Total caracteres:', fullText.length);
-        console.log('📝 Primeiros 500 chars:', fullText.substring(0, 500));
         return fullText;
     };
 
-    // --- Step B: Inteligência (Gemini 3 Flash) ---
+    // --- Step B: Inteligência (via server-side API route) ---
     const analyzeTextWithGemini = async (text: string): Promise<IRPFExtractedAsset[]> => {
         setProgress(40);
-        setProgressStatus('Enviando para Auditoria IA (Gemini 3.0)...');
+        setProgressStatus('Enviando para Auditoria IA...');
 
-        // Read API Key from Next.js environment
-        const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+        const response = await fetch('/api/ai/irpf-extract', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text })
+        });
 
-        if (!apiKey) {
-            console.warn("API Key missing, using mock data for demo.");
-            throw new Error("API Key missing");
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error || `Erro na extração IA: ${response.statusText}`);
         }
 
-        const MAX_RETRIES = 3;
-        const RETRY_DELAY = 2000;
+        setProgress(70);
+        setProgressStatus('Estruturando dados...');
 
-        const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-        let lastError = null;
-        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-            try {
-                const ai = new GoogleGenAI({ apiKey });
-                const slicedText = text.length > 50000 ? text.slice(-50000) : text;
-
-                const response = await ai.models.generateContent({
-                    model: 'gemini-3-flash-preview',
-                    contents: `DOCUMENTO: Declaração de Imposto de Renda Pessoa Física (IRPF) - Receita Federal do Brasil
-
-TAREFA: Analise o texto abaixo e extraia TODOS os IMÓVEIS declarados na seção "BENS E DIREITOS" (códigos 11-19).
-
-CAMPOS OBRIGATÓRIOS POR IMÓVEL:
-- id_declaracao: Código/número do bem no IR
-- descricao: Texto INTEGRAL E COMPLETO da declaração do imóvel (copiar exatamente como está no PDF)
-- descricao_resumida: Resumo curto e claro (ex: "Apto 905 - Porto Velho/RO")
-- valor_ir_atual: Valor declarado em reais (apenas número, sem R$ ou vírgulas)
-- matricula: Número da matrícula no cartório
-- iptu: Inscrição Municipal (IPTU)
-- logradouro: Nome completo da rua/avenida
-- numero: Número do imóvel
-- complemento: Bloco, apartamento, sala (se houver)
-- bairro: Nome do bairro
-- municipio: Nome da cidade
-- uf: Sigla do estado (2 letras)
-- cep: Código postal
-- area_total: Área em metros quadrados (apenas número)
-- cartorio: Nome completo do cartório
-- data_aquisicao: Data de aquisição no formato DD/MM/AAAA (ex: "15/03/2012")
-- origem_aquisicao: Forma de aquisição ( ex: "Compra e Venda", "Doação", "Herança", "Leilão", "Financiamento")
-
-IMPORTANTE: 
-- Normalize valores monetários (ex: "R$ 270.000,00" → 270000)
-- Extraia endereço COMPLETO separando rua, número, complemento e bairro
-- Se algum campo não estiver disponível, deixe vazio mas não omita o campo
-- Para origem_aquisicao, infira pelo contexto se não estiver explícito (ex: "Adquirido de fulano" -> "Compra e Venda")
-
-TEXTO DO PDF:
-${slicedText}
-
-OBS: Se não encontrar a seção "BENS E DIREITOS" explicitamente, procure por qualquer menção a imóveis, apartamentos, terrenos ou propriedades declaradas. Retorne TODOS os imóveis encontrados, mesmo que parcialmente preenchidos.`,
-                    config: {
-                        systemInstruction: `Você é um AUDITOR FISCAL ESPECIALIZADO em extração de dados de Declaração de IRPF da Receita Federal do Brasil.
-
-MISSÃO: Extrair TODOS os imóveis da seção "BENS E DIREITOS" com MÁXIMA PRECISÃO.
-
-REGRAS OBRIGATÓRIAS:
-1. Normalize valores R$ → number (ex: "R$ 1.250.000,00" → 1250000)
-2. Crie descrição_resumida curta e clara (ex: "Apto 905 - Porto Velho/RO")
-3. Se campo não disponível, deixe string vazia (não omita)
-4. Extraia ENDEREÇO COMPLETO: separe rua, número, complemento, bairro
-5. Area em m²: extraia APENAS NÚMEROS do texto (ex: "102,7 m²" → 102.7, "área de 200m2" → 200). Se houver fração ideal, ignore e pegue a área privativa ou total do imóvel.`,
-                        responseMimeType: "application/json",
-                        responseSchema: {
-                            type: Type.ARRAY,
-                            items: {
-                                type: Type.OBJECT,
-                                properties: {
-                                    id_declaracao: { type: Type.STRING },
-                                    descricao: { type: Type.STRING },
-                                    descricao_resumida: { type: Type.STRING },
-                                    valor_ir_atual: { type: Type.NUMBER },
-                                    matricula: { type: Type.STRING },
-                                    iptu: { type: Type.STRING },
-                                    logradouro: { type: Type.STRING },
-                                    numero: { type: Type.STRING },
-                                    complemento: { type: Type.STRING },
-                                    bairro: { type: Type.STRING },
-                                    municipio: { type: Type.STRING },
-                                    uf: { type: Type.STRING },
-                                    cep: { type: Type.STRING },
-                                    area_total: { type: Type.NUMBER },
-                                    cartorio: { type: Type.STRING },
-                                    data_aquisicao: { type: Type.STRING },
-                                    origem_aquisicao: { type: Type.STRING }
-                                },
-                                required: ['id_declaracao', 'descricao', 'descricao_resumida', 'valor_ir_atual', 'municipio', 'uf']
-                            }
-                        }
-                    }
-                });
-
-                setProgress(70);
-                setProgressStatus('Estruturando dados...');
-
-                const jsonText = response.text || "[]";
-                const data = JSON.parse(jsonText);
-
-                // DEBUG: Log extracted data to console
-                console.log('🔍 GEMINI EXTRACTED DATA:', data);
-                console.log('📊 Total items extracted:', data.length);
-                if (data.length > 0) {
-                    console.log('📍 First item sample:', {
-                        municipio: data[0].municipio,
-                        uf: data[0].uf,
-                        cep: data[0].cep,
-                        logradouro: data[0].logradouro,
-                        bairro: data[0].bairro
-                    });
-                }
-
-                return data;
-
-            } catch (error: any) {
-                console.error(`=== ERRO GEMINI (Tentativa ${attempt + 1}) ===`);
-                console.error(error);
-                lastError = error;
-
-                // Only retry on 503 or 429
-                const isRetryable = error?.message?.includes('overloaded') || error?.status === 503 || error?.code === 503 || error?.status === 429 || error?.code === 429;
-
-                if (!isRetryable) {
-                    break;
-                }
-
-                if (attempt < MAX_RETRIES - 1) {
-                    setProgressStatus(`Gemini ocupado. Re-tentando em ${RETRY_DELAY / 1000}s... (Tentativa ${attempt + 1})`);
-                    await sleep(RETRY_DELAY * (attempt + 1));
-                }
-            }
-        }
-
-        // If we reach here, all retries failed
-        if (lastError?.message?.includes('overloaded') || lastError?.code === 503) {
-            throw new Error("API Gemini está temporariamente sobrecarregada após múltiplas tentativas. Por favor, aguarde alguns segundos e tente novamente.");
-        }
-
-        throw new Error(`Erro ao processar PDF com Gemini: ${lastError?.message || 'Erro desconhecido'}`);
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
     };
 
     // --- Step C: Reconciliação (Heurística) ---
@@ -318,17 +179,6 @@ REGRAS OBRIGATÓRIAS:
             const similarity = commonKeywords.length / allKeywords.size;
 
             // Debug log for low similarity cases
-            if (similarity < 0.5) {
-                console.log(`🔍 Similarity calculation:`, {
-                    pdf: pdfDesc,
-                    asset: assetName,
-                    pdfKeywords,
-                    assetKeywords,
-                    common: commonKeywords,
-                    similarity: (similarity * 100).toFixed(0) + '%'
-                });
-            }
-
             return similarity;
         };
 
@@ -356,7 +206,6 @@ REGRAS OBRIGATÓRIAS:
                     const assetMat = asset.matricula.replace(/\D/g, '');
 
                     if (itemMat.length > 2 && assetMat.length > 2 && itemMat === assetMat) {
-                        console.log(`✅ ID MATCH: Matricula (${itemMat}) - Bypassing Veto`);
                         score += 2000;
                         bypassVeto = true;
                     }
@@ -371,16 +220,11 @@ REGRAS OBRIGATÓRIAS:
                     // Only veto if BOTH are present, BOTH are longer than 3 chars, and NEITHER allows the other
                     if (itemCity.length > 3 && assetCity.length > 3) {
                         if (itemCity !== assetCity && !itemCity.includes(assetCity) && !assetCity.includes(itemCity)) {
-                            console.log(`⛔ VETO: City Mismatch [${item.descricao_resumida} vs ${asset.name}]`, {
-                                pdfCity: itemCity,
-                                assetCity: assetCity
-                            });
                             score -= 2000; // Nuclear penalty
                         }
                     }
 
                     if (item.uf && asset.state && item.uf.toUpperCase() !== asset.state.toUpperCase()) {
-                        console.log(`⛔ VETO: State Mismatch (${item.uf} vs ${asset.state})`);
                         score -= 2000;
                     }
 
@@ -391,7 +235,6 @@ REGRAS OBRIGATÓRIAS:
                         // Only veto if both have valid numbers and they are different
                         if (itemMat.length > 2 && assetMat.length > 2 && itemMat !== assetMat) {
                             score -= 2000;
-                            console.log(`⛔ VETO: Matricula Mismatch (${item.matricula} vs ${asset.matricula})`);
                         }
                     }
                     if (item.iptu && asset.iptu) {
@@ -400,7 +243,6 @@ REGRAS OBRIGATÓRIAS:
                         // Only veto if both have valid numbers and they are different
                         if (itemIptu.length > 5 && assetIptu.length > 5 && itemIptu !== assetIptu) {
                             score -= 2000;
-                            console.log(`⛔ VETO: IPTU Mismatch (${item.iptu} vs ${asset.iptu})`);
                         }
                     }
                 }
@@ -408,16 +250,13 @@ REGRAS OBRIGATÓRIAS:
                 // Award points for geographic matches (instead of requiring them)
                 if (cityMatch && stateMatch) {
                     score += 50; // RESTORED CONFIDENCE: Exact City+State is a strong indicator
-                    console.log(`✅ Geographic match: ${item.municipio}/${item.uf} = ${asset.city}/${asset.state}`);
                 } else if (cityMatch && !asset.state) {
                     score += 35;
-                    console.log(`⚠️ Partial match: City OK but asset missing state (${item.municipio})`);
                 } else if (cityMatch) {
                     // City matches but state differs? Rare but possible (e.g. same name cities). Check later logic.
                     score += 10;
                 } else if (!asset.city && !asset.state) {
                     // Asset has no geographic data - allow comparison based on description only
-                    console.log(`⚠️ Asset "${asset.name}" missing city/state - will rely on description similarity`);
                 } else {
                     // Different cities - logged above in veto
                 }
@@ -445,44 +284,21 @@ REGRAS OBRIGATÓRIAS:
 
                     const number = match ? match[1] : null;
 
-                    if (number) {
-                        console.log(`🔢 Extracted unit number from "${str}": ${number}`);
-                    }
-
                     return number;
                 };
 
                 const pdfAptNum = extractAptNumber(item.descricao);
                 const assetAptNum = extractAptNumber(asset.name);
 
-                console.log(`🔍 Comparing: PDF="${item.descricao_resumida}" vs Asset="${asset.name}"`, {
-                    cityMatch,
-                    stateMatch,
-                    pdfApt: pdfAptNum,
-                    assetApt: assetAptNum,
-                    aptMatch: pdfAptNum === assetAptNum
-                });
-
-
-
                 // SPECIAL CASE: If city + apt# match (state optional), consider auto-approve
                 // This handles cases like "Apt 905 Porto Velho" where description varies but key identifiers match
                 const hasStrongGeographicMatch = cityMatch && (stateMatch || !asset.state);
 
                 if (pdfAptNum && assetAptNum && pdfAptNum === assetAptNum && hasStrongGeographicMatch) {
-                    console.log(`✅ AUTO-APPROVED: City+Apt# match (${item.municipio} #${pdfAptNum})`, {
-                        pdf: item.descricao_resumida,
-                        asset: asset.name,
-                        stateMatch: stateMatch ? 'Yes' : asset.state ? 'No' : 'Asset missing state'
-                    });
                     // Skip similarity check entirely - proceed with high score
                     score += 100; // High confidence match
                 } else if (pdfAptNum && assetAptNum && pdfAptNum !== assetAptNum) {
                     // NEW: Explicit penalty for mismatched unit numbers
-                    console.log(`⛔ MISMATCH: Unit numbers differ (${pdfAptNum} vs ${assetAptNum}) - applying penalty`, {
-                        pdf: item.descricao_resumida,
-                        asset: asset.name
-                    });
                     score -= 500; // INCREASED PENALTY from 100 to 500
                 } else {
                     // Normal similarity check with boost
@@ -491,13 +307,6 @@ REGRAS OBRIGATÓRIAS:
 
                     // Reduced threshold from 10% to 5% (to handle very different description lengths)
                     if (finalSimilarity < 0.05) {
-                        console.log(`⚠️ Low description similarity (${(finalSimilarity * 100).toFixed(0)}%) - skipping match`, {
-                            pdf: item.descricao_resumida,
-                            asset: asset.name,
-                            city: item.municipio,
-                            descSim: (descSimilarity * 100).toFixed(0) + '%',
-                            aptBoost: aptNumberBoost > 0 ? '+50% (apt#' + pdfAptNum + ')' : '0%'
-                        });
                         return; // Skip this asset, score = 0
                     }
 
@@ -571,15 +380,6 @@ REGRAS OBRIGATÓRIAS:
             };
         });
 
-        console.log('🔍 RECONCILIATION RESULTS:', results.map(r => ({
-            desc: r.extracted.descricao_resumida,
-            desc_len: r.extracted.descricao?.length || 0,
-            city: r.extracted.municipio,
-            score: r.matchScore,
-            status: r.status,
-            matchedTo: r.matchedAssetId ? currentAssets.find(a => a.id === r.matchedAssetId)?.name : 'none'
-        })));
-
         setReconciliationList(results);
         setStep('review');
     };
@@ -595,10 +395,10 @@ REGRAS OBRIGATÓRIAS:
             try {
                 const data = await analyzeTextWithGemini(text);
                 reconcileData(data);
-            } catch (geminiError: any) {
+            } catch (geminiError: unknown) {
                 console.error('Gemini error:', geminiError);
                 setStep('upload');
-                alert(`❌ ERRO AO PROCESSAR COM GEMINI\n\n${geminiError.message}\n\n💡 Dica: Se a API está sobrecarregada, aguarde 10-30 segundos e tente novamente.`);
+                alert(`❌ ERRO AO PROCESSAR COM GEMINI\n\n${(geminiError as Error).message}\n\n💡 Dica: Se a API está sobrecarregada, aguarde 10-30 segundos e tente novamente.`);
             }
         } catch (err) {
             console.error('PDF extraction error:', err);
@@ -663,13 +463,10 @@ REGRAS OBRIGATÓRIAS:
         // If we are in dashboard mode and this is just a data update (not confirm), update list without side effects
         // We detect this by checking if 'editedData' is present AND it's not a commit action.
         if (reviewViewMode === 'dashboard' && action !== 'update_commit' as any && editedData && Object.keys(editedData).length > 0) {
-            console.log('📝 Dashboard Edit - Updating State Only', updatedItem);
             setReconciliationList(prev => prev.map(item => item.id === currentItem.id ? updatedItem : item));
             // Don't save to DB yet, don't remove from list. User will click "Salvar Alterações" globally.
             return;
         }
-
-        console.log('💾 Saving item immediately to database:', effectiveAction, updatedItem);
 
         // Save to database immediately (if not ignore)
         if (effectiveAction !== 'ignore') {
@@ -687,6 +484,7 @@ REGRAS OBRIGATÓRIAS:
                             irpfStatus: 'Declarado',
                             matricula: updatedItem.extracted.matricula || existingAsset.matricula,
                             iptu: updatedItem.extracted.iptu || existingAsset.iptu,
+                            iptuRegistration: updatedItem.extracted.iptu || existingAsset.iptuRegistration || existingAsset.iptu,
                             registryOffice: updatedItem.extracted.cartorio || existingAsset.registryOffice,
                             street: updatedItem.extracted.logradouro || existingAsset.street,
                             number: updatedItem.extracted.numero || existingAsset.number,
@@ -700,7 +498,6 @@ REGRAS OBRIGATÓRIAS:
                             acquisitionOrigin: updatedItem.extracted.origem_aquisicao || existingAsset.acquisitionOrigin
                         };
                         await handleUpdateAsset(assetToUpdate);
-                        console.log('✅ Updated existing asset in database');
                     }
                 } else if (action === 'create') {
                     // Create new asset
@@ -723,6 +520,7 @@ REGRAS OBRIGATÓRIAS:
                         zipCode: updatedItem.extracted.cep || '',
                         matricula: updatedItem.extracted.matricula,
                         iptu: updatedItem.extracted.iptu,
+                        iptuRegistration: updatedItem.extracted.iptu,
                         registryOffice: updatedItem.extracted.cartorio,
                         areaTotal: updatedItem.extracted.area_total,
                         acquisitionDate: updatedItem.extracted.data_aquisicao,
@@ -735,14 +533,7 @@ REGRAS OBRIGATÓRIAS:
                         image: ''
                     };
 
-                    console.log('🚨 DEBUG: Creating New Asset - Payload:', JSON.stringify(newAsset, null, 2));
-
-                    if (!newAsset.description) {
-                        console.warn('⚠️ WARNING: Description is empty for new asset!');
-                    }
-
                     await handleUpdateAsset(newAsset);
-                    console.log('✅ Created new asset in database');
                 }
             } catch (error) {
                 console.error('❌ Error saving asset:', error);
@@ -771,8 +562,6 @@ REGRAS OBRIGATÓRIAS:
 
         setReviewModalOpen(false);
 
-        // Show success feedback
-        console.log('✅ Item saved and removed from pending list');
         toast.success(action === 'ignore' ? 'Item ignorado' : 'Ativo salvo com sucesso!');
     };
 
@@ -791,15 +580,10 @@ REGRAS OBRIGATÓRIAS:
     };
 
     const handleClearAll = () => {
-        console.log('🧹 handleClearAll called - button clicked!');
-        console.log('📋 Current reconciliationList length:', reconciliationList.length);
-
-        console.log('💾 Clearing state...');
         setStep('upload');
         setReconciliationList([]);
         setFile(null);
         localStorage.removeItem(STORAGE_KEY);
-        console.log('🗑️ Cleared all items and localStorage');
 
         toast.success('Lista de importação limpa com sucesso!');
     };
@@ -813,10 +597,7 @@ REGRAS OBRIGATÓRIAS:
             let updatedCount = 0;
 
             for (const item of reconciliationList) {
-                console.log('🚨 [IRPF] Processing item:', item.action, item.extracted.descricao_resumida);
-
                 if (item.action === 'ignore') {
-                    console.log('⏭️ [IRPF] Skipping ignored item');
                     continue;
                 }
 
@@ -829,6 +610,7 @@ REGRAS OBRIGATÓRIAS:
                             irpfStatus: 'Declarado',
                             matricula: item.extracted.matricula || existingAsset.matricula,
                             iptu: item.extracted.iptu || existingAsset.iptu,
+                            iptuRegistration: item.extracted.iptu || existingAsset.iptuRegistration || existingAsset.iptu,
                             registryOffice: item.extracted.cartorio || existingAsset.registryOffice,
                             street: item.extracted.logradouro || existingAsset.street,
                             number: item.extracted.numero || existingAsset.number,
@@ -843,9 +625,7 @@ REGRAS OBRIGATÓRIAS:
                             description: item.extracted.descricao !== undefined ? item.extracted.descricao : existingAsset.description,
                         };
 
-                        console.log('🔄 [IRPF] Updating existing asset:', updatedAsset.id, updatedAsset.name);
                         await handleUpdateAsset(updatedAsset);
-                        console.log('✅ [IRPF] Updated successfully');
                         updatedCount++;
                     }
                 } else if (item.action === 'create') {
@@ -868,6 +648,7 @@ REGRAS OBRIGATÓRIAS:
                         zipCode: item.extracted.cep || '',
                         matricula: item.extracted.matricula,
                         iptu: item.extracted.iptu,
+                        iptuRegistration: item.extracted.iptu,
                         areaTotal: item.extracted.area_total,
                         acquisitionDate: item.extracted.data_aquisicao,
                         acquisitionOrigin: item.extracted.origem_aquisicao,
@@ -884,9 +665,7 @@ REGRAS OBRIGATÓRIAS:
                 }
             }
 
-            console.log(`🏁 [IRPF] Finished! Created: ${savedCount}, Updated: ${updatedCount}`);
             localStorage.removeItem(STORAGE_KEY);
-            console.log('🧹 [IRPF] Cleared localStorage');
 
             toast.success(`✅ ${savedCount} novos ativos criados, ${updatedCount} atualizados!`, { id: toastId });
             setStep('success');
@@ -1046,7 +825,35 @@ REGRAS OBRIGATÓRIAS:
                     )}
 
                     {/* Footer Actions */}
-
+                    {step === 'review' && reconciliationList.length > 0 && (
+                        <div className="sticky bottom-0 bg-white/90 backdrop-blur-md border-t border-gray-200 p-4 flex items-center justify-between rounded-b-2xl shadow-lg mt-4 z-20">
+                            <div className="flex items-center gap-3">
+                                <span className="material-symbols-outlined text-blue-600">inventory_2</span>
+                                <span className="text-sm font-bold text-gray-700">
+                                    {reconciliationList.filter(i => i.action !== 'ignore').length} ativo(s) para salvar
+                                </span>
+                                <span className="text-xs text-gray-400">
+                                    ({reconciliationList.filter(i => i.action === 'update').length} atualizar, {reconciliationList.filter(i => i.action === 'create').length} criar)
+                                </span>
+                            </div>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={handleClearAll}
+                                    className="px-5 py-2.5 border border-gray-300 text-gray-600 rounded-xl font-bold hover:bg-gray-50 transition-all flex items-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined text-sm">close</span>
+                                    Descartar
+                                </button>
+                                <button
+                                    onClick={handleFinalSave}
+                                    className="px-8 py-2.5 bg-green-600 text-white rounded-xl font-bold shadow-lg hover:bg-green-700 hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined text-sm">save</span>
+                                    Salvar Todos os Ativos
+                                </button>
+                            </div>
+                        </div>
+                    )}
 
                     {/* STEP 4: SUCCESS */}
                     {step === 'success' && (

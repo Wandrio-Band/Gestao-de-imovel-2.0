@@ -8,7 +8,7 @@ export default function NewAssetPage() {
     const router = useRouter();
     const { handleUpdateAsset } = useAssetContext();
 
-    const handleNavigate = (view: any) => {
+    const handleNavigate = (view: string) => {
         router.push('/properties');
     };
 

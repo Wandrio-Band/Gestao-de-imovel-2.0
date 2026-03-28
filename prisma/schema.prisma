@@ -37,7 +37,9 @@ model Asset {
 
   // Documentation
   matricula         String?
-  iptu              String?
+  iptuRegistration  String?                      // Inscrição municipal (ex: 03.09.043.0273.175)
+  iptuValue         Decimal? @default(0)         // Valor mensal ou anual do IPTU em R$
+  iptuFrequency     String? @default("monthly")  // monthly or annual
   condominio        String? // Novo Campo
   registryOffice    String?
   acquisitionDate   String? // ISO Date string
@@ -108,7 +110,7 @@ model Lease {
   id              String @id @default(uuid())
   assetId         String
   asset           Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  
+
   nomeInquilino   String
   documentoInquilino String?
   emailInquilino     String?
@@ -122,6 +124,8 @@ model Lease {
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  @@index([assetId])
 }
 
 model Invoice {
@@ -167,6 +171,11 @@ model Invoice {
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  @@index([status])
+  @@index([categoria])
+  @@index([createdAt])
+    @@index([numero_nota])
 }
 
 // --- RENTAL MANAGEMENT MODULE ---
@@ -203,6 +212,11 @@ model Contract {
   payments        PaymentHistory[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  @@index([assetId])
+  @@index([tenantId])
+  @@index([status])
+    @@index([dueDate])
 }
 
 model TenantAlias {
@@ -230,6 +244,10 @@ model PaymentHistory {
   
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+
+  @@index([contractId])
+  @@index([status])
+    @@index([dueDate])
 }
 
 model SystemAuditLog {

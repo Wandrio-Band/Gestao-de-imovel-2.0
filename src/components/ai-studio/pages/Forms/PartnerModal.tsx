@@ -48,7 +48,7 @@ export const PartnerModal: React.FC<PartnerModalProps> = ({ isOpen, onClose, cur
         setPartners(newPartners);
     };
 
-    const handleUpdatePartner = (index: number, field: keyof PartnerShare, value: any) => {
+    const handleUpdatePartner = (index: number, field: keyof PartnerShare, value: string | number) => {
         const newPartners = [...partners];
         const partner = { ...newPartners[index], [field]: value };
         

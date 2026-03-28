@@ -1,32 +1,59 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ContractData, getContracts } from '@/app/actions/contracts';
+import { ContractData, PaginatedResult, getContracts } from '@/app/actions/contracts';
 import { Asset } from '@/components/ai-studio/types';
 import { saveStandaloneContract } from '@/app/actions/contract-management';
 import { ContractForm } from '@/components/forms/ContractForm';
+import { Pagination } from '@/components/ui/pagination';
+
+interface ContractFormData {
+    id?: string;
+    assetId?: string;
+    contractNumber?: string | null;
+    nomeInquilino: string;
+    documentoInquilino: string;
+    emailInquilino: string;
+    valorAluguel: string;
+    diaVencimento: string;
+    tipoGarantia: string;
+    inicioVigencia: string;
+    fimContrato: string;
+    indexador: string;
+}
 
 interface ContractsClientProps {
-    initialContracts: ContractData[];
+    initialResult: PaginatedResult<ContractData>;
     initialAssets: Asset[];
 }
 
-export default function ContractsClient({ initialContracts, initialAssets }: ContractsClientProps) {
-    const [contracts, setContracts] = useState<ContractData[]>(initialContracts);
-    const [assets, setAssets] = useState<Asset[]>(initialAssets);
+export default function ContractsClient({ initialResult, initialAssets }: ContractsClientProps) {
+    const [contracts, setContracts] = useState<ContractData[]>(initialResult.data);
+    const [assets] = useState<Asset[]>(initialAssets);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedContract, setSelectedContract] = useState<any>(null);
+    const [selectedContract, setSelectedContract] = useState<ContractFormData | null>(null);
     const [loading, setLoading] = useState(false);
+    const [page, setPage] = useState(initialResult.page);
+    const [limit, setLimit] = useState(initialResult.limit);
+    const [total, setTotal] = useState(initialResult.total);
+    const [totalPages, setTotalPages] = useState(initialResult.totalPages);
 
-    const refreshList = async () => {
+    const fetchPage = async (p: number, l: number = limit) => {
         setLoading(true);
         try {
-            const data = await getContracts();
-            setContracts(data);
+            const result = await getContracts(p, l);
+            setContracts(result.data);
+            setPage(result.page);
+            setTotal(result.total);
+            setTotalPages(result.totalPages);
+            setLimit(result.limit);
         } finally {
             setLoading(false);
         }
     };
+
+    const handlePageChange = (newPage: number) => fetchPage(newPage);
+    const handleLimitChange = (newLimit: number) => fetchPage(1, newLimit);
 
     const handleNewContract = () => {
         setSelectedContract(null);
@@ -35,7 +62,6 @@ export default function ContractsClient({ initialContracts, initialAssets }: Con
 
     const handleEdit = (contract: ContractData) => {
         setIsModalOpen(true);
-        // Safely handle potential undefined values
         setSelectedContract({
             id: contract.id,
             assetId: contract.assetId,
@@ -43,8 +69,8 @@ export default function ContractsClient({ initialContracts, initialAssets }: Con
             nomeInquilino: contract.tenantName,
             documentoInquilino: '',
             emailInquilino: '',
-            valorAluguel: contract.currentValue ? contract.currentValue.toString() : '0', // Fix: use currentValue
-            diaVencimento: 'Dia 5', // Default or need to fetch
+            valorAluguel: contract.currentValue ? contract.currentValue.toString() : '0',
+            diaVencimento: 'Dia 5',
             tipoGarantia: '',
             inicioVigencia: contract.startDate instanceof Date ? contract.startDate.toISOString().split('T')[0] : (typeof contract.startDate === 'string' ? (contract.startDate as string).split('T')[0] : ''),
             fimContrato: '',
@@ -52,9 +78,9 @@ export default function ContractsClient({ initialContracts, initialAssets }: Con
         });
     };
 
-    const handleSaveContract = async (data: any) => {
+    const handleSaveContract = async (data: ContractFormData) => {
         await saveStandaloneContract(data);
-        await refreshList();
+        await fetchPage(page);
     };
 
     return (
@@ -68,17 +94,17 @@ export default function ContractsClient({ initialContracts, initialAssets }: Con
                 </div>
                 <div className="flex gap-3">
                     <button
-                        onClick={refreshList}
+                        onClick={() => fetchPage(page)}
                         className={`p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors ${loading ? 'animate-spin' : ''}`}
-                        title="Atualizar lista"
+                        aria-label="Atualizar lista"
                     >
-                        <span className="material-symbols-outlined">refresh</span>
+                        <span className="material-symbols-outlined" aria-hidden="true">refresh</span>
                     </button>
                     <button
                         onClick={handleNewContract}
                         className="bg-black text-white px-6 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-gray-800 transition-colors shadow-lg shadow-gray-200"
                     >
-                        <span className="material-symbols-outlined text-[20px]">add</span>
+                        <span className="material-symbols-outlined text-[20px]" aria-hidden="true">add</span>
                         Novo Contrato
                     </button>
                 </div>
@@ -89,12 +115,12 @@ export default function ContractsClient({ initialContracts, initialAssets }: Con
                     <table className="w-full text-left text-sm">
                         <thead className="bg-gray-50 border-b border-gray-100">
                             <tr>
-                                <th className="px-6 py-4 font-bold text-gray-500 uppercase text-xs">ID</th>
-                                <th className="px-6 py-4 font-bold text-gray-500 uppercase text-xs">Imóvel e Inquilino</th>
-                                <th className="px-6 py-4 font-bold text-gray-500 uppercase text-xs">Vigência</th>
-                                <th className="px-6 py-4 font-bold text-gray-500 uppercase text-xs">Valor Atual</th>
-                                <th className="px-6 py-4 font-bold text-gray-500 uppercase text-xs">Status</th>
-                                <th className="px-6 py-4 text-right font-bold text-gray-500 uppercase text-xs">Ações</th>
+                                <th scope="col" className="px-6 py-4 font-bold text-gray-500 uppercase text-xs">ID</th>
+                                <th scope="col" className="px-6 py-4 font-bold text-gray-500 uppercase text-xs">Imóvel e Inquilino</th>
+                                <th scope="col" className="px-6 py-4 font-bold text-gray-500 uppercase text-xs">Vigência</th>
+                                <th scope="col" className="px-6 py-4 font-bold text-gray-500 uppercase text-xs">Valor Atual</th>
+                                <th scope="col" className="px-6 py-4 font-bold text-gray-500 uppercase text-xs">Status</th>
+                                <th scope="col" className="px-6 py-4 text-right font-bold text-gray-500 uppercase text-xs">Ações</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -134,9 +160,9 @@ export default function ContractsClient({ initialContracts, initialAssets }: Con
                                             <button
                                                 onClick={() => handleEdit(contract)}
                                                 className="text-gray-400 hover:text-blue-600 transition-colors p-1 inline-block"
-                                                title="Editar Contrato"
+                                                aria-label={`Editar contrato ${contract.contractNumber || contract.id}`}
                                             >
-                                                <span className="material-symbols-outlined">edit_document</span>
+                                                <span className="material-symbols-outlined" aria-hidden="true">edit_document</span>
                                             </button>
                                         </td>
                                     </tr>
@@ -145,6 +171,16 @@ export default function ContractsClient({ initialContracts, initialAssets }: Con
                         </tbody>
                     </table>
                 </div>
+
+                <Pagination
+                    page={page}
+                    totalPages={totalPages}
+                    total={total}
+                    limit={limit}
+                    onPageChange={handlePageChange}
+                    onLimitChange={handleLimitChange}
+                    className="border-t border-gray-100"
+                />
             </div>
 
             <ContractForm

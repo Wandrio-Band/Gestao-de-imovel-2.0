@@ -3,10 +3,12 @@ import { prisma } from '@/lib/prisma';
 import { invoiceUpdateSchema } from '@/lib/validations';
 import { apiError, handleApiError, handleValidationError } from '@/lib/api-utils';
 import { logAudit } from '@/lib/audit';
+import { requireAuth } from '@/lib/auth-guard';
 
 export async function PUT(request: Request, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
     try {
+        await requireAuth();
         const body = await request.json();
 
         const parsed = invoiceUpdateSchema.safeParse(body);
@@ -64,6 +66,7 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
 export async function DELETE(request: Request, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
     try {
+        await requireAuth();
         await prisma.invoice.delete({
             where: { id: params.id }
         });

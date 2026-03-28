@@ -17,7 +17,7 @@ export const PaymentMatchCard: React.FC<PaymentMatchCardProps> = ({ entry, sugge
 
     const [isSearching, setIsSearching] = React.useState(false);
     const [searchQuery, setSearchQuery] = React.useState('');
-    const [searchResults, setSearchResults] = React.useState<any[]>([]);
+    const [searchResults, setSearchResults] = React.useState<Array<{ id: string; name: string; document: string; activeContractId?: string; assetName?: string }>>([]);
     const [isSearchingApi, setIsSearchingApi] = React.useState(false);
 
     // Dynamic import to avoid circular dep if needed, or pass search function as prop. 
@@ -120,7 +120,7 @@ export const PaymentMatchCard: React.FC<PaymentMatchCardProps> = ({ entry, sugge
                             <div className="mt-4 max-h-60 overflow-y-auto">
                                 <SearchList
                                     query={searchQuery}
-                                    onSelect={(tenant: any) => {
+                                    onSelect={(tenant: { id: string; name: string; activeContractId?: string; assetName?: string }) => {
                                         const manualSuggestion: MatchSuggestion = {
                                             tenantId: tenant.id,
                                             tenantName: tenant.name,
@@ -143,8 +143,8 @@ export const PaymentMatchCard: React.FC<PaymentMatchCardProps> = ({ entry, sugge
 };
 
 // Internal component to handle async search effect cleanly
-function SearchList({ query, onSelect }: { query: string, onSelect: (t: any) => void }) {
-    const [list, setList] = React.useState<any[]>([]);
+function SearchList({ query, onSelect }: { query: string, onSelect: (t: { id: string; name: string; activeContractId?: string; assetName?: string }) => void }) {
+    const [list, setList] = React.useState<Array<{ id: string; name: string; document: string; activeContractId?: string; assetName?: string }>>([]);
     const [loading, setLoading] = React.useState(false);
 
     React.useEffect(() => {

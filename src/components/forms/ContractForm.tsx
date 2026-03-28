@@ -102,7 +102,7 @@ export const ContractForm: React.FC<ContractFormProps> = ({ isOpen, onClose, onS
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
                 const textContent = await page.getTextContent();
-                const textItems = textContent.items.map((item: any) => item.str);
+                const textItems = textContent.items.map((item: { str: string }) => item.str);
                 fullText += textItems.join(' ') + "\n";
             }
 

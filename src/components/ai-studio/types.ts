@@ -24,7 +24,10 @@ export interface Asset {
 
   // Documentation
   matricula?: string;
-  iptu?: string;
+  iptu?: string;           // Legacy alias for iptuRegistration
+  iptuRegistration?: string; // Inscrição municipal
+  iptuValue?: number;        // Valor monetário do IPTU (R$)
+  iptuFrequency?: string;    // 'monthly' or 'annual'
   condominio?: string;
   registryOffice?: string; // Cartório
   acquisitionDate?: string;
@@ -56,7 +59,7 @@ export interface LeaseDetails {
   inicioVigencia: string;
   fimContrato: string;
   indexador: string;
-  contractFile?: any; // File object locally, simpler for now
+  contractFile?: File | null; // File object locally, simpler for now
 }
 
 export interface KPICardProps {

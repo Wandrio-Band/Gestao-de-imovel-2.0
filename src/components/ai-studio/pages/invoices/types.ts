@@ -13,7 +13,7 @@ export interface Invoice {
     fileCopy?: string;
     auditReason?: string | null;
     createdAt?: number;
-    items?: any[];
+    items?: Array<{ descricao: string; quantidade: number; valor: number; categoria?: string }>;
     numero_nota?: string;
     nome_tomador?: string;
     cpf_cnpj_tomador?: string;
@@ -45,10 +45,10 @@ export interface GmailMessage {
     id: string;
     subject: string;
     date?: string;
-    extracted?: any;
+    extracted?: Record<string, unknown>;
     isDuplicate: boolean;
-    rawEmail: any;
-    aiInput?: any;
+    rawEmail: Record<string, unknown>;
+    aiInput?: string | File;
     fullBody?: string;
 }
 

@@ -68,8 +68,8 @@ export const IRPFAuditDashboard: React.FC<IRPFAuditDashboardProps> = ({ items, a
     }: {
         label: string,
         fieldKey: string,
-        pdfValue: any,
-        systemValue: any,
+        pdfValue: string | number | null,
+        systemValue: string | number | null,
         type?: 'text' | 'money' | 'textarea' | 'select',
         options?: string[]
     }) => {
@@ -79,7 +79,7 @@ export const IRPFAuditDashboard: React.FC<IRPFAuditDashboardProps> = ({ items, a
 
         // Local state for editing could be here, but for simplicity we rely on parent update via onBlur/onChange logic
         // Actually, we need to lift the change handler.
-        const handleLocalChange = (newValue: any) => {
+        const handleLocalChange = (newValue: string | number) => {
             if (!selectedItem) return;
             onSave(selectedItem, 'update', { [fieldKey]: newValue });
         };

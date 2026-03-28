@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
-import { extractBearerToken, parseIntParam, apiError, handleApiError } from '@/lib/api-utils';
+import { extractGmailToken, parseIntParam, apiError, handleApiError } from '@/lib/api-utils';
 
 export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
-        const token = extractBearerToken(request);
+        const cookieHeader = request.headers.get('cookie');
+        const token = extractGmailToken(request, cookieHeader);
 
         if (!token) {
             return apiError('Token de autorizacao ausente ou invalido', 401, 'UNAUTHORIZED');

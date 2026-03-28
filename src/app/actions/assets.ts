@@ -1,12 +1,42 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 import { Asset } from '@/components/ai-studio/types';
 import { revalidatePath } from 'next/cache';
 import { logAudit } from '@/lib/audit';
 import { generateContractNumber } from '@/utils/generators';
+import { requireAuth, requireAdmin } from '@/lib/auth-guard';
+import { saveAssetSchema } from '@/lib/action-schemas';
 
+/**
+ * @module actions/assets
+ * @description Server Actions para gestão de ativos imobiliários.
+ * Inclui operações de CRUD, importação em lote e atualização de aluguel.
+ * Todas as operações exigem autenticação e registram log de auditoria.
+ * 
+ * @requires prisma - ORM para acesso ao banco SQLite
+ * @requires auth-guard - Guards de autenticação (requireAuth, requireAdmin)
+ * @requires action-schemas - Schemas Zod para validação de entrada
+ */
+
+/**
+ * Busca todos os ativos imobiliários do banco de dados com relacionamentos.
+ * 
+ * Inclui parceiros (sócios), financiamento e locações (legacy).
+ * Converte campos Decimal do Prisma para number e faz parse seguro de JSON
+ * armazenado como string (phases, cashFlow, contractFile).
+ * 
+ * @returns {Promise<Asset[]>} Lista de ativos ordenada por data de atualização (mais recente primeiro)
+ * @throws Retorna array vazio em caso de erro (não propaga exceção)
+ * 
+ * @example
+ * const assets = await getAssets();
+ * // assets[0].partners → [{ name: "Wândrio", percentage: 50, ... }]
+ * // assets[0].financingDetails?.cashFlow → CashFlowItem[] | undefined
+ */
 export async function getAssets(): Promise<Asset[]> {
+    await requireAuth();
     try {
         const assets = await prisma.asset.findMany({
             include: {
@@ -23,10 +53,10 @@ export async function getAssets(): Promise<Asset[]> {
             try { return JSON.parse(str); } catch (e) { return undefined; }
         };
 
-        return assets.map((a: any) => ({
+        return assets.map((a: typeof assets[number]) => ({
             id: a.id,
             name: a.name,
-            type: a.type as any,
+            type: a.type as Asset['type'],
             address: a.address || '',
             zipCode: a.zipCode || undefined,
             street: a.street || undefined,
@@ -42,10 +72,13 @@ export async function getAssets(): Promise<Asset[]> {
 
             // Documentation
             matricula: a.matricula || undefined,
-            iptu: a.iptu || undefined,
+            iptu: a.iptuRegistration || undefined,
+            iptuRegistration: a.iptuRegistration || undefined,
+            iptuValue: a.iptuValue ? Number(a.iptuValue) : undefined,
+            iptuFrequency: a.iptuFrequency || undefined,
             registryOffice: a.registryOffice || undefined,
             acquisitionDate: a.acquisitionDate || undefined,
-            irpfStatus: (a.irpfStatus as any) || 'Declarado',
+            irpfStatus: (a.irpfStatus as Asset['irpfStatus']) || 'Declarado',
             acquisitionOrigin: a.acquisitionOrigin || undefined,
 
             // Financial
@@ -56,10 +89,10 @@ export async function getAssets(): Promise<Asset[]> {
             suggestedRentalValue: a.suggestedRentalValue ? Number(a.suggestedRentalValue) : undefined,
             rentalValue: Number(a.rentalValue),
 
-            status: (a.status as any) || 'Vago',
+            status: (a.status as Asset['status']) || 'Vago',
             image: a.image || '',
 
-            partners: a.partners.map((p: any) => ({
+            partners: a.partners.map((p: { name: string; initials: string; color: string; percentage: unknown }) => ({
                 initials: p.initials,
                 name: p.name,
                 percentage: Number(p.percentage),
@@ -99,12 +132,39 @@ export async function getAssets(): Promise<Asset[]> {
             } : undefined
         }));
     } catch (e) {
-        console.error("Failed to fetch assets:", e);
+        logger.error("Failed to fetch assets:", e);
         return [];
     }
 }
 
+/**
+ * Cria ou atualiza um ativo imobiliário com todos os relacionamentos.
+ * 
+ * Fluxo de operação:
+ * 1. Valida input com schema Zod (saveAssetSchema)
+ * 2. Upsert do ativo principal (Asset)
+ * 3. Recria parceiros (delete all + createMany) — validando soma = 100%
+ * 4. Upsert do financiamento (Financing) com parse de moeda BRL → Decimal
+ * 5. Recria locação legacy (Lease) e sincroniza com módulo de contratos (Contract + Tenant)
+ * 6. Registra log de auditoria (CREATE ou UPDATE)
+ * 
+ * @param {Asset} asset - Dados completos do ativo incluindo partners, financingDetails e leaseDetails
+ * @returns {Promise<{success: boolean, error?: string}>} Resultado da operação
+ * 
+ * @remarks
+ * - Parse de moeda: strings como "1.000,00" são convertidas para Decimal via parseCurrency()
+ * - Sincronização Lease↔Contract: ao salvar leaseDetails, também cria/atualiza Tenant e Contract
+ * - Se o inquilino não tem documento válido (>5 chars), gera documento temporário "UNK-XXXXXXX"
+ */
 export async function saveAsset(asset: Asset) {
+    const session = await requireAuth();
+    const actorName = session.user?.name || session.user?.email || 'Unknown';
+
+    const validation = saveAssetSchema.safeParse(asset);
+    if (!validation.success) {
+        return { success: false, error: `Dados inválidos: ${validation.error.issues.map(i => i.message).join(', ')}` };
+    }
+
     try {
         const existing = await prisma.asset.findUnique({ where: { id: asset.id } });
 
@@ -122,7 +182,9 @@ export async function saveAsset(asset: Asset) {
             description: asset.description, // Added description field
             areaTotal: asset.areaTotal,
             matricula: asset.matricula,
-            iptu: asset.iptu,
+            iptuRegistration: asset.iptuRegistration || asset.iptu,
+            iptuValue: asset.iptuValue || 0,
+            iptuFrequency: asset.iptuFrequency || 'monthly',
             registryOffice: asset.registryOffice,
             acquisitionDate: asset.acquisitionDate,
             irpfStatus: asset.irpfStatus,
@@ -137,7 +199,7 @@ export async function saveAsset(asset: Asset) {
             image: asset.image,
         };
 
-        console.log("💾 [Server] dataToSave:", JSON.stringify(dataToSave, null, 2));
+        logger.debug("💾 [Server] dataToSave:", JSON.stringify(dataToSave, null, 2));
 
         // 1. Upsert Main Asset
         if (existing) {
@@ -145,9 +207,6 @@ export async function saveAsset(asset: Asset) {
                 where: { id: asset.id },
                 data: dataToSave
             });
-
-            // Clear and recreate partners (simple strategy for 1:N value objects)
-            await prisma.assetPartner.deleteMany({ where: { assetId: asset.id } });
         } else {
             await prisma.asset.create({
                 data: {
@@ -157,10 +216,16 @@ export async function saveAsset(asset: Asset) {
             });
         }
 
-        console.log(`💾 [Server] Asset Saved: ${asset.name} | DescLen: ${asset.description?.length || 0}`);
+        logger.info(`💾 [Server] Asset Saved: ${asset.name} | DescLen: ${asset.description?.length || 0}`);
 
-        // 2. Partners
+        // 2. Partners (validate percentages sum to 100)
         if (asset.partners && asset.partners.length > 0) {
+            const totalPercentage = asset.partners.reduce((sum, p) => sum + (p.percentage || 0), 0);
+            if (Math.abs(totalPercentage - 100) > 0.01) {
+                return { success: false, error: `Percentuais dos sócios devem somar 100%. Atual: ${totalPercentage.toFixed(2)}%` };
+            }
+
+            await prisma.assetPartner.deleteMany({ where: { assetId: asset.id } });
             await prisma.assetPartner.createMany({
                 data: asset.partners.map(p => ({
                     assetId: asset.id,
@@ -175,12 +240,21 @@ export async function saveAsset(asset: Asset) {
         // 3. Financing
         if (asset.financingDetails) {
             const f = asset.financingDetails;
+
+            // Parse formatted currency strings ("1.000,00") to numbers for Prisma Decimal fields
+            const parseCurrency = (val: string | number | undefined | null): number => {
+                if (!val) return 0;
+                if (typeof val === 'number') return val;
+                const clean = String(val).replace(/[R$\s.]/g, '').replace(',', '.');
+                return parseFloat(clean) || 0;
+            };
+
             const financingData = {
-                valorTotal: f.valorTotal, // Decimal/String
-                subtotalConstrutora: f.subtotalConstrutora,
-                valorFinanciar: f.valorFinanciar,
-                valorQuitado: f.valorQuitado,
-                saldoDevedor: f.saldoDevedor,
+                valorTotal: parseCurrency(f.valorTotal),
+                subtotalConstrutora: parseCurrency(f.subtotalConstrutora),
+                valorFinanciar: parseCurrency(f.valorFinanciar),
+                valorQuitado: parseCurrency(f.valorQuitado),
+                saldoDevedor: parseCurrency(f.saldoDevedor),
                 dataAssinatura: f.dataAssinatura,
                 vencimentoConstrutora: f.vencimentoConstrutora,
                 vencimentoPrimeira: f.vencimentoPrimeira,
@@ -320,26 +394,36 @@ export async function saveAsset(asset: Asset) {
             existing ? 'UPDATE' : 'CREATE',
             'Asset',
             asset.id,
-            { name: asset.name, value: asset.value }
+            { name: asset.name, value: asset.value },
+            actorName
         );
 
         revalidatePath('/dashboard');
         revalidatePath('/assets');
 
         return { success: true };
-
-        return { success: true };
     } catch (e) {
-        console.error("❌ CRITICAL ERROR saving asset:", e);
+        logger.error("❌ CRITICAL ERROR saving asset:", e);
         if (e instanceof Error) {
-            console.error("Error Message:", e.message);
-            console.error("Error Stack:", e.stack);
+            logger.error("Error Message:", e.message);
+            logger.error("Error Stack:", e.stack);
         }
         return { success: false, error: String(e) };
     }
 }
 
+/**
+ * Remove um ativo imobiliário e todos os relacionamentos em cascata.
+ * 
+ * A exclusão em cascata é garantida pelo schema Prisma (onDelete: Cascade)
+ * para: AssetPartner, Financing, Lease e Contract.
+ * 
+ * @param {string} id - UUID do ativo a ser removido
+ * @returns {Promise<{success: boolean, error?: unknown}>} Resultado da operação
+ */
 export async function deleteAsset(id: string) {
+    const session = await requireAuth();
+    const actorName = session.user?.name || session.user?.email || 'Unknown';
     try {
         // Fetch asset name for log before deleting
         const asset = await prisma.asset.findUnique({ where: { id }, select: { name: true } });
@@ -351,7 +435,8 @@ export async function deleteAsset(id: string) {
             'DELETE',
             'Asset',
             id,
-            { name: asset?.name || 'Unknown' }
+            { name: asset?.name || 'Unknown' },
+            actorName
         );
 
         // Revalidate all possible paths that show assets
@@ -360,12 +445,26 @@ export async function deleteAsset(id: string) {
         revalidatePath('/', 'layout'); // Revalidate entire app
         return { success: true };
     } catch (e) {
-        console.error('Delete asset error:', e);
+        logger.error('Delete asset error:', e);
         return { success: false, error: e };
     }
 }
 
+/**
+ * Atualiza o valor do aluguel de um ativo e suas locações associadas.
+ * 
+ * Atualiza tanto o campo rentalValue do Asset quanto o valorAluguel
+ * de todos os Leases vinculados. Registra a mudança no log de auditoria
+ * com valor anterior e novo.
+ * 
+ * @param {string} assetId - UUID do ativo
+ * @param {number} newRentalValue - Novo valor do aluguel em reais
+ * @param {Date} [adjustmentDecidedDate] - Data da decisão do reajuste (não utilizado atualmente)
+ * @returns {Promise<{success: boolean, error?: unknown}>} Resultado da operação
+ */
 export async function updateRent(assetId: string, newRentalValue: number, adjustmentDecidedDate?: Date) {
+    const session = await requireAuth();
+    const actorName = session.user?.name || session.user?.email || 'Unknown';
     try {
         // Fetch old value for audit
         const asset = await prisma.asset.findUnique({ where: { id: assetId }, select: { rentalValue: true, name: true } });
@@ -400,7 +499,8 @@ export async function updateRent(assetId: string, newRentalValue: number, adjust
                 oldValue: oldValue,
                 newValue: newRentalValue,
                 difference: newRentalValue - oldValue
-            }
+            },
+            actorName
         );
 
         revalidatePath('/assets');
@@ -408,27 +508,45 @@ export async function updateRent(assetId: string, newRentalValue: number, adjust
         revalidatePath('/adjustments');
         return { success: true };
     } catch (e) {
-        console.error("Failed to update rent:", e);
+        logger.error("Failed to update rent:", e);
         return { success: false, error: e };
     }
 }
 
+/**
+ * Importação em lote de ativos — usado no backup/restore e importação IRPF.
+ * 
+ * Suporta dois modos de operação:
+ * - **Incremental** (replaceAll=false): importa apenas ativos com IDs inexistentes, pula duplicatas
+ * - **Substituição total** (replaceAll=true): deleta TODOS os ativos e reimporta do zero
+ * 
+ * Otimização: pré-busca todos os IDs existentes em uma query para evitar N+1.
+ * Requer role ADMIN (via requireAdmin).
+ * 
+ * @param {Asset[]} assets - Lista de ativos a importar
+ * @param {boolean} [replaceAll=false] - Se true, remove todos os ativos antes de importar
+ * @returns {Promise<{success: boolean, imported: number, skipped: number, total: number, error?: unknown}>}
+ */
 export async function bulkImportAssets(assets: Asset[], replaceAll: boolean = false) {
+    await requireAdmin();
     try {
         // If replaceAll, delete all existing assets first
         if (replaceAll) {
             await prisma.asset.deleteMany({});
-            console.log('All existing assets deleted for full restore');
+            logger.info('All existing assets deleted for full restore');
         }
 
-        // Import all assets
+        // Import all assets - pre-fetch existing IDs to avoid N+1 queries
         let imported = 0;
         let skipped = 0;
+        const existingIds = new Set(
+            (await prisma.asset.findMany({ select: { id: true } })).map(a => a.id)
+        );
 
         for (const asset of assets) {
             try {
-                // Check if asset with same ID exists
-                const existing = await prisma.asset.findUnique({ where: { id: asset.id } });
+                // Check if asset with same ID exists (using pre-fetched set)
+                const existing = existingIds.has(asset.id);
 
                 if (existing && !replaceAll) {
                     // Skip if exists and not replacing
@@ -453,7 +571,9 @@ export async function bulkImportAssets(assets: Asset[], replaceAll: boolean = fa
                         description: asset.description, // Added description field
                         areaTotal: asset.areaTotal,
                         matricula: asset.matricula,
-                        iptu: asset.iptu,
+                        iptuRegistration: asset.iptuRegistration || asset.iptu,
+                        iptuValue: asset.iptuValue || 0,
+                        iptuFrequency: asset.iptuFrequency || 'monthly',
                         registryOffice: asset.registryOffice,
                         acquisitionDate: asset.acquisitionDate,
                         irpfStatus: asset.irpfStatus || 'Não Declarado',
@@ -479,10 +599,12 @@ export async function bulkImportAssets(assets: Asset[], replaceAll: boolean = fa
                         neighborhood: asset.neighborhood,
                         city: asset.city,
                         state: asset.state,
-                        description: asset.description, // Added description field
+                        description: asset.description,
                         areaTotal: asset.areaTotal,
                         matricula: asset.matricula,
-                        iptu: asset.iptu,
+                        iptuRegistration: asset.iptuRegistration || asset.iptu,
+                        iptuValue: asset.iptuValue || 0,
+                        iptuFrequency: asset.iptuFrequency || 'monthly',
                         registryOffice: asset.registryOffice,
                         acquisitionDate: asset.acquisitionDate,
                         irpfStatus: asset.irpfStatus || 'Não Declarado',
@@ -499,7 +621,7 @@ export async function bulkImportAssets(assets: Asset[], replaceAll: boolean = fa
                 });
                 imported++;
             } catch (err) {
-                console.error(`Failed to import asset ${asset.id}:`, err);
+                logger.error(`Failed to import asset ${asset.id}:`, err);
             }
         }
 
@@ -514,7 +636,14 @@ export async function bulkImportAssets(assets: Asset[], replaceAll: boolean = fa
             total: assets.length
         };
     } catch (e) {
-        console.error('Bulk import error:', e);
+        logger.error('Bulk import error:', e);
+
+
+/** Converte Decimal do Prisma para number com precisão de 2 casas */
+function toNumber(val: any): number {
+    if (val == null) return 0;
+    return Math.round(Number(val) * 100) / 100;
+}
         return { success: false, error: e, imported: 0, skipped: 0, total: 0 };
     }
 }

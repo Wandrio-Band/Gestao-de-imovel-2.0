@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { FinancingModal } from './FinancingModal';
 import { CashFlowModal } from './CashFlowModal';
-import { AreaChart, Area, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { Asset, ViewState, CashFlowItem, KPICardProps } from '../../types';
+import { formatMoney as formatCurrency } from '@/lib/formatters';
+import { generateBankAmortizationTable } from '@/lib/financingHelpers';
 
 interface FinancingDashboardProps {
     asset?: Asset | null;
@@ -10,30 +12,154 @@ interface FinancingDashboardProps {
     onUpdateAsset?: (asset: Asset) => void;
 }
 
-const data = [
-    { name: 'Jan', value: 2400 },
-    { name: 'Feb', value: 1398 },
-    { name: 'Mar', value: 9800 },
-    { name: 'Apr', value: 3908 },
-    { name: 'May', value: 4800 },
-    { name: 'Jun', value: 3800 },
-    { name: 'Jul', value: 4300 },
-];
+// Helper: parse date YYYY-MM-DD to { year, month }
+const parseDateYM = (dateStr: string | undefined): { year: number; month: number } | null => {
+    if (!dateStr) return null;
+    // Supports YYYY-MM-DD or DD/MM/YYYY
+    if (dateStr.includes('-')) {
+        const [y, m] = dateStr.split('-').map(Number);
+        if (y && m) return { year: y, month: m };
+    } else if (dateStr.includes('/')) {
+        const parts = dateStr.split('/').map(Number);
+        if (parts.length === 3) return { year: parts[2], month: parts[1] };
+    }
+    return null;
+};
 
-const cashOutData = [
-    { name: 'Jan', regular: 450000, balloon: 0 },
-    { name: 'Fev', regular: 450000, balloon: 0 },
-    { name: 'Mar', regular: 480000, balloon: 0 },
-    { name: 'Abr', regular: 450000, balloon: 0 },
-    { name: 'Mai', regular: 450000, balloon: 800000 },
-    { name: 'Jun', regular: 450000, balloon: 0 },
-    { name: 'Jul', regular: 450000, balloon: 0 },
-    { name: 'Ago', regular: 450000, balloon: 950000 },
-    { name: 'Set', regular: 450000, balloon: 0 },
-    { name: 'Out', regular: 450000, balloon: 0 },
-    { name: 'Nov', regular: 450000, balloon: 0 },
-    { name: 'Dez', regular: 500000, balloon: 0 },
-];
+// Helper: parse currency string to number
+const parseCurrencyValue = (val: string | number | undefined | null): number => {
+    if (!val) return 0;
+    if (typeof val === 'number') return val;
+    const clean = String(val).replace(/[R$\s.]/g, '').replace(',', '.');
+    return parseFloat(clean) || 0;
+};
+
+const monthAbbrevs = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+
+interface CellEntry {
+    amount: number;
+    status: 'PAGO' | 'PREVISTO' | 'BALÃO' | 'BANCO';
+    isBaloon: boolean;
+    isBank: boolean;
+    details: string[];
+}
+
+// Build projection grid from financing phases
+function buildProjectionGrid(
+    phases: { sinal: { qtd: number; unitario: number }; mensais: { qtd: number; unitario: number }; baloes: { qtd: number; unitario: number } },
+    startDateStr: string | undefined,
+    signatureDateStr: string | undefined,
+    cashFlowItems: CashFlowItem[],
+    bankFinancing?: {
+        valorFinanciar: number;
+        prazoMeses: number;
+        jurosAnuais: number;
+        sistemaAmortizacao: string;
+        vencimentoPrimeira: string;
+    }
+): { years: number[]; grid: Map<string, CellEntry>; bankGrid: Map<string, CellEntry> } {
+    const grid = new Map<string, CellEntry>();
+    const bankGrid = new Map<string, CellEntry>();
+    const today = new Date();
+    const currentYM = today.getFullYear() * 12 + today.getMonth();
+
+    const addToGrid = (year: number, month: number, amount: number, detail: string, forceBaloon = false) => {
+        // month is 1-indexed
+        const key = `${year}-${month}`;
+        const existing = grid.get(key) || { amount: 0, status: 'PREVISTO' as const, isBaloon: false, isBank: false, details: [] };
+        existing.amount += amount;
+        existing.details.push(detail);
+        if (forceBaloon) existing.isBaloon = true;
+
+        // Mark as paid if month is in the past
+        const cellYM = year * 12 + (month - 1);
+        if (cellYM < currentYM) {
+            existing.status = 'PAGO';
+        } else if (forceBaloon) {
+            existing.status = 'BALÃO';
+        } else {
+            existing.status = 'PREVISTO';
+        }
+        grid.set(key, existing);
+    };
+
+    const startDate = parseDateYM(startDateStr) || parseDateYM(signatureDateStr);
+    if (!startDate && !bankFinancing) return { years: [], grid, bankGrid };
+
+    if (startDate) {
+        // 1. Sinal - on signature date
+        const sigDate = parseDateYM(signatureDateStr) || startDate;
+        if (phases.sinal.qtd > 0 && phases.sinal.unitario > 0) {
+            const total = phases.sinal.qtd * phases.sinal.unitario;
+            addToGrid(sigDate.year, sigDate.month, total, `Sinal (${phases.sinal.qtd}x)`);
+        }
+
+        // 2. Mensais - starting from vencimentoConstrutora
+        if (phases.mensais.qtd > 0 && phases.mensais.unitario > 0) {
+            for (let i = 0; i < phases.mensais.qtd; i++) {
+                const d = new Date(startDate.year, startDate.month - 1 + i, 1);
+                addToGrid(d.getFullYear(), d.getMonth() + 1, phases.mensais.unitario, `Mensal ${i + 1}/${phases.mensais.qtd}`);
+            }
+        }
+
+        // 3. Balões semestrais - every 6 months from start
+        if (phases.baloes.qtd > 0 && phases.baloes.unitario > 0) {
+            for (let i = 0; i < phases.baloes.qtd; i++) {
+                const monthOffset = (i + 1) * 6;
+                const d = new Date(startDate.year, startDate.month - 1 + monthOffset, 1);
+                addToGrid(d.getFullYear(), d.getMonth() + 1, phases.baloes.unitario, `Balão ${i + 1}/${phases.baloes.qtd}`, true);
+            }
+        }
+
+        // 4. Cash flow manual items
+        for (const item of cashFlowItems) {
+            const parsed = parseDateYM(item.vencimento);
+            if (parsed) {
+                const total = Object.values(item.valoresPorSocio).reduce((a, b) => a + b, 0);
+                addToGrid(parsed.year, parsed.month, total, item.descricao);
+            }
+        }
+    }
+
+    // 5. Bank financing (Phase 2)
+    if (bankFinancing && bankFinancing.valorFinanciar > 0 && bankFinancing.prazoMeses > 0 && bankFinancing.vencimentoPrimeira) {
+        const bankRows = generateBankAmortizationTable({
+            valorFinanciar: String(bankFinancing.valorFinanciar),
+            prazoMeses: String(bankFinancing.prazoMeses),
+            jurosAnuais: bankFinancing.jurosAnuais,
+            sistemaAmortizacao: bankFinancing.sistemaAmortizacao || 'SAC',
+            vencimentoPrimeira: bankFinancing.vencimentoPrimeira,
+        } as any);
+
+        for (const row of bankRows) {
+            // Parse DD/MM/YYYY from row.date
+            const parts = row.date.split('/');
+            if (parts.length === 3) {
+                const month = parseInt(parts[1]);
+                const year = parseInt(parts[2]);
+                const key = `${year}-${month}`;
+                bankGrid.set(key, {
+                    amount: row.prestacao,
+                    status: 'BANCO',
+                    isBaloon: false,
+                    isBank: true,
+                    details: [`Parcela ${row.parcela}/${bankFinancing.prazoMeses} — Amort: R$ ${row.amortizacao.toFixed(0)} + Juros: R$ ${row.juros.toFixed(0)}`]
+                });
+            }
+        }
+    }
+
+    // Determine year range from both grids
+    const allKeys = [...Array.from(grid.keys()), ...Array.from(bankGrid.keys())];
+    if (allKeys.length === 0) return { years: [], grid, bankGrid };
+    const allYears = allKeys.map(k => parseInt(k.split('-')[0]));
+    const minYear = Math.min(...allYears);
+    const maxYear = Math.max(...allYears);
+    const years: number[] = [];
+    for (let y = minYear; y <= maxYear; y++) years.push(y);
+
+    return { years, grid, bankGrid };
+}
 
 // --- Sub-components for Schedule View ---
 
@@ -90,19 +216,11 @@ export const FinancingDashboard: React.FC<FinancingDashboardProps> = ({ asset, o
     const [isCashFlowModalOpen, setIsCashFlowModalOpen] = useState(false);
     const [editingCashFlowItem, setEditingCashFlowItem] = useState<CashFlowItem | null>(null);
 
-    // Helpers to safely get data
-    const formatCurrency = (val: number | string | undefined) => {
-        if (val === undefined || val === null) return 'R$ 0,00';
-        const num = typeof val === 'string' ? parseFloat(val.replace(/\./g, '').replace(',', '.')) : val;
-        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num || 0);
-    };
-
     const financing = asset?.financingDetails || {} as any;
     const subtotalConstrutora = financing.subtotalConstrutora || 0;
-    const valorFinanciar = financing.valorFinanciar ? parseFloat(financing.valorFinanciar.replace(/\./g, '').replace(',', '.')) : 0;
-    const valorTotal = financing.valorTotal ? parseFloat(financing.valorTotal.replace(/\./g, '').replace(',', '.')) : 0;
+    const valorFinanciar = financing.valorFinanciar ? parseCurrencyValue(financing.valorFinanciar) : 0;
+    const valorTotal = financing.valorTotal ? parseCurrencyValue(financing.valorTotal) : 0;
     const valorQuitado = financing.valorQuitado || 0;
-    const saldoDevedor = financing.saldoDevedor || 0;
 
     // Extração robusta das fases para evitar crash se alguma propriedade faltar
     const rawPhases = financing.phases || {};
@@ -114,30 +232,42 @@ export const FinancingDashboard: React.FC<FinancingDashboardProps> = ({ asset, o
 
     const sinalTotal = phases.sinal ? phases.sinal.qtd * phases.sinal.unitario : 0;
     const mensaisTotal = phases.mensais ? phases.mensais.qtd * phases.mensais.unitario : 0;
+    const baloesTotal = phases.baloes ? phases.baloes.qtd * phases.baloes.unitario : 0;
     const cashFlow: CashFlowItem[] = financing.cashFlow || [];
 
-    // Mock Data for Schedule View
-    const years = [2024, 2025, 2026];
-    const months = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+    // Bank financing params
+    const bankFinancingParams = (financing.valorFinanciar && financing.prazoMeses && financing.vencimentoPrimeira) ? {
+        valorFinanciar: parseCurrencyValue(financing.valorFinanciar),
+        prazoMeses: financing.prazoMeses,
+        jurosAnuais: financing.jurosAnuais || 0,
+        sistemaAmortizacao: financing.sistemaAmortizacao || 'SAC',
+        vencimentoPrimeira: financing.vencimentoPrimeira,
+    } : undefined;
 
-    // Generating a grid of mock values to match the screenshot
-    const getCellData = (year: number, monthIndex: number) => {
-        const isPast = year < 2024 || (year === 2024 && monthIndex < 4); // Jan-Mar 2024 paid
-        const isBaloon = (monthIndex === 5 || monthIndex === 11); // Jun and Dec
-        const baseValue = 15000;
-        const baloonValue = 65000;
+    // Build projection grid from REAL data
+    const projection = buildProjectionGrid(
+        phases,
+        financing.vencimentoConstrutora,
+        financing.dataAssinatura,
+        cashFlow,
+        bankFinancingParams
+    );
+    const years = projection.years;
+    const months = monthAbbrevs;
 
-        let amount = isBaloon ? baloonValue : baseValue;
-
-        // Simulate slight variations or specific highlights
-        if (year === 2026 && monthIndex === 10) return { amount: 28000, status: 'BALÃO', isBaloon: true }; // Nov 2026 Highlight
-
-        return {
-            amount,
-            status: isPast ? 'PAGO' : 'PREVISTO',
-            isBaloon: isBaloon && !isPast
-        };
+    // Get cell data from projection grid (construtora)
+    const getCellData = (year: number, monthIndex: number): CellEntry => {
+        const key = `${year}-${monthIndex + 1}`; // monthIndex is 0-based, grid uses 1-based
+        return projection.grid.get(key) || { amount: 0, status: 'PREVISTO' as const, isBaloon: false, isBank: false, details: [] };
     };
+
+    // Get cell data from bank grid
+    const getBankCellData = (year: number, monthIndex: number): CellEntry => {
+        const key = `${year}-${monthIndex + 1}`;
+        return projection.bankGrid.get(key) || { amount: 0, status: 'BANCO' as const, isBaloon: false, isBank: true, details: [] };
+    };
+
+    const hasBankData = projection.bankGrid.size > 0;
 
     // Calculate Monthly Totals (Vertical Sum)
     const getMonthlyTotal = (monthIndex: number) => {
@@ -147,6 +277,57 @@ export const FinancingDashboard: React.FC<FinancingDashboardProps> = ({ asset, o
         });
         return sum;
     };
+
+    // --- KPI Calculations from real data ---
+    const totalProjected = sinalTotal + mensaisTotal + baloesTotal;
+    const today = new Date();
+    const currentYM = today.getFullYear() * 12 + today.getMonth();
+
+    // Calculate paid vs pending from the grid
+    let totalPaid = 0;
+    let totalPending = 0;
+    for (const [key, entry] of projection.grid.entries()) {
+        if (entry.status === 'PAGO') {
+            totalPaid += entry.amount;
+        } else {
+            totalPending += entry.amount;
+        }
+    }
+
+    const pctRealized = totalProjected > 0 ? Math.round((totalPaid / totalProjected) * 100) : 0;
+
+    // Saldo devedor = total construtora - o que já foi pago
+    const saldoDevedor = Math.max(0, totalProjected - totalPaid);
+
+    // Find the first banking date or last construction date
+    const lastConstructionDate = parseDateYM(financing.vencimentoConstrutora);
+    const bankStartEstimate = lastConstructionDate
+        ? (() => {
+            const d = new Date(lastConstructionDate.year, lastConstructionDate.month - 1 + (phases.mensais.qtd || 0), 1);
+            return `${monthAbbrevs[d.getMonth()]} / ${d.getFullYear()}`;
+        })()
+        : 'N/D';
+    const monthsRemaining = lastConstructionDate
+        ? Math.max(0, (lastConstructionDate.year * 12 + lastConstructionDate.month - 1 + (phases.mensais.qtd || 0)) - currentYM)
+        : 0;
+
+    // Build cashOutData for chart from projection grid (next 12 months from start)
+    const cashOutData = monthAbbrevs.map((name, idx) => {
+        let regular = 0;
+        let balloon = 0;
+        let bank = 0;
+        for (const year of years) {
+            const entry = getCellData(year, idx);
+            if (entry.isBaloon) {
+                balloon += entry.amount;
+            } else {
+                regular += entry.amount;
+            }
+            const bankEntry = getBankCellData(year, idx);
+            bank += bankEntry.amount;
+        }
+        return { name, regular, balloon, bank };
+    });
 
     // --- Handlers for Cash Flow ---
     const handleAddCashFlow = () => {
@@ -246,35 +427,35 @@ export const FinancingDashboard: React.FC<FinancingDashboardProps> = ({ asset, o
                         <KPICard
                             icon="calendar_month"
                             colorClass="bg-blue-50 text-blue-600"
-                            label="Total Previsto para 2024"
-                            value="R$ 580.000,00"
-                            subtext="+12% vs. ano anterior"
-                            type="progress"
+                            label="Total Previsto (Construtora)"
+                            value={formatCurrency(totalProjected)}
+                            subtext={`Sinal + ${phases.mensais.qtd}x Mensais + ${phases.baloes.qtd}x Balões`}
+                            type="standard"
                         />
                         <KPICard
                             icon="construction"
                             colorClass="bg-gray-100 text-gray-600"
                             label="Fluxo Construtora Pendente"
-                            value="R$ 1.240.000,00"
-                            subtext="QUITADO: R$ 800.000,00 (39%)"
+                            value={formatCurrency(totalPending)}
+                            subtext={`QUITADO: ${formatCurrency(totalPaid)} (${pctRealized}%)`}
                         />
                         <KPICard
                             icon="key"
                             colorClass="bg-blue-50 text-blue-800"
                             label="Início Fase Bancária"
-                            value="Nov / 2026"
-                            subtext="32 MESES RESTANTES"
+                            value={bankStartEstimate}
+                            subtext={`${monthsRemaining} MESES RESTANTES`}
                             type="standard"
                         />
                         <div className="bg-white p-4 rounded-[2rem] border border-gray-100 shadow-soft flex items-center justify-between">
                             <div className="h-full flex flex-col justify-center pl-4">
                                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Status de Fluxo</span>
-                                <h3 className="text-4xl font-black text-gray-900">65%</h3>
+                                <h3 className="text-4xl font-black text-gray-900">{pctRealized}%</h3>
                                 <div className="w-24 h-1.5 bg-gray-100 rounded-full mt-2 overflow-hidden">
-                                    <div className="w-[65%] h-full bg-green-500 rounded-full"></div>
+                                    <div style={{ width: `${pctRealized}%` }} className="h-full bg-green-500 rounded-full"></div>
                                 </div>
                             </div>
-                            <CircularProgress percentage={65} />
+                            <CircularProgress percentage={pctRealized} />
                         </div>
                     </div>
 
@@ -313,7 +494,43 @@ export const FinancingDashboard: React.FC<FinancingDashboardProps> = ({ asset, o
                             </div>
                         </div>
 
+                        {hasBankData && (
+                            <div className="px-8 py-4 bg-blue-50/50 border-b border-blue-100 flex items-center gap-6">
+                                <div className="flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-blue-700 text-sm">account_balance</span>
+                                    <span className="text-xs font-bold text-blue-800">Financiamento Bancário (Fase 2)</span>
+                                </div>
+                                <span className="text-[10px] text-blue-600">
+                                    {financing.sistemaAmortizacao || 'SAC'} · {financing.prazoMeses} parcelas · {financing.jurosAnuais}% a.a.
+                                </span>
+                                <div className="flex items-center gap-3 ml-auto">
+                                    <div className="flex items-center gap-1">
+                                        <span className="text-[11px]">🏗</span>
+                                        <span className="text-[9px] font-bold text-gray-500">Construtora</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <span className="text-[11px]">✅</span>
+                                        <span className="text-[9px] font-bold text-green-600">Pago</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <span className="text-[11px]">⚡</span>
+                                        <span className="text-[9px] font-bold text-orange-500">Balão</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <span className="text-[11px]">🏦</span>
+                                        <span className="text-[9px] font-bold text-blue-600">Banco</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                         <div className="overflow-x-auto pb-4">
+                            {years.length === 0 ? (
+                                <div className="p-12 text-center">
+                                    <span className="material-symbols-outlined text-4xl text-gray-300 mb-4 block">calendar_month</span>
+                                    <p className="text-sm font-bold text-gray-500">Nenhum cronograma gerado.</p>
+                                    <p className="text-xs text-gray-400 mt-1">Cadastre as fases do financiamento (sinal, mensais, balões) e defina as datas para gerar o cronograma projetado.</p>
+                                </div>
+                            ) : (
                             <table className="w-full min-w-[1200px]">
                                 <thead>
                                     <tr className="border-b border-gray-100">
@@ -326,40 +543,52 @@ export const FinancingDashboard: React.FC<FinancingDashboardProps> = ({ asset, o
                                 <tbody className="divide-y divide-gray-50">
                                     {years.map(year => (
                                         <tr key={year} className="group hover:bg-gray-50/50 transition-colors">
-                                            <td className="py-6 px-6 bg-white group-hover:bg-gray-50/50 transition-colors sticky left-0 z-10 border-r border-gray-50">
+                                            <td className="py-4 px-6 bg-white group-hover:bg-gray-50/50 transition-colors sticky left-0 z-10 border-r border-gray-50">
                                                 <span className="text-lg font-black text-gray-900">{year}</span>
                                             </td>
-                                            {months.map((month, idx) => {
-                                                const data = getCellData(year, idx);
-                                                const amountK = (data.amount / 1000).toFixed(0) + 'k';
+                                            {months.map((_, idx) => {
+                                                const cd = getCellData(year, idx);
+                                                const bd = getBankCellData(year, idx);
+                                                const hasC = cd.amount > 0;
+                                                const hasB = bd.amount > 0;
 
-                                                // Opacity Logic based on filter
-                                                let opacity = 'opacity-100';
-                                                if (scheduleFilter === 'realized' && data.status !== 'PAGO') opacity = 'opacity-20 grayscale';
-                                                if (scheduleFilter === 'projected' && data.status === 'PAGO') opacity = 'opacity-20 grayscale';
+                                                if (!hasC && !hasB) {
+                                                    return <td key={idx} className="py-2 px-0.5 text-center"><span className="text-[10px] text-gray-300">—</span></td>;
+                                                }
+
+                                                const fmtK = (v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                                                let opacity = '';
+                                                if (scheduleFilter === 'realized' && cd.status !== 'PAGO') opacity = 'opacity-20 grayscale';
+                                                if (scheduleFilter === 'projected' && cd.status === 'PAGO') opacity = 'opacity-20 grayscale';
+
+                                                // Inline single-line format: 🏗 3k 🏦 2k — balão gets ⚡ instead of 🏗
+                                                const items: React.ReactNode[] = [];
+                                                if (hasC) {
+                                                    const isBal = cd.status === 'BALÃO';
+                                                    const isPago = cd.status === 'PAGO';
+                                                    const color = isBal ? 'text-orange-600 font-black' : isPago ? 'text-green-700 font-bold' : 'text-gray-700 font-bold';
+                                                    items.push(
+                                                        <span key="c" className={`inline-flex items-center gap-0.5 ${color}`}>
+                                                            <span className="text-[10px]">{isBal ? '⚡' : isPago ? '✅' : '🏗'}</span>
+                                                            <span className="text-[11px]">{fmtK(cd.amount)}</span>
+                                                        </span>
+                                                    );
+                                                }
+                                                if (hasB) {
+                                                    items.push(
+                                                        <span key="b" className="inline-flex items-center gap-0.5 text-blue-700 font-bold">
+                                                            <span className="text-[10px]">🏦</span>
+                                                            <span className="text-[11px]">{fmtK(bd.amount)}</span>
+                                                        </span>
+                                                    );
+                                                }
 
                                                 return (
-                                                    <td key={idx} className="py-4 px-2 text-center align-middle">
-                                                        <div className={`flex flex-col items-center justify-center gap-1.5 transition-all duration-300 ${opacity}`}>
-                                                            {data.status === 'BALÃO' ? (
-                                                                <div className="bg-orange-50 border border-orange-100 px-4 py-3 rounded-2xl w-full max-w-[90px] shadow-sm group/cell hover:-translate-y-1 transition-transform">
-                                                                    <span className="block text-sm font-black text-gray-900">R$ {amountK}</span>
-                                                                    <span className="text-[9px] font-bold text-orange-600 uppercase mt-0.5 block">BALÃO</span>
-                                                                </div>
-                                                            ) : data.status === 'PAGO' ? (
-                                                                <div className="bg-green-50 border border-green-100 px-4 py-3 rounded-2xl w-full max-w-[90px] shadow-sm flex flex-col items-center group/cell hover:-translate-y-1 transition-transform">
-                                                                    <span className="block text-sm font-black text-gray-900">R$ {amountK}</span>
-                                                                    <div className="flex items-center gap-1 mt-0.5 text-green-700">
-                                                                        <span className="material-symbols-outlined text-[10px] font-bold">check</span>
-                                                                        <span className="text-[9px] font-bold uppercase">PAGO</span>
-                                                                    </div>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="bg-gray-100 border border-gray-200 px-4 py-3 rounded-2xl w-full max-w-[90px] group/cell hover:-translate-y-1 transition-transform">
-                                                                    <span className="block text-sm font-bold text-gray-600">R$ {amountK}</span>
-                                                                    <span className="text-[9px] font-bold text-gray-400 uppercase mt-0.5 block">PREVISTO</span>
-                                                                </div>
-                                                            )}
+                                                    <td key={idx} className={`py-2 px-0.5 text-center ${opacity}`}>
+                                                        <div className="flex flex-col items-center gap-0">
+                                                            {items.map((item, i) => (
+                                                                <div key={i}>{item}</div>
+                                                            ))}
                                                         </div>
                                                     </td>
                                                 );
@@ -375,7 +604,7 @@ export const FinancingDashboard: React.FC<FinancingDashboardProps> = ({ asset, o
                                         </td>
                                         {months.map((m, idx) => {
                                             const total = getMonthlyTotal(idx);
-                                            const totalK = (total / 1000).toFixed(0) + 'k';
+                                            const totalK = total > 0 ? (total >= 1000 ? (total / 1000).toFixed(0) + 'k' : formatCurrency(total)) : '—';
                                             return (
                                                 <td key={idx} className="py-6 px-2 text-center">
                                                     <span className="text-sm font-black text-blue-700">{totalK}</span>
@@ -385,6 +614,7 @@ export const FinancingDashboard: React.FC<FinancingDashboardProps> = ({ asset, o
                                     </tr>
                                 </tfoot>
                             </table>
+                            )}
                         </div>
                     </div>
 
@@ -404,6 +634,12 @@ export const FinancingDashboard: React.FC<FinancingDashboardProps> = ({ asset, o
                                     <span className="w-3 h-3 rounded-full bg-[#f97316]"></span>
                                     <span className="text-[10px] font-bold text-gray-500 uppercase">PARCELAS BALÃO</span>
                                 </div>
+                                {hasBankData && (
+                                <div className="flex items-center gap-2">
+                                    <span className="w-3 h-3 rounded-full bg-[#1e40af]"></span>
+                                    <span className="text-[10px] font-bold text-gray-500 uppercase">FINANCIAMENTO BANCÁRIO</span>
+                                </div>
+                                )}
                             </div>
                         </div>
                         <div className="h-[300px] w-full">
@@ -411,14 +647,15 @@ export const FinancingDashboard: React.FC<FinancingDashboardProps> = ({ asset, o
                                 <BarChart data={cashOutData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }} barSize={40}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280', fontWeight: 'bold' }} dy={10} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} tickFormatter={(value) => `R$ ${(value / 1000000).toFixed(1)}M`} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`} />
                                     <Tooltip
                                         cursor={{ fill: '#f9fafb' }}
                                         contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
                                         formatter={(value: number | undefined) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(value || 0)}
                                     />
                                     <Bar dataKey="regular" stackId="a" fill="#2563eb" radius={[0, 0, 4, 4]} />
-                                    <Bar dataKey="balloon" stackId="a" fill="#f97316" radius={[4, 4, 0, 0]} />
+                                    <Bar dataKey="balloon" stackId="a" fill="#f97316" radius={[0, 0, 0, 0]} />
+                                    <Bar dataKey="bank" stackId="a" fill="#1e40af" radius={[4, 4, 0, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
@@ -492,36 +729,41 @@ export const FinancingDashboard: React.FC<FinancingDashboardProps> = ({ asset, o
                             <div className="lg:col-span-2 space-y-4">
                                 <div className="flex justify-between items-center mb-2"><h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><span className="material-symbols-outlined text-xs">calendar_view_week</span> BLOCOS DE PAGAMENTO</h4><button className="text-[10px] font-bold text-primary bg-blue-50 px-3 py-1.5 rounded-full hover:bg-blue-100 transition flex items-center gap-1"><span className="material-symbols-outlined text-xs">add</span> Adicionar Grupo</button></div>
 
-                                {/* Static blocks matching screenshot */}
+                                {/* Dynamic blocks from financing phases */}
+                                {phases.sinal.qtd > 0 && phases.sinal.unitario > 0 && (
                                 <div className="bg-white border border-gray-200 rounded-xl p-4 flex justify-between items-center hover:shadow-md transition-shadow">
                                     <div className="flex gap-4 items-center">
                                         <div className="w-8 h-8 rounded-lg bg-green-50 text-green-600 flex items-center justify-center"><span className="material-symbols-outlined text-sm">payments</span></div>
-                                        <div><h5 className="text-sm font-bold text-gray-900">Entrada (Sinal)</h5><p className="text-[10px] text-gray-500">Vencimento: 10/01/2023</p><p className="text-[10px] text-gray-500">Parcela Única</p></div>
+                                        <div><h5 className="text-sm font-bold text-gray-900">Entrada (Sinal)</h5><p className="text-[10px] text-gray-500">Data: {financing.dataAssinatura ? financing.dataAssinatura.split('-').reverse().join('/') : 'N/D'}</p><p className="text-[10px] text-gray-500">{phases.sinal.qtd}x {formatCurrency(phases.sinal.unitario)}</p></div>
                                     </div>
-                                    <div className="text-right"><p className="text-[9px] font-bold text-gray-400 uppercase">VALOR TOTAL</p><p className="text-lg font-bold text-gray-900">{formatCurrency(sinalTotal)}</p><p className="text-[9px] text-gray-400">Sem correção INCC</p></div>
+                                    <div className="text-right"><p className="text-[9px] font-bold text-gray-400 uppercase">VALOR TOTAL</p><p className="text-lg font-bold text-gray-900">{formatCurrency(sinalTotal)}</p></div>
                                 </div>
+                                )}
 
+                                {phases.mensais.qtd > 0 && phases.mensais.unitario > 0 && (
                                 <div className="bg-white border border-gray-200 rounded-xl p-4 flex justify-between items-center hover:shadow-md transition-shadow">
                                     <div className="flex gap-4 items-center">
                                         <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center"><span className="material-symbols-outlined text-sm">calendar_month</span></div>
-                                        <div><div className="flex items-center gap-2"><h5 className="text-sm font-bold text-gray-900">Mensais</h5><span className="bg-gray-100 text-gray-600 px-1.5 rounded text-[9px] font-bold">24x Parcelas</span></div><p className="text-[10px] text-gray-500">Início: 10/02/2023</p><p className="text-[10px] text-gray-500">Valor Unitário: {formatCurrency(phases.mensais.unitario)}</p></div>
+                                        <div><div className="flex items-center gap-2"><h5 className="text-sm font-bold text-gray-900">Mensais</h5><span className="bg-gray-100 text-gray-600 px-1.5 rounded text-[9px] font-bold">{phases.mensais.qtd}x Parcelas</span></div><p className="text-[10px] text-gray-500">Início: {financing.vencimentoConstrutora ? financing.vencimentoConstrutora.split('-').reverse().join('/') : 'N/D'}</p><p className="text-[10px] text-gray-500">Valor Unitário: {formatCurrency(phases.mensais.unitario)}</p></div>
                                     </div>
-                                    <div className="text-right"><p className="text-[9px] font-bold text-gray-400 uppercase">SUBTOTAL GRUPO</p><p className="text-lg font-bold text-gray-900">{formatCurrency(mensaisTotal)}</p><p className="text-[9px] text-orange-500 bg-orange-50 px-1 rounded inline-block">~ + R$ 42,00 (INCC est.)</p></div>
+                                    <div className="text-right"><p className="text-[9px] font-bold text-gray-400 uppercase">SUBTOTAL GRUPO</p><p className="text-lg font-bold text-gray-900">{formatCurrency(mensaisTotal)}</p></div>
                                 </div>
+                                )}
 
+                                {phases.baloes.qtd > 0 && phases.baloes.unitario > 0 && (
                                 <div className="bg-white border border-gray-200 rounded-xl p-4 flex justify-between items-center hover:shadow-md transition-shadow">
                                     <div className="flex gap-4 items-center">
                                         <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center"><span className="material-symbols-outlined text-sm">rocket_launch</span></div>
-                                        <div><div className="flex items-center gap-2"><h5 className="text-sm font-bold text-gray-900">Balões Semestrais</h5><span className="bg-gray-100 text-gray-600 px-1.5 rounded text-[9px] font-bold">4x Parcelas</span></div><p className="text-[10px] text-gray-500">Início: 10/06/2023</p><p className="text-[10px] text-gray-500">Valor Unitário: R$ 50.000,00</p></div>
+                                        <div><div className="flex items-center gap-2"><h5 className="text-sm font-bold text-gray-900">Balões Semestrais</h5><span className="bg-gray-100 text-gray-600 px-1.5 rounded text-[9px] font-bold">{phases.baloes.qtd}x Parcelas</span></div><p className="text-[10px] text-gray-500">A cada 6 meses</p><p className="text-[10px] text-gray-500">Valor Unitário: {formatCurrency(phases.baloes.unitario)}</p></div>
                                     </div>
-                                    <div className="text-right"><p className="text-[9px] font-bold text-gray-400 uppercase">SUBTOTAL GRUPO</p><p className="text-lg font-bold text-gray-900">R$ 200.000,00</p><p className="text-[9px] text-orange-500 bg-orange-50 px-1 rounded inline-block">~ + R$ 1.250,00 (INCC est.)</p></div>
+                                    <div className="text-right"><p className="text-[9px] font-bold text-gray-400 uppercase">SUBTOTAL GRUPO</p><p className="text-lg font-bold text-gray-900">{formatCurrency(baloesTotal)}</p></div>
                                 </div>
+                                )}
 
                                 <div className="bg-blue-50/50 rounded-xl p-4 flex justify-between items-center border border-blue-100">
                                     <span className="text-xs font-bold text-blue-800 uppercase tracking-widest">TOTAL ACUMULADO FASE 1</span>
                                     <div className="flex gap-8">
-                                        <div className="text-right"><span className="block text-[9px] font-bold text-gray-400">ORIGINAL</span><span className="text-lg font-black text-gray-900">R$ 520.000,00</span></div>
-                                        <div className="text-right"><span className="block text-[9px] font-bold text-blue-400">CORRIGIDO (EST.)</span><span className="text-lg font-black text-blue-600">R$ 521.292,00</span></div>
+                                        <div className="text-right"><span className="block text-[9px] font-bold text-gray-400">ORIGINAL</span><span className="text-lg font-black text-gray-900">{formatCurrency(subtotalConstrutora)}</span></div>
                                     </div>
                                 </div>
                             </div>
@@ -534,18 +776,8 @@ export const FinancingDashboard: React.FC<FinancingDashboardProps> = ({ asset, o
                                 </div>
                                 <div className="border border-gray-200 rounded-xl p-4">
                                     <div className="flex justify-between mb-2"><span className="text-[9px] font-bold text-gray-400 uppercase">Tendência INCC</span><span className="text-[10px] font-bold text-green-600">↑ 0.5% Mês</span></div>
-                                    <div className="h-24 w-full bg-blue-50 rounded-lg mb-2 relative overflow-hidden">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <AreaChart data={data}><Area type="monotone" dataKey="value" stroke="#1152d4" strokeWidth={2} fill="#bfdbfe" /></AreaChart>
-                                        </ResponsiveContainer>
-                                    </div>
-                                    <div className="flex justify-between bg-orange-50 p-2 rounded-lg border border-orange-100">
-                                        <span className="text-[10px] font-bold text-orange-800">Projeção Acumulada</span>
-                                        <span className="text-[10px] font-black text-orange-600">4.52%</span>
-                                    </div>
-                                    <div className="flex justify-between mt-2 px-1">
-                                        <span className="text-[9px] font-medium text-gray-400">Impacto Financeiro Total:</span>
-                                        <span className="text-[10px] font-bold text-gray-900">R$ ~32.400</span>
+                                    <div className="h-16 w-full bg-gray-50 rounded-lg mb-2 flex items-center justify-center text-[10px] text-gray-400">
+                                        Dados INCC em tempo real indisponíveis
                                     </div>
                                 </div>
                             </div>
@@ -568,32 +800,47 @@ export const FinancingDashboard: React.FC<FinancingDashboardProps> = ({ asset, o
                         <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
                             <div className="flex-1">
                                 <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">SISTEMA DE AMORTIZAÇÃO</p>
-                                <div className="bg-white border border-gray-200 rounded p-2 text-xs font-bold text-gray-700 flex justify-between">SAC (Decrescente) <span className="material-symbols-outlined text-sm">expand_more</span></div>
+                                <div className="bg-white border border-gray-200 rounded p-2 text-xs font-bold text-gray-700 flex justify-between">{financing.sistemaAmortizacao || 'SAC'} {financing.sistemaAmortizacao === 'PRICE' ? '(Constante)' : '(Decrescente)'} <span className="material-symbols-outlined text-sm">expand_more</span></div>
                             </div>
                             <div className="flex-1">
                                 <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">PRAZO TOTAL</p>
-                                <div className="bg-white border border-gray-200 rounded p-2 text-xs font-bold text-gray-700 flex justify-between">360 <span className="text-gray-400 font-normal">meses</span></div>
+                                <div className="bg-white border border-gray-200 rounded p-2 text-xs font-bold text-gray-700 flex justify-between">{financing.prazoMeses || '—'} <span className="text-gray-400 font-normal">meses</span></div>
                             </div>
                             <div className="flex-1">
                                 <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">TAXA DE JUROS (ANUAL)</p>
-                                <div className="bg-white border border-gray-200 rounded p-2 text-xs font-bold text-gray-700 flex justify-between">9.8 <span className="text-gray-400 font-normal">% a.a.</span></div>
+                                <div className="bg-white border border-gray-200 rounded p-2 text-xs font-bold text-gray-700 flex justify-between">{financing.jurosAnuais || '—'} <span className="text-gray-400 font-normal">% a.a.</span></div>
                             </div>
                             <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-xs font-bold flex items-center gap-2 shadow-md transition-colors">
                                 <span className="material-symbols-outlined text-sm">calculate</span> Calcular Simulação
                             </button>
                         </div>
 
-                        <div className="mt-4 bg-blue-50/50 border border-blue-100 rounded-xl p-4 flex justify-between items-center">
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-blue-600 shadow-sm"><span className="material-symbols-outlined text-sm">payments</span></div>
-                                <div><p className="text-[9px] font-bold text-blue-700 uppercase">PRIMEIRA PARCELA (ESTIMADA)</p><p className="text-xl font-black text-gray-900">R$ 18.450,22</p></div>
+                        {valorFinanciar > 0 && financing.prazoMeses && financing.jurosAnuais ? (() => {
+                            const prazo = parseInt(financing.prazoMeses) || 360;
+                            const taxaMensal = (parseCurrencyValue(financing.jurosAnuais) / 100) / 12;
+                            const isSAC = financing.sistemaAmortizacao !== 'PRICE';
+                            const amortizacao = valorFinanciar / prazo;
+                            const primeiraParcela = isSAC ? amortizacao + (valorFinanciar * taxaMensal) :
+                                taxaMensal > 0 ? valorFinanciar * (taxaMensal * Math.pow(1 + taxaMensal, prazo)) / (Math.pow(1 + taxaMensal, prazo) - 1) : valorFinanciar / prazo;
+                            const ultimaParcela = isSAC ? amortizacao + (amortizacao * taxaMensal) : primeiraParcela;
+                            const totalJuros = isSAC ? (valorFinanciar * taxaMensal * (prazo + 1)) / 2 : (primeiraParcela * prazo) - valorFinanciar;
+                            return (
+                            <div className="mt-4 bg-blue-50/50 border border-blue-100 rounded-xl p-4 flex justify-between items-center">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-blue-600 shadow-sm"><span className="material-symbols-outlined text-sm">payments</span></div>
+                                    <div><p className="text-[9px] font-bold text-blue-700 uppercase">PRIMEIRA PARCELA (ESTIMADA)</p><p className="text-xl font-black text-gray-900">{formatCurrency(primeiraParcela)}</p></div>
+                                </div>
+                                <div className="flex gap-8 text-right">
+                                    <div><p className="text-[9px] text-gray-400">Última Parcela</p><p className="text-xs font-bold text-gray-900">{formatCurrency(ultimaParcela)}</p></div>
+                                    <div><p className="text-[9px] text-gray-400">Total Juros (Est.)</p><p className="text-xs font-bold text-gray-900">{formatCurrency(totalJuros)}</p></div>
+                                </div>
                             </div>
-                            <div className="flex gap-8 text-right">
-                                <div><p className="text-[9px] text-gray-400">Última Parcela</p><p className="text-xs font-bold text-gray-900">R$ 5.200,45</p></div>
-                                <div><p className="text-[9px] text-gray-400">CET Anual</p><p className="text-xs font-bold text-gray-900">10.45%</p></div>
-                                <div><p className="text-[9px] text-gray-400">Total Juros</p><p className="text-xs font-bold text-gray-900">R$ 1.2M</p></div>
-                            </div>
+                            );
+                        })() : (
+                        <div className="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
+                            <p className="text-xs text-gray-400">Preencha prazo e juros para ver a simulação bancária.</p>
                         </div>
+                        )}
                     </div>
 
                     {/* Fluxo de Caixa Table */}
@@ -673,10 +920,16 @@ export const FinancingDashboard: React.FC<FinancingDashboardProps> = ({ asset, o
                                 </tbody>
                                 <tfoot className="bg-gray-50 border-t border-gray-200">
                                     <tr>
-                                        <td colSpan={5} className="py-3 px-4 text-[10px] font-bold text-gray-500 uppercase">TOTAL PAGO POR SÓCIO</td>
-                                        <td className="py-3 px-4 text-xs font-black text-blue-700 text-right">R$ 55.042,00</td>
-                                        <td className="py-3 px-4 text-xs font-black text-blue-700 text-right">R$ 55.085,00</td>
-                                        <td colSpan={2} className="py-3 px-4 text-[9px] font-bold text-gray-400 text-right">TOTAL: R$ 210.127,00</td>
+                                        <td colSpan={5} className="py-3 px-4 text-[10px] font-bold text-gray-500 uppercase">TOTAL POR SÓCIO</td>
+                                        <td className="py-3 px-4 text-xs font-black text-blue-700 text-right">
+                                            {formatCurrency(cashFlow.reduce((sum, item) => sum + (item.valoresPorSocio['Raquel'] || 0), 0))}
+                                        </td>
+                                        <td className="py-3 px-4 text-xs font-black text-blue-700 text-right">
+                                            {formatCurrency(cashFlow.reduce((sum, item) => sum + (item.valoresPorSocio['Marília'] || 0), 0))}
+                                        </td>
+                                        <td colSpan={2} className="py-3 px-4 text-[9px] font-bold text-gray-400 text-right">
+                                            TOTAL: {formatCurrency(cashFlow.reduce((sum, item) => sum + Object.values(item.valoresPorSocio).reduce((a, b) => a + b, 0), 0))}
+                                        </td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -696,7 +949,9 @@ export const FinancingDashboard: React.FC<FinancingDashboardProps> = ({ asset, o
                                 <div className="col-span-3 text-right">Total Geral Pago</div>
                             </div>
 
-                            {['Raquel', 'Marília', 'Wândrio', 'Inventário Tilinha'].map((partner, idx) => (
+                            {['Raquel', 'Marília', 'Wândrio', 'Inventário Tilinha'].map((partner, idx) => {
+                                const partnerConstTotal = cashFlow.reduce((sum, item) => sum + (item.valoresPorSocio[partner] || 0), 0);
+                                return (
                                 <div key={partner} className="border-b border-gray-50 last:border-none">
                                     <div
                                         className="grid grid-cols-12 py-3 px-4 hover:bg-gray-50 cursor-pointer items-center"
@@ -706,9 +961,9 @@ export const FinancingDashboard: React.FC<FinancingDashboardProps> = ({ asset, o
                                             <span className="material-symbols-outlined text-gray-400 text-sm transition-transform duration-200" style={{ transform: expandedPartner === partner ? 'rotate(180deg)' : 'rotate(0deg)' }}>expand_more</span>
                                             <span className="text-xs font-bold text-gray-900">{partner}</span>
                                         </div>
-                                        <div className="col-span-3 text-right text-xs font-medium text-gray-700">R$ 55.042,00</div>
-                                        <div className="col-span-3 text-right text-xs font-medium text-gray-400">R$ 0,00</div>
-                                        <div className="col-span-3 text-right text-xs font-bold text-blue-700">R$ 55.042,00</div>
+                                        <div className="col-span-3 text-right text-xs font-medium text-gray-700">{formatCurrency(partnerConstTotal)}</div>
+                                        <div className="col-span-3 text-right text-xs font-medium text-gray-400">{formatCurrency(0)}</div>
+                                        <div className="col-span-3 text-right text-xs font-bold text-blue-700">{formatCurrency(partnerConstTotal)}</div>
                                     </div>
 
                                     {/* Expanded Details */}
@@ -718,40 +973,41 @@ export const FinancingDashboard: React.FC<FinancingDashboardProps> = ({ asset, o
                                                 <thead>
                                                     <tr>
                                                         <th className="py-2 text-[9px] font-bold text-blue-600 uppercase">Data</th>
-                                                        <th className="py-2 text-[9px] font-bold text-blue-600 uppercase">Descrição da Parcela</th>
-                                                        <th className="py-2 text-[9px] font-bold text-blue-600 uppercase text-right">Valor Pago</th>
+                                                        <th className="py-2 text-[9px] font-bold text-blue-600 uppercase">Descrição</th>
+                                                        <th className="py-2 text-[9px] font-bold text-blue-600 uppercase text-right">Valor</th>
                                                         <th className="py-2 text-[9px] font-bold text-blue-600 uppercase text-right">Fase</th>
-                                                        <th className="w-8"></th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-100">
-                                                    <tr>
-                                                        <td className="py-2 text-[10px] text-gray-600">10/01/2023</td>
-                                                        <td className="py-2 text-[10px] text-gray-600">Entrada Parcela Única</td>
-                                                        <td className="py-2 text-[10px] font-medium text-gray-900 text-right">R$ 50.000,00</td>
-                                                        <td className="py-2 text-right"><span className="bg-blue-100 text-blue-600 text-[9px] px-1.5 py-0.5 rounded font-bold">Construtora</span></td>
-                                                        <td className="text-center"><span className="material-symbols-outlined text-[10px] text-blue-400 cursor-pointer hover:text-blue-600">open_in_new</span></td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td className="py-2 text-[10px] text-gray-600">10/02/2023</td>
-                                                        <td className="py-2 text-[10px] text-gray-600">Mensal 02/24</td>
-                                                        <td className="py-2 text-[10px] font-medium text-gray-900 text-right">R$ 5.042,00</td>
-                                                        <td className="py-2 text-right"><span className="bg-blue-100 text-blue-600 text-[9px] px-1.5 py-0.5 rounded font-bold">Construtora</span></td>
-                                                        <td className="text-center"><span className="material-symbols-outlined text-[10px] text-blue-400 cursor-pointer hover:text-blue-600">open_in_new</span></td>
-                                                    </tr>
+                                                    {cashFlow.filter(item => item.valoresPorSocio[partner]).map(item => (
+                                                        <tr key={item.id}>
+                                                            <td className="py-2 text-[10px] text-gray-600">{item.vencimento}</td>
+                                                            <td className="py-2 text-[10px] text-gray-600">{item.descricao}</td>
+                                                            <td className="py-2 text-[10px] font-medium text-gray-900 text-right">{formatCurrency(item.valoresPorSocio[partner])}</td>
+                                                            <td className="py-2 text-right"><span className="bg-blue-100 text-blue-600 text-[9px] px-1.5 py-0.5 rounded font-bold">{item.fase}</span></td>
+                                                        </tr>
+                                                    ))}
+                                                    {cashFlow.filter(item => item.valoresPorSocio[partner]).length === 0 && (
+                                                        <tr><td colSpan={4} className="py-3 text-center text-[10px] text-gray-400">Nenhum lançamento registrado</td></tr>
+                                                    )}
                                                 </tbody>
                                             </table>
                                         </div>
                                     )}
                                 </div>
-                            ))}
+                            )})}
 
-                            <div className="grid grid-cols-12 bg-gray-50 py-3 px-4 border-t border-gray-200">
-                                <div className="col-span-3 text-[10px] font-black text-gray-900 uppercase">TOTAL CONSOLIDADO</div>
-                                <div className="col-span-3 text-right text-xs font-black text-gray-900">R$ 210.127,00</div>
-                                <div className="col-span-3 text-right text-xs font-black text-gray-900">R$ 0,00</div>
-                                <div className="col-span-3 text-right text-xs font-black text-blue-700">R$ 210.127,00</div>
-                            </div>
+                            {(() => {
+                                const totalConstrutora = cashFlow.reduce((sum, item) => sum + Object.values(item.valoresPorSocio).reduce((a, b) => a + b, 0), 0);
+                                return (
+                                <div className="grid grid-cols-12 bg-gray-50 py-3 px-4 border-t border-gray-200">
+                                    <div className="col-span-3 text-[10px] font-black text-gray-900 uppercase">TOTAL CONSOLIDADO</div>
+                                    <div className="col-span-3 text-right text-xs font-black text-gray-900">{formatCurrency(totalConstrutora)}</div>
+                                    <div className="col-span-3 text-right text-xs font-black text-gray-900">{formatCurrency(0)}</div>
+                                    <div className="col-span-3 text-right text-xs font-black text-blue-700">{formatCurrency(totalConstrutora)}</div>
+                                </div>
+                                );
+                            })()}
                         </div>
                     </div>
                 </>

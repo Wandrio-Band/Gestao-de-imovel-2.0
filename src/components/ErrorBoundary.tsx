@@ -34,8 +34,8 @@ export class ErrorBoundary extends Component<Props, State> {
             console.error('ErrorBoundary caught an error:', error, errorInfo);
         }
 
-        // TODO: Send to error tracking service (Sentry, LogRocket, etc.)
-        // sendErrorToService(error, errorInfo);
+        // To enable error tracking: install @sentry/nextjs and set NEXT_PUBLIC_SENTRY_DSN
+        // Then uncomment: Sentry.captureException(error, { extra: { componentStack: errorInfo.componentStack } });
     }
 
     render() {
@@ -47,10 +47,10 @@ export class ErrorBoundary extends Component<Props, State> {
 
             // Default fallback UI
             return (
-                <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+                <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4" role="alert" aria-live="assertive">
                     <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
                         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <span className="material-symbols-outlined text-red-600 text-3xl">error</span>
+                            <span className="material-symbols-outlined text-red-600 text-3xl" aria-hidden="true">error</span>
                         </div>
 
                         <h2 className="text-2xl font-bold text-gray-900 mb-2">

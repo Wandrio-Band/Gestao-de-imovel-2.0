@@ -3,18 +3,7 @@
 import React, { useState } from 'react';
 import { useAssetContext } from '@/context/AssetContext';
 import { Asset } from '@/components/ai-studio/types';
-
-// Helper to format currency
-const formatCurrency = (value: number) => {
-    if (value >= 1000000) {
-        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 1 }).format(value); // 1.2M format if needed, currently using full
-    }
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-};
-
-const formatCurrencyCompact = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(value);
-};
+import { formatCurrencyLarge as formatCurrency, formatCurrencyCompact } from '@/lib/formatters';
 
 // Colors matching the screenshot specifically for this view
 const PARTNER_CONFIG: Record<string, { color: string, bg: string, text: string, barColor: string }> = {

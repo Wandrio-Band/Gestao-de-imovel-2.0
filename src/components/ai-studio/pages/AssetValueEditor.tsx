@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Asset, PartnerShare } from '../types';
+import { formatDecimal as formatCurrency } from '@/lib/formatters';
 
 interface Props {
     assets: Asset[];
@@ -36,11 +37,6 @@ export const AssetValueEditor: React.FC<Props> = ({ assets, onUpdateAssets, onUp
     React.useEffect(() => {
         setInternalAssets(assets);
     }, [assets]);
-
-    // Helper to format/parse currency
-    const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('pt-BR', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
-    };
 
     const parseCurrencyInput = (val: string) => {
         return parseFloat(val.replace(/\./g, '').replace(',', '.')) || 0;

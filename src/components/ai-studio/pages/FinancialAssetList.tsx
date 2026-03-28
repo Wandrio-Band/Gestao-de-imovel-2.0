@@ -6,6 +6,7 @@ import { CashFlowGrid } from './FinancialOverview/CashFlowGrid';
 import { ProjectedCashFlowChart } from './FinancialOverview/ProjectedCashFlowChart';
 import { getProjectedCashFlow, CashFlowProjection } from '@/app/actions/financial';
 import { useState, useEffect } from 'react';
+import { formatMoney as formatCurrency } from '@/lib/formatters';
 
 // ... interactions ...
 
@@ -32,11 +33,6 @@ export const FinancialAssetList: React.FC<FinancialAssetListProps> = ({ onNaviga
         loadCashFlow();
     }, []);
 
-    const formatCurrency = (val: number | string) => {
-        if (typeof val === 'string') return `R$ ${val}`;
-        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
-    };
-
     // Calculate Global KPIs
     const totalDebt = financialAssets.reduce((acc, curr) => acc + (curr.financingDetails?.saldoDevedor || 0), 0);
     const totalPaid = financialAssets.reduce((acc, curr) => acc + (curr.financingDetails?.valorQuitado || 0), 0);
@@ -46,6 +42,10 @@ export const FinancialAssetList: React.FC<FinancialAssetListProps> = ({ onNaviga
     // Yield Calculations
     const totalAnnualRent = financialAssets.reduce((acc, curr) => acc + (curr.rentalValue * 12), 0);
     const avgYield = totalAssetsValue > 0 ? (totalAnnualRent / totalAssetsValue) * 100 : 0;
+
+    // Next 30 days payables (from real cash flow data)
+    const next30DaysPayables = cashFlowData.length > 0 ? cashFlowData[0].payables : 0;
+    const next30DaysAssetCount = cashFlowData.length > 0 ? cashFlowData[0].details.expenses.length : 0;
 
     return (
         <div className="p-8 max-w-[1600px] mx-auto pb-24 animate-fade-in-up">
@@ -106,21 +106,19 @@ export const FinancialAssetList: React.FC<FinancialAssetListProps> = ({ onNaviga
                             <div className="flex justify-between items-start">
                                 <div>
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">PRÓXIMOS VENCIMENTOS (30 DIAS)</p>
-                                    <h2 className="text-3xl font-black text-gray-900 mb-2">R$ 18.450,00</h2>
+                                    <h2 className="text-3xl font-black text-gray-900 mb-2">
+                                        {loadingCashFlow ? '...' : formatCurrency(next30DaysPayables)}
+                                    </h2>
                                 </div>
                                 <div className="w-10 h-10 bg-yellow-50 text-yellow-600 rounded-xl flex items-center justify-center">
                                     <span className="material-symbols-outlined">calendar_clock</span>
                                 </div>
                             </div>
-                            <div className="flex -space-x-2 mt-2">
-                                {[1, 2, 3].map(i => (
-                                    <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-500 relative z-10">
-                                        <span className="material-symbols-outlined text-xs">apartment</span>
-                                    </div>
-                                ))}
-                                <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-500 relative z-0 pl-1">
-                                    +2
-                                </div>
+                            <div className="flex items-center gap-2 mt-2">
+                                <span className="material-symbols-outlined text-gray-400 text-sm">receipt_long</span>
+                                <span className="text-[10px] text-gray-400">
+                                    {loadingCashFlow ? 'Calculando...' : `${next30DaysAssetCount} despesa${next30DaysAssetCount !== 1 ? 's' : ''} prevista${next30DaysAssetCount !== 1 ? 's' : ''}`}
+                                </span>
                             </div>
                         </div>
 

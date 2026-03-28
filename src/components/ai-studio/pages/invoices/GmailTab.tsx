@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { GmailMessage, Invoice } from './types';
+import { formatMoney, normalizeDate, normalizeValue } from '@/lib/formatters';
 
 interface GmailTabProps {
     isConnected: boolean;
@@ -22,32 +23,11 @@ const FieldBox = ({ label, value, fullWidth = false, className = '' }: { label: 
     </div>
 );
 
-function normalizeDate(dateStr?: string): string {
-    if (!dateStr) return '';
-    let clean = dateStr.trim();
-    if (/^\d{2}\/\d{2}\/\d{2}$/.test(clean)) { const [d, m, y] = clean.split('/'); return `${d}/${m}/20${y}`; }
-    if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) { const [y, m, d] = clean.split('-'); return `${d}/${m}/${y}`; }
-    return clean;
-}
 
-function normalizeValue(val: string | number | undefined): number {
-    if (!val) return 0;
-    if (typeof val === 'number') return val;
-    let clean = val.toString().replace(/[R$\s]/g, '');
-    if (clean.includes(',') && (!clean.includes('.') || clean.lastIndexOf(',') > clean.lastIndexOf('.'))) {
-        clean = clean.replace(/\./g, '').replace(',', '.');
-    } else {
-        clean = clean.replace(/,/g, '');
-    }
-    return parseFloat(clean) || 0;
-}
-
-const formatMoney = (v: any) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(normalizeValue(v));
-
-const isDivergent = (val1: any, val2: any) => {
+const isDivergent = (val1: string | number | null, val2: string | number | null) => {
     if (!val1 && !val2) return false;
     if (!val1 || !val2) return true;
-    const normalize = (s: any) => String(s || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
+    const normalize = (s: string | number | null | undefined) => String(s || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
     const s1 = normalize(val1);
     const s2 = normalize(val2);
     if (s1 === s2) return false;
@@ -80,7 +60,7 @@ export const GmailTab: React.FC<GmailTabProps> = ({ isConnected, isProcessing, m
 
     const invoiceIndex = useMemo(() => {
         const index = new Map<string, Invoice>();
-        const cleanCNPJ = (c: any) => String(c || '').replace(/\D/g, '');
+        const cleanCNPJ = (c: string | number | null | undefined) => String(c || '').replace(/\D/g, '');
         invoices.forEach(inv => {
             const key = `${cleanCNPJ(inv.cnpj_cpf_emissor)}_${normalizeValue(inv.valor_total).toFixed(2)}`;
             if (!index.has(key)) index.set(key, inv);
@@ -90,7 +70,7 @@ export const GmailTab: React.FC<GmailTabProps> = ({ isConnected, isProcessing, m
 
     const displayedMessages = useMemo(() => {
         if (activeFilter === 'all') return messages;
-        const cleanCNPJ = (c: any) => String(c || '').replace(/\D/g, '');
+        const cleanCNPJ = (c: string | number | null | undefined) => String(c || '').replace(/\D/g, '');
         return messages.filter(m => {
             if (activeFilter === 'new') return !m.isDuplicate;
             if (!m.isDuplicate) return false;
@@ -138,8 +118,8 @@ export const GmailTab: React.FC<GmailTabProps> = ({ isConnected, isProcessing, m
         if (!selectedMessage) return null;
         const newData = selectedMessage.extracted;
         if (!newData) return null;
-        const cleanCNPJ = (c: any) => String(c || '').replace(/\D/g, '');
-        const normDate = (d: any) => normalizeDate(d);
+        const cleanCNPJ = (c: string | number | null | undefined) => String(c || '').replace(/\D/g, '');
+        const normDate = (d: string | number | null | undefined) => normalizeDate(d);
         const newCNPJ = cleanCNPJ(newData.cnpj_cpf_emissor);
         const newVal = normalizeValue(newData.valor_total).toFixed(2);
         const newNum = newData.numero_nota ? String(newData.numero_nota).trim() : null;
@@ -160,7 +140,7 @@ export const GmailTab: React.FC<GmailTabProps> = ({ isConnected, isProcessing, m
         });
     }, [selectedMessage, invoices]);
 
-    const ComparisonRow = ({ label, systemVal, newVal, type = 'text', field }: { label: string, systemVal: any, newVal: any, type?: 'text' | 'money', field?: string }) => {
+    const ComparisonRow = ({ label, systemVal, newVal, type = 'text', field }: { label: string, systemVal: string | number | null, newVal: string | number | null, type?: 'text' | 'money', field?: string }) => {
         const displaySystem = type === 'money' ? formatMoney(systemVal) : (systemVal || '-');
         const displayNew = type === 'money' ? formatMoney(newVal) : (newVal || '-');
         let divergent = false;
@@ -173,7 +153,7 @@ export const GmailTab: React.FC<GmailTabProps> = ({ isConnected, isProcessing, m
         const bgColor = divergent ? 'bg-orange-50' : 'bg-white';
         const textColor = divergent ? 'text-orange-900' : 'text-slate-700';
 
-        const handleEdit = (e: any) => {
+        const handleEdit = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
             if (!selectedMessage || !field) return;
             const updated = { ...selectedMessage };
             if (!updated.extracted) updated.extracted = {};
@@ -218,7 +198,7 @@ export const GmailTab: React.FC<GmailTabProps> = ({ isConnected, isProcessing, m
         );
     };
 
-    const AddressBlock = ({ prefix, extracted, onUpdate }: { prefix: 'emissor' | 'tomador', extracted: any, onUpdate: (data: any) => void }) => {
+    const AddressBlock = ({ prefix, extracted, onUpdate }: { prefix: 'emissor' | 'tomador', extracted: Record<string, unknown>, onUpdate: (data: Record<string, unknown>) => void }) => {
         const [loadingCep, setLoadingCep] = useState(false);
         const handleChange = (field: string, val: string) => onUpdate({ ...extracted, [field]: val });
         const handleBlurCep = async () => {
@@ -284,7 +264,7 @@ export const GmailTab: React.FC<GmailTabProps> = ({ isConnected, isProcessing, m
         );
     };
 
-    const AddressComparisonBlock = ({ prefix, extracted, system, onUpdate }: { prefix: 'emissor' | 'tomador', extracted: any, system: any, onUpdate: (data: any) => void }) => {
+    const AddressComparisonBlock = ({ prefix, extracted, system, onUpdate }: { prefix: 'emissor' | 'tomador', extracted: Record<string, unknown>, system: Record<string, unknown>, onUpdate: (data: Record<string, unknown>) => void }) => {
         const getField = (base: string) => {
             if (prefix === 'emissor') {
                 if (base === 'cidade') return 'cidade';
@@ -326,7 +306,7 @@ export const GmailTab: React.FC<GmailTabProps> = ({ isConnected, isProcessing, m
             if (!m.isDuplicate) return false;
             const newData = m.extracted;
             const inv = invoices.find(i => {
-                const cleanCNPJ = (c: any) => String(c || '').replace(/\D/g, '');
+                const cleanCNPJ = (c: string | number | null | undefined) => String(c || '').replace(/\D/g, '');
                 return cleanCNPJ(i.cnpj_cpf_emissor) === cleanCNPJ(newData?.cnpj_cpf_emissor) && normalizeValue(i.valor_total).toFixed(2) === normalizeValue(newData?.valor_total).toFixed(2);
             });
             if (!inv) return false;
@@ -391,8 +371,8 @@ export const GmailTab: React.FC<GmailTabProps> = ({ isConnected, isProcessing, m
                                     <span className="text-[10px] font-bold text-slate-400 truncate max-w-[150px]">{msg.extracted?.numero_nota ? `Nota #${msg.extracted.numero_nota}` : (msg.rawEmail.snippet?.substring(0, 20) + '...')}</span>
                                     {(() => {
                                         if (msg.isDuplicate) {
-                                            const cleanCNPJ = (c: any) => String(c || '').replace(/\D/g, '');
-                                            const normDate = (d: any) => normalizeDate(d);
+                                            const cleanCNPJ = (c: string | number | null | undefined) => String(c || '').replace(/\D/g, '');
+                                            const normDate = (d: string | number | null | undefined) => normalizeDate(d);
                                             const newData = msg.extracted;
                                             const newCNPJ = cleanCNPJ(newData?.cnpj_cpf_emissor);
                                             const newVal = normalizeValue(newData?.valor_total).toFixed(2);
@@ -449,7 +429,7 @@ export const GmailTab: React.FC<GmailTabProps> = ({ isConnected, isProcessing, m
                                             {selectedMessage.isDuplicate ? (
                                                 <>
                                                     <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm mb-6"><div className="grid grid-cols-6 gap-0"><div className="border-r border-slate-100 last:border-0 pr-4"><label className="text-[10px] font-black text-slate-400 uppercase block mb-3 tracking-widest">Valor Total</label><p className="font-black text-3xl text-[#1e293b] tracking-tight">{formatMoney(selectedMessage.extracted?.valor_total)}</p></div><div className="border-r border-slate-100 last:border-0 px-4"><label className="text-[10px] font-black text-slate-400 uppercase block mb-3 tracking-widest">Data Emissão</label><p className="font-bold text-2xl text-[#475569]">{selectedMessage.extracted?.data}</p></div><div className="border-r border-slate-100 last:border-0 px-4"><label className="text-[10px] font-black text-slate-400 uppercase block mb-3 tracking-widest">Número</label><p className="font-black text-2xl text-[#dc2626]">{selectedMessage.extracted?.numero_nota || '-'}</p></div><div className="border-r border-slate-100 last:border-0 px-4"><label className="text-[10px] font-black text-slate-400 uppercase block mb-3 tracking-widest">Série</label><p className="font-bold text-2xl text-[#475569]">{selectedMessage.extracted?.serie_nota || '-'}</p></div><div className="border-r border-slate-100 last:border-0 px-4"><label className="text-[10px] font-black text-slate-400 uppercase block mb-3 tracking-widest">Município</label><p className="font-bold text-2xl text-[#475569] uppercase truncate">{selectedMessage.extracted?.cidade || '-'}</p></div><div className="pl-4"><label className="text-[10px] font-black text-slate-400 uppercase block mb-3 tracking-widest">IRPF</label>{['Saúde', 'Educação'].includes(editedCategory) ? <div className="flex flex-col gap-1.5"><div className="flex items-center gap-1.5 text-emerald-600"><span className="material-symbols-outlined text-[18px]">check_circle</span><span className="text-[10px] font-black uppercase tracking-tight">Dedutível</span></div><select value={selectedMessage.extracted?.beneficiario || ''} onChange={(e) => onUpdateMessage({ ...selectedMessage, extracted: { ...selectedMessage.extracted, beneficiario: e.target.value } })} className="text-[9px] font-black bg-emerald-50 border border-emerald-100 rounded px-1.5 py-0.5 focus:ring-0 text-emerald-900 cursor-pointer h-5 uppercase"><option value="">Beneficiário...</option><option value="Wândrio">Wândrio</option><option value="Lucas">Lucas</option><option value="Raquel">Raquel</option></select></div> : <div className="flex items-center gap-1.5 text-slate-400"><span className="material-symbols-outlined text-[18px]">remove_circle_outline</span><span className="text-[10px] font-black uppercase tracking-tight">Não dedutível</span></div>}</div></div></div>
-                                                    <div className="mb-6"><div className="flex items-center gap-2 mb-2"><div className="p-1 px-2 bg-indigo-50 text-indigo-600 rounded-lg flex items-center gap-2"><span className="material-symbols-outlined text-sm">receipt_long</span><span className="text-[10px] font-black uppercase tracking-wider text-indigo-900">Itens da Nota</span></div></div>{selectedMessage.extracted?.items?.length > 0 ? <div className="bg-white border border-indigo-100 rounded-xl overflow-hidden shadow-sm"><div className="grid grid-cols-[30px_1fr_60px_80px_80px_100px] gap-2 px-4 py-2 bg-indigo-50/50 border-b border-indigo-100 text-[9px] font-black uppercase tracking-wider text-indigo-400"><div className="text-center">#</div><div>Descrição</div><div className="text-center">Qtd.</div><div className="text-right">V. Unit</div><div className="text-right">V. Total</div><div className="text-right">Categoria</div></div><div className="bg-white divide-y divide-slate-50">{selectedMessage.extracted.items.map((item: any, idx: number) => <div key={idx} className="grid grid-cols-[30px_1fr_60px_80px_80px_100px] gap-2 px-4 py-2 hover:bg-indigo-50/30 transition-colors items-center text-[10px] group"><div className="text-center text-slate-300 font-bold group-hover:text-indigo-300">{idx + 1}</div><div className="font-bold text-slate-700 uppercase leading-snug">{item.descricao}</div><div className="text-center text-slate-500 bg-slate-50 rounded py-0.5 font-medium border border-slate-100">{Number(item.quantidade) || 1}</div><div className="text-right text-slate-500">{formatMoney((Number(item.valor) || 0) / (Number(item.quantidade) || 1))}</div><div className="text-right font-black text-slate-900 group-hover:text-indigo-700">{formatMoney(Number(item.valor) || 0)}</div><div className="text-right"><span className="px-1.5 py-0.5 bg-slate-100 rounded text-[8px] font-bold text-slate-500 uppercase">{item.categoria || '-'}</span></div></div>)}</div></div> : <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-center"><p className="text-[10px] italic text-slate-400">Nenhum item detalhado.</p></div>}</div>
+                                                    <div className="mb-6"><div className="flex items-center gap-2 mb-2"><div className="p-1 px-2 bg-indigo-50 text-indigo-600 rounded-lg flex items-center gap-2"><span className="material-symbols-outlined text-sm">receipt_long</span><span className="text-[10px] font-black uppercase tracking-wider text-indigo-900">Itens da Nota</span></div></div>{selectedMessage.extracted?.items?.length > 0 ? <div className="bg-white border border-indigo-100 rounded-xl overflow-hidden shadow-sm"><div className="grid grid-cols-[30px_1fr_60px_80px_80px_100px] gap-2 px-4 py-2 bg-indigo-50/50 border-b border-indigo-100 text-[9px] font-black uppercase tracking-wider text-indigo-400"><div className="text-center">#</div><div>Descrição</div><div className="text-center">Qtd.</div><div className="text-right">V. Unit</div><div className="text-right">V. Total</div><div className="text-right">Categoria</div></div><div className="bg-white divide-y divide-slate-50">{selectedMessage.extracted.items.map((item: Record<string, unknown>, idx: number) => <div key={idx} className="grid grid-cols-[30px_1fr_60px_80px_80px_100px] gap-2 px-4 py-2 hover:bg-indigo-50/30 transition-colors items-center text-[10px] group"><div className="text-center text-slate-300 font-bold group-hover:text-indigo-300">{idx + 1}</div><div className="font-bold text-slate-700 uppercase leading-snug">{item.descricao}</div><div className="text-center text-slate-500 bg-slate-50 rounded py-0.5 font-medium border border-slate-100">{Number(item.quantidade) || 1}</div><div className="text-right text-slate-500">{formatMoney((Number(item.valor) || 0) / (Number(item.quantidade) || 1))}</div><div className="text-right font-black text-slate-900 group-hover:text-indigo-700">{formatMoney(Number(item.valor) || 0)}</div><div className="text-right"><span className="px-1.5 py-0.5 bg-slate-100 rounded text-[8px] font-bold text-slate-500 uppercase">{item.categoria || '-'}</span></div></div>)}</div></div> : <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-center"><p className="text-[10px] italic text-slate-400">Nenhum item detalhado.</p></div>}</div>
                                                     <SectionHeader title="Dados da Nota" icon="receipt" color="blue" /><div className="bg-slate-50 border border-slate-100 rounded-xl p-4"><div className="grid grid-cols-12 gap-4 px-4 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 border-b border-slate-100 mb-2"><div className="col-span-3">Campo</div><div className="col-span-4">Sistema</div><div className="col-span-1"></div><div className="col-span-4 text-slate-900">Importação</div></div><ComparisonRow label="Valor" systemVal={existingInvoice?.valor_total} newVal={selectedMessage.extracted?.valor_total} type="money" field="valor_total" /><ComparisonRow label="Data" systemVal={existingInvoice?.data} newVal={selectedMessage.extracted?.data} field="data" /><ComparisonRow label="Número" systemVal={existingInvoice?.numero_nota} newVal={selectedMessage.extracted?.numero_nota} field="numero_nota" /><ComparisonRow label="Série" systemVal={existingInvoice?.serie_nota} newVal={selectedMessage.extracted?.serie_nota} field="serie_nota" /></div>
                                                     <SectionHeader title="Emissor" icon="store" color="indigo" /><div className="bg-slate-50 border border-slate-100 rounded-xl p-4"><ComparisonRow label="Nome" systemVal={existingInvoice?.nome_emissor} newVal={selectedMessage.extracted?.nome_emissor} field="nome_emissor" /><ComparisonRow label="CNPJ" systemVal={existingInvoice?.cnpj_cpf_emissor} newVal={selectedMessage.extracted?.cnpj_cpf_emissor} field="cnpj_cpf_emissor" /><ComparisonRow label="Telefone" systemVal={existingInvoice?.telefone_emissor} newVal={selectedMessage.extracted?.telefone_emissor} field="telefone_emissor" /><div className="mt-4 pt-4 border-t border-slate-100"><AddressComparisonBlock prefix="emissor" extracted={selectedMessage.extracted || {}} system={existingInvoice || {}} onUpdate={(d) => onUpdateMessage({ ...selectedMessage, extracted: d })} /></div></div>
                                                     <SectionHeader title="Tomador" icon="person" color="emerald" /><div className="bg-slate-50 border border-slate-100 rounded-xl p-4"><ComparisonRow label="Nome" systemVal={existingInvoice?.nome_tomador} newVal={selectedMessage.extracted?.nome_tomador} field="nome_tomador" /><ComparisonRow label="Email" systemVal={existingInvoice?.email_tomador} newVal={selectedMessage.extracted?.email_tomador} field="email_tomador" /><ComparisonRow label="Telefone" systemVal={existingInvoice?.telefone_tomador} newVal={selectedMessage.extracted?.telefone_tomador} field="telefone_tomador" /><div className="mt-4 pt-4 border-t border-slate-100"><AddressComparisonBlock prefix="tomador" extracted={selectedMessage.extracted || {}} system={existingInvoice || {}} onUpdate={(d) => onUpdateMessage({ ...selectedMessage, extracted: d })} /></div></div>
@@ -457,7 +437,7 @@ export const GmailTab: React.FC<GmailTabProps> = ({ isConnected, isProcessing, m
                                             ) : (
                                                 <div className="space-y-4">
                                                     <div><SectionHeader title="Dados Principais" icon="info" color="blue" /><div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm"><div className="grid grid-cols-6 gap-0"><div className="border-r border-slate-100 last:border-0 pr-4"><label className="text-[10px] font-black text-slate-400 uppercase block mb-3 tracking-widest">Valor Total</label><p className="font-black text-3xl text-[#1e293b] tracking-tight">{formatMoney(selectedMessage.extracted?.valor_total)}</p></div><div className="border-r border-slate-100 last:border-0 px-4"><label className="text-[10px] font-black text-slate-400 uppercase block mb-3 tracking-widest">Data Emissão</label><p className="font-bold text-2xl text-[#475569]">{selectedMessage.extracted?.data}</p></div><div className="border-r border-slate-100 last:border-0 px-4"><label className="text-[10px] font-black text-slate-400 uppercase block mb-3 tracking-widest">Número</label><p className="font-black text-2xl text-[#dc2626]">{selectedMessage.extracted?.numero_nota || '-'}</p></div><div className="border-r border-slate-100 last:border-0 px-4"><label className="text-[10px] font-black text-slate-400 uppercase block mb-3 tracking-widest">Série</label><p className="font-bold text-2xl text-[#475569]">{selectedMessage.extracted?.serie_nota || '-'}</p></div><div className="border-r border-slate-100 last:border-0 px-4"><label className="text-[10px] font-black text-slate-400 uppercase block mb-3 tracking-widest">Município</label><p className="font-bold text-2xl text-[#475569] uppercase truncate">{selectedMessage.extracted?.cidade || '-'}</p></div><div className="pl-4"><label className="text-[10px] font-black text-slate-400 uppercase block mb-3 tracking-widest">IRPF</label>{['Saúde', 'Educação'].includes(editedCategory) ? <div className="flex flex-col gap-1.5"><div className="flex items-center gap-1.5 text-emerald-600"><span className="material-symbols-outlined text-[18px]">check_circle</span><span className="text-[10px] font-black uppercase tracking-tight">Dedutível</span></div><select value={selectedMessage.extracted?.beneficiario || ''} onChange={(e) => onUpdateMessage({ ...selectedMessage, extracted: { ...selectedMessage.extracted, beneficiario: e.target.value } })} className="text-[9px] font-black bg-emerald-50 border border-emerald-100 rounded px-1.5 py-0.5 focus:ring-0 text-emerald-900 cursor-pointer h-5 uppercase"><option value="">Beneficiário...</option><option value="Wândrio">Wândrio</option><option value="Lucas">Lucas</option><option value="Raquel">Raquel</option></select></div> : <div className="flex items-center gap-1.5 text-slate-400"><span className="material-symbols-outlined text-[18px]">remove_circle_outline</span><span className="text-[10px] font-black uppercase tracking-tight">Não dedutível</span></div>}</div></div></div></div>
-                                                    <div className="bg-indigo-50/30 border-2 border-indigo-100 rounded-xl p-4 mt-6"><div className="flex items-center justify-between mb-4"><div className="flex items-center gap-2"><div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg"><span className="material-symbols-outlined text-xl">receipt_long</span></div><h4 className="text-sm font-black uppercase tracking-wider text-indigo-900">Itens da Nota</h4></div></div>{selectedMessage.extracted?.items?.length > 0 ? <div className="bg-white border border-indigo-100 rounded-xl overflow-hidden shadow-sm"><div className="grid grid-cols-[40px_1fr_60px_100px_120px_100px] gap-4 px-4 py-3 bg-indigo-50/50 border-b border-indigo-100 text-[10px] font-black uppercase tracking-wider text-indigo-400"><div className="text-center">#</div><div>Descrição</div><div className="text-center">Qtd.</div><div className="text-right">V. Unit</div><div className="text-right">V. Total</div><div className="text-right">Categoria</div></div><div className="bg-white divide-y divide-slate-50">{selectedMessage.extracted.items.map((item: any, idx: number) => <div key={idx} className="grid grid-cols-[40px_1fr_60px_100px_120px_100px] gap-4 px-4 py-3 hover:bg-indigo-50/30 transition-colors items-center text-xs group"><div className="text-center text-slate-300 font-bold group-hover:text-indigo-300">{idx + 1}</div><div className="font-bold text-slate-700 uppercase leading-snug">{item.descricao}</div><div className="text-center text-slate-500 bg-slate-50 rounded py-0.5 font-medium border border-slate-100">{Number(item.quantidade) || 1}</div><div className="text-right text-slate-500">{formatMoney((Number(item.valor) || 0) / (Number(item.quantidade) || 1))}</div><div className="text-right font-black text-slate-900 group-hover:text-indigo-700 text-sm">{formatMoney(Number(item.valor) || 0)}</div><div className="text-right"><span className="px-2 py-0.5 bg-indigo-50 rounded text-[9px] font-black text-indigo-600 uppercase border border-indigo-100">{item.categoria || '-'}</span></div></div>)}</div></div> : <div className="bg-white border border-indigo-100 rounded-xl p-8 text-center"><p className="text-xs italic text-indigo-300">Nenhum item detalhado.</p></div>}</div>
+                                                    <div className="bg-indigo-50/30 border-2 border-indigo-100 rounded-xl p-4 mt-6"><div className="flex items-center justify-between mb-4"><div className="flex items-center gap-2"><div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg"><span className="material-symbols-outlined text-xl">receipt_long</span></div><h4 className="text-sm font-black uppercase tracking-wider text-indigo-900">Itens da Nota</h4></div></div>{selectedMessage.extracted?.items?.length > 0 ? <div className="bg-white border border-indigo-100 rounded-xl overflow-hidden shadow-sm"><div className="grid grid-cols-[40px_1fr_60px_100px_120px_100px] gap-4 px-4 py-3 bg-indigo-50/50 border-b border-indigo-100 text-[10px] font-black uppercase tracking-wider text-indigo-400"><div className="text-center">#</div><div>Descrição</div><div className="text-center">Qtd.</div><div className="text-right">V. Unit</div><div className="text-right">V. Total</div><div className="text-right">Categoria</div></div><div className="bg-white divide-y divide-slate-50">{selectedMessage.extracted.items.map((item: Record<string, unknown>, idx: number) => <div key={idx} className="grid grid-cols-[40px_1fr_60px_100px_120px_100px] gap-4 px-4 py-3 hover:bg-indigo-50/30 transition-colors items-center text-xs group"><div className="text-center text-slate-300 font-bold group-hover:text-indigo-300">{idx + 1}</div><div className="font-bold text-slate-700 uppercase leading-snug">{item.descricao}</div><div className="text-center text-slate-500 bg-slate-50 rounded py-0.5 font-medium border border-slate-100">{Number(item.quantidade) || 1}</div><div className="text-right text-slate-500">{formatMoney((Number(item.valor) || 0) / (Number(item.quantidade) || 1))}</div><div className="text-right font-black text-slate-900 group-hover:text-indigo-700 text-sm">{formatMoney(Number(item.valor) || 0)}</div><div className="text-right"><span className="px-2 py-0.5 bg-indigo-50 rounded text-[9px] font-black text-indigo-600 uppercase border border-indigo-100">{item.categoria || '-'}</span></div></div>)}</div></div> : <div className="bg-white border border-indigo-100 rounded-xl p-8 text-center"><p className="text-xs italic text-indigo-300">Nenhum item detalhado.</p></div>}</div>
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                                                         <div><SectionHeader title="Prestador (Emissor)" icon="store" color="blue" /><div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-3 h-full mt-2"><FieldBox label="Razão Social" value={selectedMessage.extracted?.nome_emissor} fullWidth /><div className="grid grid-cols-2 gap-3"><FieldBox label="CNPJ" value={selectedMessage.extracted?.cnpj_cpf_emissor} /><FieldBox label="Telefone" value={selectedMessage.extracted?.telefone_emissor} /></div><div className="pt-2"><AddressBlock prefix="emissor" extracted={selectedMessage.extracted || {}} onUpdate={(d) => onUpdateMessage({ ...selectedMessage, extracted: d })} /></div></div></div>
                                                         <div><SectionHeader title="Tomador de Serviço" icon="person" color="orange" /><div className="bg-orange-50 border border-orange-100 rounded-xl p-4 space-y-3 h-full mt-2"><FieldBox label="Nome Completo" value={selectedMessage.extracted?.nome_tomador} fullWidth /><div className="grid grid-cols-2 gap-3"><FieldBox label="CPF/CNPJ" value={selectedMessage.extracted?.cpf_cnpj_tomador} /><FieldBox label="E-mail" value={selectedMessage.extracted?.email_tomador} /></div><div className="pt-2"><AddressBlock prefix="tomador" extracted={selectedMessage.extracted || {}} onUpdate={(d) => onUpdateMessage({ ...selectedMessage, extracted: d })} /></div></div></div>

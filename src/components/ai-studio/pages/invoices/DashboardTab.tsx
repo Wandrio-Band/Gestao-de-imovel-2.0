@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Invoice, CATEGORY_ICONS } from './types';
+import { formatMoney } from '@/lib/formatters';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 interface DashboardTabProps {
@@ -10,13 +11,11 @@ interface DashboardTabProps {
     availableFilters: { categories: string[]; years: string[]; states: string[]; cities: string[]; issuers: string[] };
     onDelete: (id: string) => void;
     onApprove: (id: string) => void;
-    onUpdate: (id: string, data: any) => Promise<void>;
+    onUpdate: (id: string, data: Record<string, unknown>) => Promise<void>;
 }
 
 export const DashboardTab: React.FC<DashboardTabProps> = ({ invoices }) => {
     // --- LÓGICA DE DADOS ---
-    const formatMoney = (v: any) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
-
     const stats = useMemo(() => {
         const approved = invoices.filter(inv => inv.status === 'APROVADO');
         const total = approved.reduce((acc, inv) => acc + (Number(inv.valor_total) || 0), 0);
@@ -135,7 +134,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({ invoices }) => {
                                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} tickFormatter={(value) => `R$${value}`} />
                                 <Tooltip
                                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px', fontWeight: 'bold' }}
-                                    formatter={(v: any) => [formatMoney(v), "Total"]}
+                                    formatter={(v: string | number) => [formatMoney(v), "Total"]}
                                 />
                                 <Area type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorTotal)" />
                             </AreaChart>
@@ -169,7 +168,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({ invoices }) => {
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Pie>
-                                    <Tooltip formatter={(v: any) => formatMoney(v)} />
+                                    <Tooltip formatter={(v: string | number) => formatMoney(v)} />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>

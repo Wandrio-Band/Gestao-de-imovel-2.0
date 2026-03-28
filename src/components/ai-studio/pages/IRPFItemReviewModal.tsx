@@ -30,24 +30,22 @@ export const IRPFItemReviewModal: React.FC<IRPFItemReviewModalProps> = ({
     const formatCurrency = (val: number) =>
         new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
-    const handleFieldChange = (field: keyof IRPFExtractedAsset, value: any) => {
+    const handleFieldChange = (field: keyof IRPFExtractedAsset, value: string | number | boolean) => {
         setEditedData(prev => ({ ...prev, [field]: value }));
     };
 
     const handleSave = () => {
-        console.log('💾 Saving with action:', selectedAction, 'data:', editedData);
         onSave(selectedAction, editedData);
         // Modal will close via onSave callback in parent
     };
 
     const handleDesvincular = () => {
-        console.log('🔗 Unlinking item:', item.id);
         onDesvincular(item.id);
         onClose();
     };
 
     // Check if values are different
-    const isDifferent = (systemValue: any, pdfValue: any): boolean => {
+    const isDifferent = (systemValue: string | number | null, pdfValue: string | number | null): boolean => {
         if (!systemValue && !pdfValue) return false;
         if (!systemValue || !pdfValue) return true;
         return String(systemValue).trim() !== String(pdfValue).trim();
@@ -61,8 +59,8 @@ export const IRPFItemReviewModal: React.FC<IRPFItemReviewModalProps> = ({
         field
     }: {
         label: string;
-        systemValue: any;
-        pdfValue: any;
+        systemValue: string | number | null;
+        pdfValue: string | number | null;
         field: keyof IRPFExtractedAsset;
     }) => {
         const hasDifference = isDifferent(systemValue, pdfValue);
@@ -112,8 +110,8 @@ export const IRPFItemReviewModal: React.FC<IRPFItemReviewModalProps> = ({
         field
     }: {
         label: string;
-        systemValue: any;
-        pdfValue: any;
+        systemValue: string | number | null;
+        pdfValue: string | number | null;
         field: keyof IRPFExtractedAsset;
     }) => {
         const hasDifference = isDifferent(systemValue, pdfValue);
@@ -180,8 +178,8 @@ export const IRPFItemReviewModal: React.FC<IRPFItemReviewModalProps> = ({
         field
     }: {
         label: string;
-        systemValue: any;
-        pdfValue: any;
+        systemValue: string | number | null;
+        pdfValue: string | number | null;
         field: keyof IRPFExtractedAsset;
     }) => {
         const hasDifference = isDifferent(systemValue, pdfValue);

@@ -34,7 +34,7 @@ export const Step4Partners: React.FC<Step4PartnersProps> = ({
         setPartners(partners.filter((_, i) => i !== index));
     };
 
-    const handlePartnerChange = (index: number, field: keyof PartnerShare, value: any) => {
+    const handlePartnerChange = (index: number, field: keyof PartnerShare, value: string | number) => {
         setPartners(partners.map((p, i) => i === index ? { ...p, [field]: value } : p));
     };
 

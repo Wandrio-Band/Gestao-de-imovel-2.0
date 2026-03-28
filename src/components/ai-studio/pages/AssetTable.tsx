@@ -4,6 +4,7 @@ import { AssetRegistration } from './Forms/AssetRegistration';
 import { useAssetContext } from '@/context/AssetContext';
 import toast from 'react-hot-toast';
 import { DatabaseBackup } from '@/components/DatabaseBackup';
+import { formatMoney } from '@/lib/formatters';
 
 interface AssetTableProps {
     assets: Asset[];
@@ -144,13 +145,10 @@ export const AssetTable: React.FC<AssetTableProps> = ({ assets, onUpdateAssets, 
         if (savedWidths) {
             try {
                 const parsed = JSON.parse(savedWidths);
-                console.log('📥 Loaded saved column widths from localStorage');
                 setColWidths(parsed);
             } catch (e) {
                 console.error('Failed to parse saved widths:', e);
             }
-        } else {
-            console.log('🆕 No saved widths, using defaults');
         }
     }, []);
 
@@ -165,7 +163,6 @@ export const AssetTable: React.FC<AssetTableProps> = ({ assets, onUpdateAssets, 
         if (savedOrder) {
             try {
                 const parsed = JSON.parse(savedOrder);
-                console.log('📥 Loaded saved column order from localStorage');
                 setColumnOrder(parsed);
             } catch (e) {
                 console.error('Failed to parse saved order:', e);
@@ -240,12 +237,8 @@ export const AssetTable: React.FC<AssetTableProps> = ({ assets, onUpdateAssets, 
 
     const resizingRef = useRef<{ col: keyof typeof colWidths | null, startX: number, startWidth: number }>({ col: null, startX: 0, startWidth: 0 });
 
-    // Helper to format currency
-    const formatCurrency = (value: number) =>
-        new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-
     // Helper to handle general field changes
-    const handleInputChange = (id: string, field: keyof Asset, value: any) => {
+    const handleInputChange = (id: string, field: keyof Asset, value: string | number | boolean) => {
         const assetToUpdate = assets.find(a => a.id === id);
 
         if (assetToUpdate && onSaveAsset) {
@@ -284,8 +277,6 @@ export const AssetTable: React.FC<AssetTableProps> = ({ assets, onUpdateAssets, 
     const { handleDeleteAsset: deleteAssetFromContext } = useAssetContext();
 
     const handleDeleteAsset = async (assetId: string) => {
-        console.log('🗑️ handleDeleteAsset called for ID:', assetId);
-
         // Find asset name for better feedback
         const asset = assets.find(a => a.id === assetId);
         const assetName = asset?.name || 'imóvel';
@@ -293,9 +284,7 @@ export const AssetTable: React.FC<AssetTableProps> = ({ assets, onUpdateAssets, 
         const toastId = toast.loading(`Deletando ${assetName}...`);
 
         try {
-            console.log('💾 Calling deleteAssetFromContext...');
             await deleteAssetFromContext(assetId);
-            console.log('✅ Asset deleted successfully');
             toast.success(`${assetName} deletado com sucesso!`, { id: toastId });
         } catch (error) {
             console.error('❌ Error deleting asset:', error);
@@ -303,22 +292,8 @@ export const AssetTable: React.FC<AssetTableProps> = ({ assets, onUpdateAssets, 
         }
     };
 
-    // Debug: Log component state
-    React.useEffect(() => {
-        console.log('🔍 AssetTable state:', {
-            isQuickEditMode,
-            visibleColumns,
-            hasAcoesColumn: visibleColumns.includes('acoes'),
-            shouldShowDeleteButtons: visibleColumns.includes('acoes') && isQuickEditMode,
-            totalAssets: assets.length
-        });
-    }, [isQuickEditMode, visibleColumns, assets.length]);
-
-
 
     const handleDeleteAll = async () => {
-        console.log('🧹 handleDeleteAll called - total assets:', assets.length);
-
         const toastId = toast.loading(`Deletando ${assets.length} imóveis...`);
 
         try {
@@ -327,11 +302,10 @@ export const AssetTable: React.FC<AssetTableProps> = ({ assets, onUpdateAssets, 
             for (const asset of assets) {
                 await deleteAssetFromContext(asset.id);
                 deleted++;
-                console.log(`✅ Deleted ${deleted}/${assets.length}: ${asset.name}`);
+
             }
 
             toast.success(`${deleted} imóveis deletados com sucesso!`, { id: toastId });
-            console.log('✅ All assets deleted successfully');
         } catch (error) {
             console.error('❌ Error deleting assets:', error);
             toast.error('Erro ao deletar imóveis', { id: toastId });
@@ -349,8 +323,6 @@ export const AssetTable: React.FC<AssetTableProps> = ({ assets, onUpdateAssets, 
         const diff = e.clientX - startX;
         const newWidth = Math.max(50, startWidth + diff);
 
-        console.log('↔️ Resizing:', col, 'from', startWidth, 'to', newWidth, 'diff:', diff);
-
         setColWidths(prev => ({
             ...prev,
             [col]: newWidth
@@ -358,17 +330,14 @@ export const AssetTable: React.FC<AssetTableProps> = ({ assets, onUpdateAssets, 
     }, []);
 
     const handleMouseUp = useCallback(() => {
-        console.log('🛑 handleMouseUp called, cleaning up...');
         resizingRef.current = { col: null, startX: 0, startWidth: 0 };
         document.body.style.cursor = 'default';
         document.body.style.userSelect = 'auto';
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
-        console.log('✅ Event listeners removed, ready for next resize');
     }, [handleMouseMove]);
 
     const startResize = (e: React.MouseEvent, col: keyof typeof colWidths) => {
-        console.log('🔧 startResize called for column:', col, 'startWidth:', colWidths[col]);
         e.preventDefault();
         e.stopPropagation();
         resizingRef.current = {
@@ -380,14 +349,12 @@ export const AssetTable: React.FC<AssetTableProps> = ({ assets, onUpdateAssets, 
         document.body.style.userSelect = 'none'; // Disable selection during drag
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleMouseUp);
-        console.log('✅ Resize started, listeners attached');
     };
 
 
     // --- Column Reordering (Drag & Drop) ---
 
     const handleDragStart = (e: React.DragEvent, columnId: string) => {
-        console.log('🎯 Column drag started:', columnId);
         setDraggedColumn(columnId);
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', columnId);
@@ -409,8 +376,6 @@ export const AssetTable: React.FC<AssetTableProps> = ({ assets, onUpdateAssets, 
 
     const handleDrop = (e: React.DragEvent, targetColumnId: string) => {
         e.preventDefault();
-        console.log('📍 Drop on column:', targetColumnId);
-
         if (!draggedColumn || draggedColumn === targetColumnId) {
             setDraggedColumn(null);
             setDropIndicatorColumn(null);
@@ -425,7 +390,6 @@ export const AssetTable: React.FC<AssetTableProps> = ({ assets, onUpdateAssets, 
         newOrder.splice(draggedIdx, 1);
         newOrder.splice(targetIdx, 0, draggedColumn);
 
-        console.log('✅ New column order:', newOrder);
         setColumnOrder(newOrder);
         setDraggedColumn(null);
         setDropIndicatorColumn(null);
@@ -479,12 +443,15 @@ export const AssetTable: React.FC<AssetTableProps> = ({ assets, onUpdateAssets, 
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    handleDeleteAll();
+                                    if (confirm(`Tem certeza que deseja deletar TODOS os ${assets.length} imóveis? Esta ação não pode ser desfeita.`)) {
+                                        handleDeleteAll();
+                                    }
                                 }}
                                 className="px-2 py-1 text-[9px] font-bold text-red-600 hover:bg-red-50 rounded transition-colors"
                                 title="Deletar todos os imóveis"
+                                aria-label={`Deletar todos os ${assets.length} imóveis`}
                             >
-                                🗑️ TODOS
+                                DELETAR TODOS
                             </button>
                         )}
                     </div>
@@ -647,7 +614,7 @@ export const AssetTable: React.FC<AssetTableProps> = ({ assets, onUpdateAssets, 
             case 'valorMercado':
                 return (
                     <td key={colId} className="py-1 px-4 text-right align-middle">
-                        <span className="text-[11px] font-medium text-gray-900 truncate block">{formatCurrency(asset.marketValue)}</span>
+                        <span className="text-[11px] font-medium text-gray-900 truncate block">{formatMoney(asset.marketValue)}</span>
                     </td>
                 );
             case 'endereco':
@@ -845,7 +812,7 @@ export const AssetTable: React.FC<AssetTableProps> = ({ assets, onUpdateAssets, 
                             />
                         ) : (
                             <span className="text-[11px] font-medium text-gray-900 truncate block">
-                                {formatCurrency(asset.value)}
+                                {formatMoney(asset.value)}
                             </span>
                         )}
                     </td>
@@ -864,7 +831,7 @@ export const AssetTable: React.FC<AssetTableProps> = ({ assets, onUpdateAssets, 
                             />
                         ) : (
                             <span className="text-[11px] font-medium text-gray-900 truncate block">
-                                {formatCurrency(asset.declaredValue || 0)}
+                                {formatMoney(asset.declaredValue || 0)}
                             </span>
                         )}
                     </td>
@@ -889,7 +856,7 @@ export const AssetTable: React.FC<AssetTableProps> = ({ assets, onUpdateAssets, 
                 return (
                     <td key={colId} className="py-1 px-4 text-right align-middle">
                         {asset.rentalValue > 0 ? (
-                            <span className="text-[11px] font-medium text-green-600 bg-green-50 px-2 py-1 rounded truncate block">{formatCurrency(asset.rentalValue)}</span>
+                            <span className="text-[11px] font-medium text-green-600 bg-green-50 px-2 py-1 rounded truncate block">{formatMoney(asset.rentalValue)}</span>
                         ) : (
                             <span className="text-gray-300">-</span>
                         )}
@@ -1111,7 +1078,7 @@ export const AssetTable: React.FC<AssetTableProps> = ({ assets, onUpdateAssets, 
                 <div className="flex items-stretch gap-1">
                     <div className="flex-1 bg-white px-2 py-1 rounded border border-gray-200">
                         <p className="text-[6px] font-bold text-gray-400 uppercase tracking-widest">Total Aquisição</p>
-                        <p className="text-xs font-black text-gray-900 leading-tight">{formatCurrency(totalValue)}</p>
+                        <p className="text-xs font-black text-gray-900 leading-tight">{formatMoney(totalValue)}</p>
                     </div>
                     <div className="flex-1 bg-white px-2 py-1 rounded border border-gray-200">
                         <div className="flex items-center justify-between">
@@ -1120,7 +1087,7 @@ export const AssetTable: React.FC<AssetTableProps> = ({ assets, onUpdateAssets, 
                                 {marketGrowth >= 0 ? '+' : ''}{marketGrowth.toFixed(1)}%
                             </span>
                         </div>
-                        <p className="text-xs font-black text-gray-900 leading-tight">{formatCurrency(totalMarketValue)}</p>
+                        <p className="text-xs font-black text-gray-900 leading-tight">{formatMoney(totalMarketValue)}</p>
                     </div>
                     <div className="flex-1 bg-white px-2 py-1 rounded border border-gray-200">
                         <p className="text-[6px] font-bold text-gray-400 uppercase tracking-widest">Ativos Cadastrados</p>
@@ -1143,6 +1110,20 @@ export const AssetTable: React.FC<AssetTableProps> = ({ assets, onUpdateAssets, 
                                     <div className={`absolute top-0.5 w-2 h-2 bg-white rounded-full transition-all ${isQuickEditMode ? 'right-0.5' : 'left-0.5'}`}></div>
                                 </div>
                             </div>
+                        )}
+                        {viewMode === 'assets_list' && assets.length > 0 && (
+                            <button
+                                onClick={() => {
+                                    if (confirm(`Tem certeza que deseja deletar TODOS os ${assets.length} imóveis? Esta ação não pode ser desfeita.`)) {
+                                        handleDeleteAll();
+                                    }
+                                }}
+                                className="bg-white px-3 py-2 rounded-lg border border-red-200 shadow-sm flex items-center gap-2 cursor-pointer hover:bg-red-50 transition-colors"
+                                aria-label={`Deletar todos os ${assets.length} imóveis`}
+                            >
+                                <span className="material-symbols-outlined text-red-500 text-sm" aria-hidden="true">delete_sweep</span>
+                                <span className="text-[10px] font-bold text-red-600">Deletar Todos ({assets.length})</span>
+                            </button>
                         )}
                     </div>
                 </div>
@@ -1265,7 +1246,7 @@ export const AssetTable: React.FC<AssetTableProps> = ({ assets, onUpdateAssets, 
                                     <div className="grid grid-cols-2 gap-4 mb-4">
                                         <div>
                                             <p className="text-[9px] font-bold text-gray-400 uppercase">Valor Mercado</p>
-                                            <p className="text-sm font-black text-gray-900">{formatCurrency(asset.marketValue)}</p>
+                                            <p className="text-sm font-black text-gray-900">{formatMoney(asset.marketValue)}</p>
                                         </div>
                                         <div>
                                             <p className="text-[9px] font-bold text-gray-400 uppercase">Área Total</p>

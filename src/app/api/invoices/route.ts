@@ -3,9 +3,11 @@ import { prisma } from '@/lib/prisma';
 import { invoiceCreateSchema } from '@/lib/validations';
 import { handleApiError, handleValidationError, parseIntParam } from '@/lib/api-utils';
 import { logAudit } from '@/lib/audit';
+import { requireAuth } from '@/lib/auth-guard';
 
 export async function GET(request: Request) {
     try {
+        await requireAuth();
         const { searchParams } = new URL(request.url);
         const page = parseIntParam(searchParams.get('page'), 1, 1, 1000);
         const limit = parseIntParam(searchParams.get('limit'), 50, 1, 100);
@@ -28,6 +30,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     try {
+        await requireAuth();
         const body = await request.json();
 
         const parsed = invoiceCreateSchema.safeParse(body);

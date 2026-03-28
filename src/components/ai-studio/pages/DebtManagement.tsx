@@ -1,80 +1,168 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useAssetContext } from '@/context/AssetContext';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import { Asset, ViewState } from '../types';
+import { Asset, ViewState, CashFlowItem } from '../types';
+import { formatMoney as formatCurrency } from '@/lib/formatters';
+import { generateBankAmortizationTable, getFinancingPhase, parseCurrencyValue } from '@/lib/financingHelpers';
+import { addMonths } from 'date-fns';
 
 interface DebtManagementProps {
     onNavigate?: (view: ViewState, asset?: Asset) => void;
 }
 
-const cashOutData = [
-    { name: 'Jan', regular: 450000, balloon: 0 },
-    { name: 'Fev', regular: 450000, balloon: 0 },
-    { name: 'Mar', regular: 480000, balloon: 0 },
-    { name: 'Abr', regular: 450000, balloon: 0 },
-    { name: 'Mai', regular: 450000, balloon: 800000 },
-    { name: 'Jun', regular: 450000, balloon: 0 },
-    { name: 'Jul', regular: 450000, balloon: 0 },
-    { name: 'Ago', regular: 450000, balloon: 950000 },
-    { name: 'Set', regular: 450000, balloon: 0 },
-    { name: 'Out', regular: 450000, balloon: 0 },
-    { name: 'Nov', regular: 450000, balloon: 0 },
-    { name: 'Dez', regular: 500000, balloon: 0 },
-];
-
 export const DebtManagement: React.FC<DebtManagementProps> = ({ onNavigate }) => {
-    // 1. Calculate Debt Metrics from Assets
     const { assets } = useAssetContext();
     const assetsWithDebt = assets.filter(a => a.financingDetails);
 
     const totalMarketValue = assets.reduce((acc, curr) => acc + curr.marketValue, 0);
 
+    // Calculate total debt: saldoDevedor (construtora) + valorFinanciar (banco)
     const totalDebt = assetsWithDebt.reduce((acc, curr) => {
-        // Parse string "1.000,00" to number
         const saldo = curr.financingDetails?.saldoDevedor || 0;
-        return acc + saldo;
+        const banco = parseCurrencyValue(curr.financingDetails?.valorFinanciar);
+        return acc + saldo + banco;
     }, 0);
 
-    const totalMonthlyService = assetsWithDebt.reduce((acc, curr) => {
-        // Estimate monthly payment based on active phases (simplified logic for mock)
-        const phases = curr.financingDetails?.phases;
-        if (!phases) return acc;
-        const mensal = (phases.mensais?.qtd > 0) ? phases.mensais.unitario : 0;
-        return acc + mensal;
-    }, 0);
-
-    const ltv = (totalDebt / totalMarketValue) * 100;
-
-    // 2. Prepare Chart Data
-    const debtByIndexer = [
-        { name: 'INCC (Obras)', value: 0, color: '#f59e0b' }, // Orange
-        { name: 'IPCA (Bancário)', value: 0, color: '#3b82f6' }, // Blue
-        { name: 'IGP-M', value: 0, color: '#8b5cf6' }, // Purple
-        { name: 'CDI', value: 0, color: '#10b981' }  // Green
-    ];
-
-    assetsWithDebt.forEach(asset => {
-        const debt = asset.financingDetails?.saldoDevedor || 0;
-        const indexer = asset.financingDetails?.indexador || 'OUTROS';
-
-        if (indexer.includes('INCC') || !asset.financingDetails?.vencimentoPrimeira) {
-            debtByIndexer[0].value += debt;
-        } else if (indexer.includes('IPCA')) {
-            debtByIndexer[1].value += debt;
-        } else if (indexer.includes('IGP')) {
-            debtByIndexer[2].value += debt;
-        } else {
-            debtByIndexer[3].value += debt;
+    // Calculate monthly service from real data
+    const totalMonthlyService = useMemo(() => {
+        let total = 0;
+        for (const asset of assetsWithDebt) {
+            const fin = asset.financingDetails!;
+            // Construtora monthly
+            const mensal = (fin.phases?.mensais?.qtd > 0) ? fin.phases.mensais.unitario : 0;
+            total += mensal;
+            // Bank monthly (first installment)
+            const bankRows = generateBankAmortizationTable(fin);
+            if (bankRows.length > 0) total += bankRows[0].prestacao;
         }
-    });
+        return total;
+    }, [assetsWithDebt]);
 
-    // Filter out empty indexers
-    const activeIndexers = debtByIndexer.filter(i => i.value > 0);
+    const ltv = totalMarketValue > 0 ? (totalDebt / totalMarketValue) * 100 : 0;
 
-    const formatCurrency = (val: number | string) => {
-        if (typeof val === 'string') return `R$ ${val}`;
-        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
-    };
+    // Weighted average rate
+    const weightedRate = useMemo(() => {
+        let sumWeighted = 0;
+        let sumDebt = 0;
+        for (const asset of assetsWithDebt) {
+            const fin = asset.financingDetails!;
+            const banco = parseCurrencyValue(fin.valorFinanciar);
+            if (banco > 0 && fin.jurosAnuais) {
+                sumWeighted += banco * parseFloat(fin.jurosAnuais);
+                sumDebt += banco;
+            }
+        }
+        return sumDebt > 0 ? sumWeighted / sumDebt : 0;
+    }, [assetsWithDebt]);
+
+    // Indexer composition
+    const activeIndexers = useMemo(() => {
+        const indexers = [
+            { name: 'INCC (Obras)', value: 0, color: '#f59e0b' },
+            { name: 'IPCA (Bancário)', value: 0, color: '#3b82f6' },
+            { name: 'IGP-M', value: 0, color: '#8b5cf6' },
+            { name: 'Outros', value: 0, color: '#10b981' }
+        ];
+
+        for (const asset of assetsWithDebt) {
+            const fin = asset.financingDetails!;
+            const saldo = fin.saldoDevedor || 0;
+            const banco = parseCurrencyValue(fin.valorFinanciar);
+            const indexer = (fin.indexador || '').toUpperCase();
+
+            if (saldo > 0) indexers[0].value += saldo; // Construtora = INCC
+            if (banco > 0) {
+                if (indexer.includes('IGP')) indexers[2].value += banco;
+                else indexers[1].value += banco; // Default banco = IPCA
+            }
+        }
+
+        return indexers.filter(i => i.value > 0);
+    }, [assetsWithDebt]);
+
+    // Cash Out Projection — next 12 months from real data
+    const cashOutData = useMemo(() => {
+        const now = new Date();
+        const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        const data: { name: string; regular: number; balloon: number }[] = [];
+
+        for (let i = 0; i < 12; i++) {
+            const targetDate = addMonths(now, i);
+            const targetMonth = targetDate.getMonth();
+            const targetYear = targetDate.getFullYear();
+            let regular = 0;
+            let balloon = 0;
+
+            for (const asset of assetsWithDebt) {
+                const fin = asset.financingDetails!;
+                const cashFlow = fin.cashFlow || [];
+
+                // From cashFlow items
+                for (const item of cashFlow) {
+                    const parts = item.vencimento.split('/');
+                    if (parts.length === 3) {
+                        const [, m, y] = parts.map(Number);
+                        if (m - 1 === targetMonth && y === targetYear) {
+                            const val = Object.values(item.valoresPorSocio).reduce((a, b) => a + b, 0);
+                            const fase = (item.fase || '').toLowerCase();
+                            if (fase.includes('bal')) balloon += val;
+                            else regular += val;
+                        }
+                    }
+                }
+
+                // From bank amortization
+                const bankRows = generateBankAmortizationTable(fin);
+                for (const row of bankRows) {
+                    const parts = row.date.split('/');
+                    if (parts.length === 3) {
+                        const [, m, y] = parts.map(Number);
+                        if (m - 1 === targetMonth && y === targetYear) {
+                            regular += row.prestacao;
+                        }
+                    }
+                }
+            }
+
+            data.push({ name: monthNames[targetMonth], regular, balloon });
+        }
+
+        return data;
+    }, [assetsWithDebt]);
+
+    // Maturity profile — next 5 years from real data
+    const maturityData = useMemo(() => {
+        const currentYear = new Date().getFullYear();
+        const years: { year: string; amount: number }[] = [];
+
+        for (let y = currentYear; y < currentYear + 5; y++) {
+            let total = 0;
+
+            for (const asset of assetsWithDebt) {
+                const fin = asset.financingDetails!;
+                const cashFlow = fin.cashFlow || [];
+
+                for (const item of cashFlow) {
+                    const parts = item.vencimento.split('/');
+                    if (parts.length === 3 && Number(parts[2]) === y) {
+                        total += Object.values(item.valoresPorSocio).reduce((a, b) => a + b, 0);
+                    }
+                }
+
+                const bankRows = generateBankAmortizationTable(fin);
+                for (const row of bankRows) {
+                    const parts = row.date.split('/');
+                    if (parts.length === 3 && Number(parts[2]) === y) {
+                        total += row.prestacao;
+                    }
+                }
+            }
+
+            years.push({ year: String(y), amount: total });
+        }
+
+        return years;
+    }, [assetsWithDebt]);
 
     return (
         <div className="p-8 max-w-[1600px] mx-auto pb-24 animate-fade-in-up">
@@ -145,8 +233,8 @@ export const DebtManagement: React.FC<DebtManagementProps> = ({ onNavigate }) =>
                             <span className="material-symbols-outlined">percent</span>
                         </div>
                     </div>
-                    <h3 className="text-3xl font-black text-gray-900 mb-1">9.85% <span className="text-sm font-bold text-gray-400">a.a.</span></h3>
-                    <p className="text-xs text-gray-400">+ IPCA (Inflação)</p>
+                    <h3 className="text-3xl font-black text-gray-900 mb-1">{weightedRate.toFixed(2)}% <span className="text-sm font-bold text-gray-400">a.a.</span></h3>
+                    <p className="text-xs text-gray-400">{weightedRate > 0 ? '+ IPCA (Inflação)' : 'Sem financiamento bancário'}</p>
                     <div className="absolute bottom-0 left-0 w-full h-1 bg-purple-600"></div>
                 </div>
             </div>
@@ -288,7 +376,7 @@ export const DebtManagement: React.FC<DebtManagementProps> = ({ onNavigate }) =>
                                     ))}
                                 </Pie>
                                 <Tooltip
-                                    formatter={(value: any) => formatCurrency(Number(value))}
+                                    formatter={(value: string | number) => formatCurrency(Number(value))}
                                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                                 />
                             </PieChart>
@@ -316,18 +404,12 @@ export const DebtManagement: React.FC<DebtManagementProps> = ({ onNavigate }) =>
                     </div>
                     <div className="h-64 w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={[
-                                { year: '2024', amount: 120000 },
-                                { year: '2025', amount: 480000 }, // High due to "keys" or balloon
-                                { year: '2026', amount: 150000 },
-                                { year: '2027', amount: 155000 },
-                                { year: '2028', amount: 160000 },
-                            ]}>
+                            <BarChart data={maturityData}>
                                 <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 'bold', fill: '#9ca3af' }} />
                                 <Tooltip
                                     cursor={{ fill: '#f3f4f6', radius: 8 }}
                                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                                    formatter={(value: any) => formatCurrency(Number(value))}
+                                    formatter={(value: string | number) => formatCurrency(Number(value))}
                                 />
                                 <Bar dataKey="amount" fill="#111827" radius={[6, 6, 0, 0]} barSize={40} />
                             </BarChart>
@@ -363,7 +445,7 @@ export const DebtManagement: React.FC<DebtManagementProps> = ({ onNavigate }) =>
                             <Tooltip
                                 cursor={{ fill: '#f9fafb' }}
                                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-                                formatter={(value: any) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(Number(value))}
+                                formatter={(value: string | number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(Number(value))}
                             />
                             <Bar dataKey="regular" stackId="a" fill="#2563eb" radius={[0, 0, 4, 4]} />
                             <Bar dataKey="balloon" stackId="a" fill="#f97316" radius={[4, 4, 0, 0]} />

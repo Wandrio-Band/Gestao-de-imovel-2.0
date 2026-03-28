@@ -1,13 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { Invoice, CATEGORY_ICONS } from './types';
-
+import { formatMoney } from '@/lib/formatters';
 import { InvoiceViewer } from './InvoiceViewer';
 
 interface HistoryTabProps {
     invoices: Invoice[];
     onDelete: (id: string) => void;
     onApprove: (id: string) => void;
-    onUpdate: (id: string, data: any) => Promise<void>;
+    onUpdate: (id: string, data: Record<string, unknown>) => Promise<void>;
 }
 
 export const HistoryTab: React.FC<HistoryTabProps> = ({ invoices, onDelete, onApprove, onUpdate }) => {
@@ -33,7 +33,6 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({ invoices, onDelete, onAp
     }, [invoices, searchQuery, statusFilter]);
 
     // Format helpers
-    const formatMoney = (v: any) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
     const dateStr = (d?: string) => {
         if (!d) return "-";
         // Convert DD/MM/YYYY to something nicer if needed

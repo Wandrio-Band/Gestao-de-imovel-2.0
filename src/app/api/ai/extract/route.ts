@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { aiExtractSchema } from '@/lib/validations';
 import { apiError, handleApiError, handleValidationError, ALLOWED_MIME_TYPES } from '@/lib/api-utils';
+import { requireAuth } from '@/lib/auth-guard';
 
 const CATEGORIES = ["Saude", "Educacao", "Reforma", "Eletronicos", "Outros"];
 const MAX_RETRIES = 3;
@@ -13,6 +15,7 @@ async function sleep(ms: number) {
 
 export async function POST(request: NextRequest) {
     try {
+        await requireAuth();
         const body = await request.json();
 
         const parsed = aiExtractSchema.safeParse(body);
@@ -29,6 +32,14 @@ export async function POST(request: NextRequest) {
 
         if (isFile && mimeType && !ALLOWED_MIME_TYPES.includes(mimeType)) {
             return apiError(`Tipo de arquivo nao suportado: ${mimeType}`, 400, 'INVALID_MIME');
+        }
+
+        // Validate file size (base64 encoded, ~10MB decoded limit)
+        if (isFile && content) {
+            const estimatedBytes = (content.length * 3) / 4;
+            if (estimatedBytes > 10 * 1024 * 1024) {
+                return apiError('Arquivo muito grande (maximo 10MB)', 413, 'FILE_TOO_LARGE');
+            }
         }
 
         const prompt = `Analise este documento de Nota Fiscal/Recibo. Seja extremamente preciso.
@@ -49,7 +60,7 @@ export async function POST(request: NextRequest) {
 
         let lastError: { status: number; text: string } | null = null;
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
             try {
@@ -72,7 +83,7 @@ export async function POST(request: NextRequest) {
             } catch (err: unknown) {
                 const errMsg = err instanceof Error ? err.message : 'Unknown AI error';
                 const errStatus = (err as { status?: number })?.status || 502;
-                console.error(`[AI Extract] Attempt ${attempt + 1} failed:`, errMsg);
+                logger.error(`[AI Extract] Attempt ${attempt + 1} failed:`, errMsg);
                 lastError = { status: errStatus, text: errMsg };
 
                 if (attempt < MAX_RETRIES - 1) {

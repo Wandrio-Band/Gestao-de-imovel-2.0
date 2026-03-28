@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Invoice } from './types';
+import { formatMoney } from '@/lib/formatters';
 
 interface AuditTabProps {
     invoices: Invoice[];
@@ -38,9 +39,7 @@ export const AuditTab: React.FC<AuditTabProps> = ({ invoices, onApprove, onDelet
         });
     }, [selectedInvoice, invoices]);
 
-    const formatMoney = (v: any) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
-
-    const ComparisonRow = ({ label, systemVal, newVal, type = 'text' }: { label: string, systemVal: any, newVal: any, type?: 'text' | 'money' }) => {
+    const ComparisonRow = ({ label, systemVal, newVal, type = 'text' }: { label: string, systemVal: string | number | null, newVal: string | number | null, type?: 'text' | 'money' }) => {
         const dSys = type === 'money' ? formatMoney(systemVal) : (systemVal || '-');
         const dNew = type === 'money' ? formatMoney(newVal) : (newVal || '-');
         const divergent = String(systemVal || '').trim().toLowerCase() !== String(newVal || '').trim().toLowerCase();

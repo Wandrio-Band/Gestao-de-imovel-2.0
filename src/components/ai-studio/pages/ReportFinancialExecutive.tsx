@@ -1,7 +1,13 @@
-
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Asset, ViewState } from '../types';
-import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { formatMoney } from '@/lib/formatters';
+import {
+    parseCurrencyValue,
+    getFinancingPhase,
+    getCashFlowItemTotal,
+    generateBankAmortizationTable,
+} from '@/lib/financingHelpers';
 
 interface ReportFinancialExecutiveProps {
     asset: Asset | null;
@@ -11,37 +17,142 @@ interface ReportFinancialExecutiveProps {
 export const ReportFinancialExecutive: React.FC<ReportFinancialExecutiveProps> = ({ asset, onNavigate }) => {
     if (!asset) return null;
 
-    // --- Mock Data specific to the screenshot layout ---
-    
-    // Line Chart Data (Decreasing curve)
-    const curveData = Array.from({ length: 25 }, (_, i) => {
-        const year = 2024 + i;
-        const total = 1.25 - (i * 0.05); // Rough linear decrease
-        const interest = total * 0.4;
+    const financing = asset.financingDetails;
+    const hasFinancing = !!financing;
+
+    // Detect phase
+    const phase = financing ? getFinancingPhase(financing) : 'construtora';
+    const isConstrutora = phase === 'construtora' || phase === 'both';
+    const isBancario = phase === 'bancario' || phase === 'both';
+
+    // Basic KPIs
+    const saldoDevedor = financing?.saldoDevedor || 0;
+    const valorQuitado = financing?.valorQuitado || 0;
+    const valorTotal = parseCurrencyValue(financing?.valorTotal);
+    const subtotalConstrutora = financing?.subtotalConstrutora || valorTotal;
+    const valorFinanciar = parseCurrencyValue(financing?.valorFinanciar);
+    const prazoMeses = parseInt(financing?.prazoMeses || '0') || 0;
+    const jurosAnuais = parseFloat(financing?.jurosAnuais || '0');
+    const percentQuitado = subtotalConstrutora > 0 ? Math.round((valorQuitado / subtotalConstrutora) * 100) : 0;
+
+    // Partners
+    const partners = asset.partners || [];
+    const totalContributed = valorQuitado;
+
+    // Phase 1 data
+    const phases = financing?.phases;
+    const sinalTotal = (phases?.sinal?.qtd || 0) * (phases?.sinal?.unitario || 0);
+    const mensaisTotal = (phases?.mensais?.qtd || 0) * (phases?.mensais?.unitario || 0);
+    const baloesTotal = (phases?.baloes?.qtd || 0) * (phases?.baloes?.unitario || 0);
+
+    // Payment status breakdown (Phase 1)
+    const statusBreakdown = useMemo(() => {
+        const cashFlow = financing?.cashFlow || [];
+        if (cashFlow.length === 0) return null;
+
+        let pago = 0, pendente = 0, futuro = 0;
+        for (const item of cashFlow) {
+            const total = getCashFlowItemTotal(item);
+            if (item.status === 'Pago') pago += total;
+            else if (item.status === 'Pendente') pendente += total;
+            else futuro += total;
+        }
+        const sum = pago + pendente + futuro;
         return {
-            year: year.toString(),
-            principal: Math.max(0, total),
-            interest: Math.max(0, interest) 
+            pago, pendente, futuro,
+            pagoPct: sum > 0 ? Math.round((pago / sum) * 100) : 0,
+            pendentePct: sum > 0 ? Math.round((pendente / sum) * 100) : 0,
+            futuroPct: sum > 0 ? Math.round((futuro / sum) * 100) : 0,
         };
-    });
+    }, [financing]);
 
-    // Donut Chart Data
-    const paymentComposition = [
-        { name: 'Amortização Principal', value: 72, color: '#1152d4' }, // Blue
-        { name: 'Juros Totais', value: 28, color: '#fb923c' }, // Orange
-    ];
+    // Evolution chart — phase-aware
+    const curveData = useMemo(() => {
+        if (!hasFinancing) return [];
 
-    const partners = [
-        { name: 'Carlos', share: 40, contributed: 183280, avatar: 'https://i.pravatar.cc/150?img=11' },
-        { name: 'Ana S.', share: 60, contributed: 274920, initials: 'AS', color: 'bg-purple-100 text-purple-600' },
-    ];
+        if (isBancario && valorFinanciar > 0 && prazoMeses > 0) {
+            // Phase 2: real amortization curve using valorFinanciar
+            const monthlyRate = jurosAnuais > 0 ? Math.pow(1 + jurosAnuais / 100, 1 / 12) - 1 : 0;
+            const totalMonths = Math.min(prazoMeses, 360);
+            const years = Math.ceil(totalMonths / 12);
+            const sistema = (financing?.sistemaAmortizacao || 'SAC').toUpperCase();
 
-    const formatCurrency = (val: number) => 
-        new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+            let balance = valorFinanciar;
+            // PRICE or SAC monthly payment
+            let monthlyPayment: number;
+            if (sistema === 'PRICE' && monthlyRate > 0) {
+                monthlyPayment = valorFinanciar * (monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) /
+                    (Math.pow(1 + monthlyRate, totalMonths) - 1);
+            } else {
+                monthlyPayment = valorFinanciar / totalMonths;
+            }
+
+            const data = [];
+            const startYear = new Date().getFullYear();
+
+            for (let y = 0; y <= years && balance > 0; y++) {
+                const interest = balance * monthlyRate * 12;
+                data.push({
+                    year: (startYear + y).toString(),
+                    principal: Math.max(0, balance / 1000000),
+                    interest: Math.max(0, interest / 1000000),
+                });
+
+                for (let m = 0; m < 12 && balance > 0; m++) {
+                    const monthInterest = balance * monthlyRate;
+                    const amort = sistema === 'SAC'
+                        ? valorFinanciar / totalMonths
+                        : Math.max(0, monthlyPayment - monthInterest);
+                    balance = Math.max(0, balance - amort);
+                }
+            }
+            return data;
+        }
+
+        if (isConstrutora && subtotalConstrutora > 0) {
+            // Phase 1: simple staircase (no interest)
+            const totalParcelas = (phases?.sinal?.qtd || 0) + (phases?.mensais?.qtd || 0) + (phases?.baloes?.qtd || 0);
+            if (totalParcelas <= 0) return [];
+
+            const years = Math.ceil(totalParcelas / 12);
+            let balance = subtotalConstrutora;
+            const data = [];
+            const startYear = new Date().getFullYear();
+
+            let parcelaIndex = 0;
+            for (let y = 0; y <= years && balance > 0; y++) {
+                data.push({
+                    year: (startYear + y).toString(),
+                    principal: Math.max(0, balance / 1000000),
+                    interest: 0,
+                });
+
+                // Reduce by 12 months of payments
+                for (let m = 0; m < 12 && parcelaIndex < totalParcelas; m++) {
+                    // Determine which phase this payment belongs to
+                    const sinalQtd = phases?.sinal?.qtd || 0;
+                    const mensaisQtd = phases?.mensais?.qtd || 0;
+                    let paymentValue = 0;
+                    if (parcelaIndex < sinalQtd) {
+                        paymentValue = phases?.sinal?.unitario || 0;
+                    } else if (parcelaIndex < sinalQtd + mensaisQtd) {
+                        paymentValue = phases?.mensais?.unitario || 0;
+                    } else {
+                        paymentValue = phases?.baloes?.unitario || 0;
+                    }
+                    balance = Math.max(0, balance - paymentValue);
+                    parcelaIndex++;
+                }
+            }
+            return data;
+        }
+
+        return [];
+    }, [hasFinancing, isConstrutora, isBancario, subtotalConstrutora, valorFinanciar, prazoMeses, jurosAnuais, phases, financing]);
 
     return (
         <div className="bg-[#f6f6f8] min-h-screen p-8 animate-fade-in-up pb-24">
-            
+
             {/* Header Navigation */}
             <div className="max-w-[1200px] mx-auto mb-6 flex items-center gap-2 text-sm text-gray-500">
                 <button onClick={() => onNavigate('report_executive')} className="hover:text-black flex items-center gap-1 transition-colors">
@@ -52,9 +163,9 @@ export const ReportFinancialExecutive: React.FC<ReportFinancialExecutiveProps> =
             </div>
 
             <div className="max-w-[1200px] mx-auto bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-200">
-                
-                {/* Title & Actions */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+
+                {/* Title & Phase Indicator */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                     <div>
                         <h1 className="text-3xl font-black text-gray-900 tracking-tight">Relatório Executivo</h1>
                         <p className="text-blue-600 font-medium text-sm mt-1">Análise consolidada - {asset.name}</p>
@@ -63,10 +174,7 @@ export const ReportFinancialExecutive: React.FC<ReportFinancialExecutiveProps> =
                         <button className="px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors">
                             <span className="material-symbols-outlined text-lg">picture_as_pdf</span> Exportar PDF
                         </button>
-                        <button className="px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors">
-                            <span className="material-symbols-outlined text-lg">table_view</span> Exportar Excel
-                        </button>
-                        <button 
+                        <button
                             onClick={() => onNavigate('debt_management')}
                             className="px-5 py-2.5 bg-[#1152d4] text-white rounded-lg text-xs font-bold hover:bg-blue-700 flex items-center gap-2 shadow-lg shadow-blue-100 transition-colors"
                         >
@@ -75,45 +183,71 @@ export const ReportFinancialExecutive: React.FC<ReportFinancialExecutiveProps> =
                     </div>
                 </div>
 
+                {/* Phase Indicator */}
+                <div className="mb-8 flex flex-wrap gap-3">
+                    {isConstrutora && (
+                        <div className="px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-blue-600" />
+                            <span className="text-xs font-bold text-blue-800">
+                                Fase 1: Construtora {financing?.indexador ? `(${financing.indexador})` : ''}
+                            </span>
+                            {financing?.vencimentoConstrutora && (
+                                <span className="text-[10px] text-blue-600 ml-1">Entrega: {financing.vencimentoConstrutora}</span>
+                            )}
+                        </div>
+                    )}
+                    {isBancario && (
+                        <div className="px-4 py-2 bg-orange-50 border border-orange-200 rounded-lg flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-orange-600" />
+                            <span className="text-xs font-bold text-orange-800">
+                                Fase 2: Bancário ({financing?.sistemaAmortizacao || 'SAC'}) — {jurosAnuais}% a.a.
+                            </span>
+                        </div>
+                    )}
+                </div>
+
                 {/* KPI Cards Row */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10 border border-gray-100 rounded-2xl p-6 bg-white shadow-soft">
-                    {/* Saldo Devedor */}
                     <div className="border-r border-gray-100 pr-6 last:border-0 last:pr-0">
-                        <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-2">SALDO DEVEDOR TOTAL (ATUAL)</p>
-                        <div className="mb-2">
-                            <span className="text-xs font-bold text-gray-400 mr-1">R$</span>
-                            <span className="text-3xl font-black text-gray-900">1.245.890,00</span>
-                        </div>
-                        <p className="text-[10px] font-bold text-red-500 flex items-center gap-1">
-                            <span className="material-symbols-outlined text-xs">trending_up</span> +2.4% (Correção INCC)
+                        <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-2">
+                            {isConstrutora ? 'SALDO RESTANTE CONSTRUTORA' : 'SALDO DEVEDOR BANCÁRIO'}
                         </p>
+                        <p className="text-2xl font-black text-gray-900">{formatMoney(saldoDevedor)}</p>
                     </div>
-
-                    {/* Total Quitado */}
                     <div className="border-r border-gray-100 px-6 last:border-0 last:pr-0">
                         <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-2">TOTAL JÁ QUITADO</p>
-                        <p className="text-xl font-black text-gray-900 mb-1">R$ 458.200,00</p>
-                        <p className="text-[10px] font-medium text-gray-400">Fase 1 + Fase 2 (27%)</p>
+                        <p className="text-xl font-black text-gray-900 mb-1">{formatMoney(valorQuitado)}</p>
+                        {percentQuitado > 0 && <p className="text-[10px] font-medium text-gray-400">{percentQuitado}% do total</p>}
                     </div>
-
-                    {/* Valor Original */}
                     <div className="border-r border-gray-100 px-6 last:border-0 last:pr-0">
-                        <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-2">VALOR TOTAL ORIGINAL</p>
-                        <p className="text-xl font-black text-gray-900 mb-1">R$ 1.650.000,00</p>
-                        <p className="text-[10px] font-medium text-gray-400">Contrato Base</p>
+                        <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-2">
+                            {isConstrutora ? 'VALOR CONTRATO CONSTRUTORA' : 'VALOR TOTAL ORIGINAL'}
+                        </p>
+                        <p className="text-xl font-black text-gray-900 mb-1">{formatMoney(isConstrutora ? subtotalConstrutora : valorTotal)}</p>
                     </div>
-
-                    {/* Prazo */}
                     <div className="pl-6">
-                        <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-2">PRAZO RESTANTE</p>
-                        <p className="text-xl font-black text-gray-900 mb-1">324 Meses</p>
-                        <p className="text-[10px] font-medium text-gray-400">~27 Anos</p>
+                        <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-2">
+                            {isBancario ? 'PRAZO FINANCIAMENTO' : 'PARCELAS RESTANTES'}
+                        </p>
+                        {isBancario && prazoMeses > 0 ? (
+                            <>
+                                <p className="text-xl font-black text-gray-900 mb-1">{prazoMeses} Meses</p>
+                                <p className="text-[10px] font-medium text-gray-400">~{Math.round(prazoMeses / 12)} Anos</p>
+                            </>
+                        ) : (
+                            <p className="text-xl font-black text-gray-900">
+                                {statusBreakdown
+                                    ? `${statusBreakdown.pendentePct + statusBreakdown.futuroPct}% pendente`
+                                    : 'N/A'
+                                }
+                            </p>
+                        )}
                     </div>
                 </div>
 
                 {/* Main Content Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    
+
                     {/* Left Column (Chart) */}
                     <div className="lg:col-span-2 bg-white border border-gray-200 rounded-[1.5rem] p-8 shadow-sm">
                         <div className="flex justify-between items-center mb-6">
@@ -121,176 +255,263 @@ export const ReportFinancialExecutive: React.FC<ReportFinancialExecutiveProps> =
                             <div className="flex gap-4">
                                 <div className="flex items-center gap-2">
                                     <span className="w-2 h-2 rounded-full bg-[#1152d4]"></span>
-                                    <span className="text-xs font-medium text-gray-500">Principal</span>
+                                    <span className="text-xs font-medium text-gray-500">Saldo (M)</span>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-orange-400"></span>
-                                    <span className="text-xs font-medium text-gray-500">Juros</span>
-                                </div>
+                                {isBancario && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-orange-400"></span>
+                                        <span className="text-xs font-medium text-gray-500">Juros (M)</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
-                        
+
                         <div className="h-72 w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={curveData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-                                    <defs>
-                                        <linearGradient id="colorPrincipal" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#1152d4" stopOpacity={0.1}/>
-                                            <stop offset="95%" stopColor="#1152d4" stopOpacity={0}/>
-                                        </linearGradient>
-                                    </defs>
-                                    <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} />
-                                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }} />
-                                    <Area type="monotone" dataKey="interest" stackId="1" stroke="#fb923c" fill="transparent" strokeWidth={3} strokeDasharray="5 5" />
-                                    <Area type="monotone" dataKey="principal" stackId="2" stroke="#1152d4" fill="url(#colorPrincipal)" strokeWidth={4} />
-                                </AreaChart>
-                            </ResponsiveContainer>
+                            {curveData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={curveData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                                        <defs>
+                                            <linearGradient id="colorPrincipal" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#1152d4" stopOpacity={0.1}/>
+                                                <stop offset="95%" stopColor="#1152d4" stopOpacity={0}/>
+                                            </linearGradient>
+                                        </defs>
+                                        <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} />
+                                        <Tooltip
+                                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
+                                            formatter={(value: number) => formatMoney(value * 1000000)}
+                                        />
+                                        {isBancario && (
+                                            <Area type="monotone" dataKey="interest" stackId="1" stroke="#fb923c" fill="transparent" strokeWidth={3} strokeDasharray="5 5" />
+                                        )}
+                                        <Area type={isConstrutora && !isBancario ? "stepAfter" : "monotone"} dataKey="principal" stackId="2" stroke="#1152d4" fill="url(#colorPrincipal)" strokeWidth={4} />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+                                    Dados insuficientes para gerar gráfico de projeção
+                                </div>
+                            )}
                         </div>
                     </div>
 
                     {/* Right Column (Phases) */}
                     <div className="lg:col-span-1 bg-white border border-gray-200 rounded-[1.5rem] p-6 shadow-sm flex flex-col">
                         <h3 className="text-lg font-bold text-gray-900 mb-6">Resumo por Fases</h3>
-                        
-                        <div className="flex-1">
-                            <table className="w-full text-left">
-                                <thead>
-                                    <tr className="border-b border-gray-100">
-                                        <th className="pb-3 text-[10px] font-bold text-blue-600 uppercase">FASE</th>
-                                        <th className="pb-3 text-[10px] font-bold text-blue-600 uppercase text-right">PAGO</th>
-                                        <th className="pb-3 text-[10px] font-bold text-blue-600 uppercase text-right">DEVIDO</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-50">
-                                    <tr>
-                                        <td className="py-4">
-                                            <p className="text-sm font-bold text-gray-900">Fase 1</p>
-                                            <p className="text-[10px] text-gray-400">Construtora</p>
-                                        </td>
-                                        <td className="py-4 text-right text-sm font-medium text-green-600">R$ 250k</td>
-                                        <td className="py-4 text-right text-sm font-medium text-gray-400">-</td>
-                                    </tr>
-                                    <tr>
-                                        <td className="py-4">
-                                            <p className="text-sm font-bold text-gray-900">Fase 2</p>
-                                            <p className="text-[10px] text-gray-400">Bancária</p>
-                                        </td>
-                                        <td className="py-4 text-right text-sm font-medium text-green-600">R$ 208k</td>
-                                        <td className="py-4 text-right text-sm font-bold text-gray-900">R$ 1.2M</td>
-                                    </tr>
-                                    <tr className="bg-gray-50">
-                                        <td className="py-4 pl-2 font-bold text-xs text-gray-700">TOTAL</td>
-                                        <td className="py-4 text-right font-black text-xs text-gray-900">R$ 458k</td>
-                                        <td className="py-4 pr-2 text-right font-black text-xs text-red-500">R$ 1.2M</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
 
-                        <div className="mt-6 bg-orange-50 border border-orange-100 rounded-xl p-4 flex items-start gap-3">
-                            <span className="material-symbols-outlined text-orange-600 text-lg mt-0.5">warning</span>
-                            <p className="text-[10px] text-orange-800 font-medium leading-relaxed">
-                                Juros/Correção acumulados até o momento: <span className="font-bold">R$ 42.350,00</span>
-                            </p>
-                        </div>
+                        {phases ? (
+                            <div className="flex-1">
+                                <table className="w-full text-left">
+                                    <thead>
+                                        <tr className="border-b border-gray-100">
+                                            <th className="pb-3 text-[10px] font-bold text-blue-600 uppercase">FASE</th>
+                                            <th className="pb-3 text-[10px] font-bold text-blue-600 uppercase text-right">QTD</th>
+                                            <th className="pb-3 text-[10px] font-bold text-blue-600 uppercase text-right">TOTAL</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-50">
+                                        {phases.sinal?.qtd > 0 && (
+                                            <tr>
+                                                <td className="py-4">
+                                                    <p className="text-sm font-bold text-gray-900">Sinal</p>
+                                                    <p className="text-[10px] text-gray-400">{formatMoney(phases.sinal.unitario)} / parcela</p>
+                                                </td>
+                                                <td className="py-4 text-right text-sm font-medium text-gray-600">{phases.sinal.qtd}x</td>
+                                                <td className="py-4 text-right text-sm font-bold text-gray-900">{formatMoney(sinalTotal)}</td>
+                                            </tr>
+                                        )}
+                                        {phases.mensais?.qtd > 0 && (
+                                            <tr>
+                                                <td className="py-4">
+                                                    <p className="text-sm font-bold text-gray-900">Mensais</p>
+                                                    <p className="text-[10px] text-gray-400">{formatMoney(phases.mensais.unitario)} / parcela</p>
+                                                </td>
+                                                <td className="py-4 text-right text-sm font-medium text-gray-600">{phases.mensais.qtd}x</td>
+                                                <td className="py-4 text-right text-sm font-bold text-gray-900">{formatMoney(mensaisTotal)}</td>
+                                            </tr>
+                                        )}
+                                        {phases.baloes?.qtd > 0 && (
+                                            <tr>
+                                                <td className="py-4">
+                                                    <p className="text-sm font-bold text-gray-900">Balões</p>
+                                                    <p className="text-[10px] text-gray-400">{formatMoney(phases.baloes.unitario)} / parcela</p>
+                                                </td>
+                                                <td className="py-4 text-right text-sm font-medium text-gray-600">{phases.baloes.qtd}x</td>
+                                                <td className="py-4 text-right text-sm font-bold text-gray-900">{formatMoney(baloesTotal)}</td>
+                                            </tr>
+                                        )}
+                                        <tr className="bg-gray-50">
+                                            <td className="py-4 pl-2 font-bold text-xs text-gray-700">TOTAL CONSTRUTORA</td>
+                                            <td className="py-4 text-right font-medium text-xs text-gray-500"></td>
+                                            <td className="py-4 pr-2 text-right font-black text-xs text-gray-900">{formatMoney(sinalTotal + mensaisTotal + baloesTotal)}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                                {/* Bank financing summary if exists */}
+                                {isBancario && (
+                                    <div className="mt-4 bg-orange-50 border border-orange-100 rounded-xl p-4">
+                                        <p className="text-[10px] font-bold text-orange-800 uppercase mb-2">Financiamento Bancário</p>
+                                        <div className="space-y-1 text-xs text-orange-700">
+                                            <div className="flex justify-between"><span>Valor:</span><span className="font-bold">{formatMoney(valorFinanciar)}</span></div>
+                                            <div className="flex justify-between"><span>Prazo:</span><span className="font-bold">{prazoMeses} meses</span></div>
+                                            <div className="flex justify-between"><span>Juros:</span><span className="font-bold">{jurosAnuais}% a.a.</span></div>
+                                            <div className="flex justify-between"><span>Sistema:</span><span className="font-bold">{financing?.sistemaAmortizacao}</span></div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ) : isBancario ? (
+                            <div className="flex-1">
+                                <div className="bg-orange-50 border border-orange-100 rounded-xl p-4">
+                                    <p className="text-[10px] font-bold text-orange-800 uppercase mb-2">Financiamento Bancário</p>
+                                    <div className="space-y-1 text-xs text-orange-700">
+                                        <div className="flex justify-between"><span>Valor:</span><span className="font-bold">{formatMoney(valorFinanciar)}</span></div>
+                                        <div className="flex justify-between"><span>Prazo:</span><span className="font-bold">{prazoMeses} meses</span></div>
+                                        <div className="flex justify-between"><span>Juros:</span><span className="font-bold">{jurosAnuais}% a.a.</span></div>
+                                        <div className="flex justify-between"><span>Sistema:</span><span className="font-bold">{financing?.sistemaAmortizacao}</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
+                                Nenhuma fase configurada
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 {/* Bottom Row */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
-                    
-                    {/* Composition */}
+                <div className={`grid grid-cols-1 ${partners.length > 0 ? 'md:grid-cols-2' : 'md:grid-cols-1'} gap-8 mt-8`}>
+
+                    {/* Payment Progress (Phase 1) or Composition (Phase 2) */}
                     <div className="bg-white border border-gray-200 rounded-[1.5rem] p-6 shadow-sm">
-                        <h3 className="text-sm font-bold text-gray-900 mb-6">Composição dos Pagamentos</h3>
-                        <div className="flex items-center gap-4">
-                            <div className="relative w-32 h-32">
-                                <ResponsiveContainer>
-                                    <PieChart>
-                                        <Pie data={paymentComposition} innerRadius={40} outerRadius={55} dataKey="value" stroke="none">
-                                            {paymentComposition.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={entry.color} />
-                                            ))}
-                                        </Pie>
-                                    </PieChart>
-                                </ResponsiveContainer>
-                                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                    <span className="text-xl font-black text-gray-900">72%</span>
-                                    <span className="text-[9px] font-bold text-gray-400 uppercase">Amort.</span>
+                        {isConstrutora && statusBreakdown ? (
+                            <>
+                                <h3 className="text-sm font-bold text-gray-900 mb-6">Progresso dos Pagamentos (Construtora)</h3>
+
+                                {/* Progress bar */}
+                                <div className="w-full h-6 rounded-full bg-gray-100 overflow-hidden flex mb-4">
+                                    {statusBreakdown.pagoPct > 0 && (
+                                        <div className="bg-green-500 h-full transition-all" style={{ width: `${statusBreakdown.pagoPct}%` }} />
+                                    )}
+                                    {statusBreakdown.pendentePct > 0 && (
+                                        <div className="bg-amber-400 h-full transition-all" style={{ width: `${statusBreakdown.pendentePct}%` }} />
+                                    )}
+                                    {statusBreakdown.futuroPct > 0 && (
+                                        <div className="bg-gray-300 h-full transition-all" style={{ width: `${statusBreakdown.futuroPct}%` }} />
+                                    )}
                                 </div>
-                            </div>
-                            <div className="flex flex-col gap-3">
-                                {paymentComposition.map((item, idx) => (
-                                    <div key={idx} className="flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
-                                        <div>
-                                            <p className="text-xs text-gray-500 leading-none mb-0.5">{item.name}</p>
-                                            <p className="text-sm font-bold text-gray-900 leading-none">{item.value}%</p>
+
+                                <div className="flex flex-col gap-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-3 h-3 rounded-full bg-green-500" />
+                                            <span className="text-xs text-gray-600">Pago</span>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-sm font-bold text-gray-900">{formatMoney(statusBreakdown.pago)}</span>
+                                            <span className="text-xs text-gray-400 ml-2">{statusBreakdown.pagoPct}%</span>
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* AI Insight */}
-                    <div className="bg-[#f0f6ff] border border-blue-100 rounded-[1.5rem] p-6 shadow-sm relative overflow-hidden">
-                        <div className="flex items-center gap-2 mb-4">
-                            <span className="material-symbols-outlined text-[#1152d4]">auto_awesome</span>
-                            <span className="text-xs font-black text-[#1152d4] uppercase tracking-widest">IA INSIGHT FINANCEIRO</span>
-                        </div>
-                        <div className="absolute top-4 right-4 bg-white/50 w-8 h-8 rounded-full flex items-center justify-center">
-                            <span className="material-symbols-outlined text-blue-300 text-sm">settings</span>
-                        </div>
-                        
-                        <h3 className="text-lg font-bold text-gray-900 mb-2">Potencial de Recomposição</h3>
-                        <p className="text-xs text-gray-600 leading-relaxed mb-6">
-                            A análise preditiva indica que com a taxa atual de amortização, haverá recomposição total do capital investido em <span className="font-bold text-gray-900">3 anos e 2 meses</span>. O risco de alavancagem é classificado como <span className="font-bold text-gray-900">Baixo</span>.
-                        </p>
-                        
-                        <button className="text-[10px] font-bold text-blue-600 uppercase tracking-wide flex items-center gap-1 hover:underline">
-                            VER ANÁLISE COMPLETA <span className="material-symbols-outlined text-xs">arrow_forward</span>
-                        </button>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-3 h-3 rounded-full bg-amber-400" />
+                                            <span className="text-xs text-gray-600">Pendente</span>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-sm font-bold text-gray-900">{formatMoney(statusBreakdown.pendente)}</span>
+                                            <span className="text-xs text-gray-400 ml-2">{statusBreakdown.pendentePct}%</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-3 h-3 rounded-full bg-gray-300" />
+                                            <span className="text-xs text-gray-600">Futuro</span>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-sm font-bold text-gray-900">{formatMoney(statusBreakdown.futuro)}</span>
+                                            <span className="text-xs text-gray-400 ml-2">{statusBreakdown.futuroPct}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </>
+                        ) : isConstrutora ? (
+                            <>
+                                <h3 className="text-sm font-bold text-gray-900 mb-6">Progresso dos Pagamentos (Construtora)</h3>
+                                <div className="w-full h-6 rounded-full bg-gray-100 overflow-hidden flex mb-4">
+                                    <div className="bg-blue-500 h-full transition-all" style={{ width: `${percentQuitado}%` }} />
+                                </div>
+                                <div className="flex justify-between text-xs">
+                                    <span className="text-gray-500">Quitado: {formatMoney(valorQuitado)}</span>
+                                    <span className="font-bold text-blue-600">{percentQuitado}%</span>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <h3 className="text-sm font-bold text-gray-900 mb-6">Projeção Financiamento Bancário</h3>
+                                {(() => {
+                                    const bankRows = generateBankAmortizationTable(financing!);
+                                    const totalJuros = bankRows.reduce((s, r) => s + r.juros, 0);
+                                    const totalAmort = bankRows.reduce((s, r) => s + r.amortizacao, 0);
+                                    const totalPago = totalJuros + totalAmort;
+                                    const jurosPct = totalPago > 0 ? Math.round((totalJuros / totalPago) * 100) : 0;
+                                    return (
+                                        <div className="space-y-3">
+                                            <div className="flex justify-between text-xs">
+                                                <span className="text-gray-500">Total a pagar:</span>
+                                                <span className="font-bold text-gray-900">{formatMoney(totalPago)}</span>
+                                            </div>
+                                            <div className="flex justify-between text-xs">
+                                                <span className="text-blue-600">Amortização:</span>
+                                                <span className="font-bold text-blue-600">{formatMoney(totalAmort)} ({100 - jurosPct}%)</span>
+                                            </div>
+                                            <div className="flex justify-between text-xs">
+                                                <span className="text-orange-600">Juros:</span>
+                                                <span className="font-bold text-orange-600">{formatMoney(totalJuros)} ({jurosPct}%)</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+                            </>
+                        )}
                     </div>
 
                     {/* Partner Division */}
-                    <div className="bg-white border border-gray-200 rounded-[1.5rem] p-6 shadow-sm flex flex-col">
-                        <h3 className="text-lg font-bold text-gray-900 mb-6">Divisão de Custos</h3>
-                        
-                        <div className="flex-1 space-y-4">
-                            <div className="flex justify-between text-[9px] font-bold text-blue-600 uppercase tracking-widest border-b border-gray-100 pb-2">
-                                <span>SÓCIO</span>
-                                <span>%</span>
-                                <span>CONTRIBUÍDO</span>
-                            </div>
-                            {partners.map((partner, idx) => (
-                                <div key={idx} className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        {partner.avatar ? (
-                                            <img src={partner.avatar} className="w-8 h-8 rounded-full border border-gray-200" alt={partner.name} />
-                                        ) : (
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${partner.color}`}>{partner.initials}</div>
-                                        )}
-                                        <span className="text-sm font-bold text-gray-900">{partner.name}</span>
-                                    </div>
-                                    <span className="text-xs font-medium text-gray-500">{partner.share}%</span>
-                                    <span className="text-sm font-bold text-gray-900">{formatCurrency(partner.contributed)}</span>
+                    {partners.length > 0 && (
+                        <div className="bg-white border border-gray-200 rounded-[1.5rem] p-6 shadow-sm flex flex-col">
+                            <h3 className="text-lg font-bold text-gray-900 mb-6">Divisão de Custos</h3>
+
+                            <div className="flex-1 space-y-4">
+                                <div className="flex justify-between text-[9px] font-bold text-blue-600 uppercase tracking-widest border-b border-gray-100 pb-2">
+                                    <span>SÓCIO</span>
+                                    <span>%</span>
+                                    <span>CONTRIBUÍDO</span>
                                 </div>
-                            ))}
-                        </div>
+                                {partners.map((partner, idx) => (
+                                    <div key={idx} className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: partner.color + '20', color: partner.color }}>
+                                                {partner.initials}
+                                            </div>
+                                            <span className="text-sm font-bold text-gray-900">{partner.name}</span>
+                                        </div>
+                                        <span className="text-xs font-medium text-gray-500">{partner.percentage}%</span>
+                                        <span className="text-sm font-bold text-gray-900">
+                                            {formatMoney(totalContributed * (partner.percentage / 100))}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
 
-                        <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
-                            <span className="text-[10px] font-bold text-gray-500 uppercase">TOTAL APORTADO</span>
-                            <span className="text-lg font-black text-[#1152d4]">{formatCurrency(458200)}</span>
+                            <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
+                                <span className="text-[10px] font-bold text-gray-500 uppercase">TOTAL APORTADO</span>
+                                <span className="text-lg font-black text-[#1152d4]">{formatMoney(totalContributed)}</span>
+                            </div>
                         </div>
-                    </div>
-
+                    )}
                 </div>
-            </div>
-
-            <div className="max-w-[1200px] mx-auto mt-12 text-center text-xs text-gray-400">
-                <p>Sistema Patrimonial PRO © 2024 - Todos os direitos reservados.</p>
             </div>
         </div>
     );
 };
-    

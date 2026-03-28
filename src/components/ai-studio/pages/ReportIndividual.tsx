@@ -1,6 +1,7 @@
 import React from 'react';
 import { Asset, ViewState } from '../types';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, Tooltip } from 'recharts';
+import { formatMoney } from '@/lib/formatters';
 
 interface ReportIndividualProps {
     asset: Asset | null;
@@ -24,7 +25,6 @@ export const ReportIndividual: React.FC<ReportIndividualProps> = ({ asset, onNav
         );
     }
 
-    const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
     const currentDate = new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
 
     // Financial Calcs (Safe Checks)
@@ -147,7 +147,7 @@ export const ReportIndividual: React.FC<ReportIndividualProps> = ({ asset, onNav
                             <span className="material-symbols-outlined text-6xl">account_balance_wallet</span>
                         </div>
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 relative z-10">EQUITY (PATRIMÔNIO LÍQUIDO)</p>
-                        <p className="text-3xl font-black text-white print:text-black relative z-10">{formatCurrency(equity)}</p>
+                        <p className="text-3xl font-black text-white print:text-black relative z-10">{formatMoney(equity)}</p>
                         <div className="mt-4 flex items-center gap-2 relative z-10">
                             <span className="text-xs font-bold text-green-400 print:text-green-700 bg-green-900/30 print:bg-green-100 px-2 py-1 rounded">+{appreciation.toFixed(1)}%</span>
                             <span className="text-[10px] text-gray-400 print:text-gray-500">vs. Aquisição</span>
@@ -158,14 +158,14 @@ export const ReportIndividual: React.FC<ReportIndividualProps> = ({ asset, onNav
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">VALOR DE MERCADO</p>
                             <span className="material-symbols-outlined text-gray-300">currency_exchange</span>
                         </div>
-                        <p className="text-2xl font-black text-gray-900">{formatCurrency(asset.marketValue)}</p>
+                        <p className="text-2xl font-black text-gray-900">{formatMoney(asset.marketValue)}</p>
                     </div>
                     <div className="bg-white border border-gray-200 p-6 rounded-2xl flex flex-col justify-center shadow-sm">
                         <div className="flex justify-between items-center mb-1">
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">VALOR DE AQUISIÇÃO</p>
                             <span className="material-symbols-outlined text-gray-300">history</span>
                         </div>
-                        <p className="text-xl font-bold text-gray-600">{formatCurrency(asset.value)}</p>
+                        <p className="text-xl font-bold text-gray-600">{formatMoney(asset.value)}</p>
                         <p className="text-[10px] text-gray-400 mt-1">Data: {asset.acquisitionDate ? asset.acquisitionDate.split('-').reverse().join('/') : 'N/A'}</p>
                     </div>
                 </div>
@@ -188,7 +188,7 @@ export const ReportIndividual: React.FC<ReportIndividualProps> = ({ asset, onNav
                             <div className="flex justify-between items-start mb-4">
                                 <div>
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">SALDO DEVEDOR</p>
-                                    <p className="text-xl font-black text-gray-900">{formatCurrency(debt)}</p>
+                                    <p className="text-xl font-black text-gray-900">{formatMoney(debt)}</p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">LTV (ALAVANCAGEM)</p>
@@ -205,7 +205,7 @@ export const ReportIndividual: React.FC<ReportIndividualProps> = ({ asset, onNav
                             <div className="flex justify-between items-start">
                                 <div>
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">RECEITA MENSAL (ALUGUEL)</p>
-                                    <p className="text-xl font-black text-gray-900">{asset.rentalValue > 0 ? formatCurrency(asset.rentalValue) : 'R$ 0,00'}</p>
+                                    <p className="text-xl font-black text-gray-900">{asset.rentalValue > 0 ? formatMoney(asset.rentalValue) : 'R$ 0,00'}</p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">YIELD MENSAL</p>
@@ -223,7 +223,7 @@ export const ReportIndividual: React.FC<ReportIndividualProps> = ({ asset, onNav
                                 <BarChart data={valuationHistory}>
                                     <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
                                     <Tooltip
-                                        formatter={(value: any) => formatCurrency(Number(value))}
+                                        formatter={(value: string | number) => formatMoney(Number(value))}
                                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                                     />
                                     <Bar dataKey="value" fill="#111827" radius={[4, 4, 0, 0]} barSize={40} />
@@ -268,7 +268,7 @@ export const ReportIndividual: React.FC<ReportIndividualProps> = ({ asset, onNav
                                 </div>
                                 <div className="text-right">
                                     <span className="block text-xs font-black text-gray-900">{partner.percentage}%</span>
-                                    <span className="text-[10px] text-gray-500">{formatCurrency(asset.marketValue * (partner.percentage / 100))}</span>
+                                    <span className="text-[10px] text-gray-500">{formatMoney(asset.marketValue * (partner.percentage / 100))}</span>
                                 </div>
                             </div>
                         )) : (

@@ -21,7 +21,7 @@ const getPartnerStyle = (name: string) => {
   }
 };
 
-export const Dashboard: React.FC<{ onNavigate?: (view: any) => void }> = ({ onNavigate = () => { } }) => {
+export const Dashboard: React.FC<{ onNavigate?: (view: string) => void }> = ({ onNavigate = () => { } }) => {
   const { assets } = useAssetContext();
   const [isLoading, setIsLoading] = useState(true);
 

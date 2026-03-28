@@ -1,41 +1,60 @@
 'use client';
 
 import React, { useState } from 'react';
-import { processConciliation, confirmPaymentAndLearn, PixEntry, ConciliationResult } from '@/app/actions/rental';
+import { processConciliation, confirmPaymentAndLearn, PixEntry, ConciliationResult, MatchSuggestion } from '@/app/actions/rental';
 import { PaymentMatchCard } from '@/components/rental/PaymentMatchCard';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 
-// Mock Data for Simulation (since we don't have real OFX parser on client yet)
-const MOCK_OFX_ENTRIES: PixEntry[] = [
-    {
-        date: '2026-02-05',
-        amount: 2500.00,
-        description: 'PIX RECEBIDO - JOAO DA SILVA'
-    },
-    {
-        date: '2026-02-05',
-        amount: 3200.50,
-        description: 'TRANSF. REC. RS CONFECCOES LTDA' // Matches 'Raquel' via alias ideally
-    },
-    {
-        date: '2026-02-06',
-        amount: 150.00,
-        description: 'DEVOLUÇÃO COMPRA MERCADO'
+function parseCSVEntries(text: string): PixEntry[] {
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) return [];
+
+    const entries: PixEntry[] = [];
+    // Skip header line
+    for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(';').map(c => c.trim().replace(/^"|"$/g, ''));
+        if (cols.length < 3) continue;
+
+        // Try common CSV formats: date;description;amount or date;amount;description
+        const date = cols[0];
+        const amount = parseFloat(cols.find(c => /^-?\d+([.,]\d+)?$/.test(c.replace(/\./g, '').replace(',', '.')))?.replace(/\./g, '').replace(',', '.') || '0');
+        const description = cols.find(c => !/^-?\d+([.,]\d+)?$/.test(c.replace(/\./g, '').replace(',', '.')) && c !== date) || '';
+
+        if (amount !== 0 && date) {
+            entries.push({
+                date,
+                amount: Math.abs(amount),
+                description,
+                payerName: description,
+            });
+        }
     }
-];
+    return entries;
+}
 
 export default function ConciliacaoPage() {
     const [results, setResults] = useState<ConciliationResult[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [stats, setStats] = useState({ total: 0, matched: 0, pending: 0 });
 
-    const handleSimulateUpload = async () => {
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
         setIsLoading(true);
         toast.loading('Processando extrato...', { id: 'process' });
 
         try {
-            const processed = await processConciliation(MOCK_OFX_ENTRIES);
+            const text = await file.text();
+            const entries: PixEntry[] = parseCSVEntries(text);
+
+            if (entries.length === 0) {
+                toast.error('Nenhuma transação encontrada no arquivo', { id: 'process' });
+                return;
+            }
+
+            const processed = await processConciliation(entries);
             setResults(processed);
 
             const matched = processed.filter(r => r.suggestion?.confidence && r.suggestion.confidence > 0.8).length;
@@ -54,7 +73,7 @@ export default function ConciliacaoPage() {
         }
     };
 
-    const handleConfirm = async (entry: PixEntry, suggestion: any) => {
+    const handleConfirm = async (entry: PixEntry, suggestion: MatchSuggestion) => {
         if (!suggestion.tenantId) return;
 
         const toastId = toast.loading('Confirmando baixa...');
@@ -116,13 +135,18 @@ export default function ConciliacaoPage() {
                     <h3 className="mt-2 text-sm font-semibold text-gray-900">Importar Extrato Bancário</h3>
                     <p className="mt-1 text-sm text-gray-500">Suporta arquivos OFX e CSV de qualquer banco.</p>
                     <div className="mt-6">
-                        <button
-                            onClick={handleSimulateUpload}
-                            disabled={isLoading}
-                            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                        <label
+                            className={`inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}
                         >
-                            {isLoading ? 'Processando...' : 'Simular Upload (Demo)'}
-                        </button>
+                            {isLoading ? 'Processando...' : 'Selecionar Arquivo (.CSV)'}
+                            <input
+                                type="file"
+                                accept=".csv,.ofx,.txt"
+                                onChange={handleFileUpload}
+                                className="hidden"
+                                disabled={isLoading}
+                            />
+                        </label>
                     </div>
                 </div>
             ) : (

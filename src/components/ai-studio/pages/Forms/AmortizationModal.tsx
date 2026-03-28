@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DatePicker } from '../../components/DatePicker';
 import { AmortizationResult } from '../../types';
+import { formatMoney } from '@/lib/formatters';
 
 interface AmortizationModalProps {
   isOpen: boolean;
@@ -11,10 +12,6 @@ interface AmortizationModalProps {
   assetName?: string;
   onConfirm: (result: AmortizationResult) => void;
 }
-
-// Helper formatting
-const formatCurrency = (val: number) => 
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
 const formatNumber = (val: number) => 
   new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
@@ -234,7 +231,7 @@ export const AmortizationModal: React.FC<AmortizationModalProps> = ({
                     <div className="space-y-3">
                         <div>
                             <p className="text-[10px] text-gray-500">Saldo Devedor</p>
-                            <p className="text-sm font-bold text-gray-900">{formatCurrency(currentDebt)}</p>
+                            <p className="text-sm font-bold text-gray-900">{formatMoney(currentDebt)}</p>
                         </div>
                         <div>
                             <p className="text-[10px] text-gray-500">Prazo Restante</p>
@@ -242,7 +239,7 @@ export const AmortizationModal: React.FC<AmortizationModalProps> = ({
                         </div>
                         <div>
                             <p className="text-[10px] text-gray-500">Parcela Estimada</p>
-                            <p className="text-sm font-bold text-gray-900">{formatCurrency(preview.currentPayment)}</p>
+                            <p className="text-sm font-bold text-gray-900">{formatMoney(preview.currentPayment)}</p>
                         </div>
                     </div>
                 </div>
@@ -254,7 +251,7 @@ export const AmortizationModal: React.FC<AmortizationModalProps> = ({
                     <div className="space-y-3">
                         <div>
                             <p className="text-[10px] text-gray-500">Novo Saldo</p>
-                            <p className="text-sm font-black text-gray-900">{formatCurrency(preview.newBalance)}</p>
+                            <p className="text-sm font-black text-gray-900">{formatMoney(preview.newBalance)}</p>
                         </div>
                         <div>
                             <p className="text-[10px] text-gray-500">Novo Prazo</p>
@@ -266,7 +263,7 @@ export const AmortizationModal: React.FC<AmortizationModalProps> = ({
                         <div>
                             <p className="text-[10px] text-gray-500">Nova Parcela</p>
                             <p className={`text-sm font-bold ${strategy === 'installment' ? 'text-green-600' : 'text-gray-900'}`}>
-                                {formatCurrency(preview.newPayment)}
+                                {formatMoney(preview.newPayment)}
                             </p>
                         </div>
                     </div>
@@ -277,7 +274,7 @@ export const AmortizationModal: React.FC<AmortizationModalProps> = ({
             <div className="bg-green-500 text-white p-5 rounded-2xl shadow-lg shadow-green-200 flex items-center justify-between">
                 <div>
                     <p className="text-[10px] font-bold text-green-100 uppercase tracking-wide">ECONOMIA PROJETADA DE JUROS</p>
-                    <p className="text-2xl font-black">{formatCurrency(preview.totalSavings)}</p>
+                    <p className="text-2xl font-black">{formatMoney(preview.totalSavings)}</p>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
                     <span className="material-symbols-outlined">savings</span>

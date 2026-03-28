@@ -124,9 +124,9 @@ export const AssetRegistrationWizard: React.FC<AssetRegistrationWizardProps> = (
                         name={formState.name}
                         setName={formState.setName}
                         type={formState.type}
-                        setType={(v: any) => formState.setType(v)}
+                        setType={(v: string) => formState.setType(v)}
                         status={formState.status}
-                        setStatus={(v: any) => formState.setStatus(v)}
+                        setStatus={(v: string) => formState.setStatus(v)}
                         street={formState.street}
                         setStreet={formState.setStreet}
                         number={formState.number}
@@ -157,7 +157,7 @@ export const AssetRegistrationWizard: React.FC<AssetRegistrationWizardProps> = (
                         acquisitionDate={formState.acquisitionDate}
                         setAcquisitionDate={formState.setAcquisitionDate}
                         irpfStatus={formState.irpfStatus || 'Declarado'}
-                        setIrpfStatus={(v: any) => formState.setIrpfStatus(v)}
+                        setIrpfStatus={(v: string) => formState.setIrpfStatus(v)}
                         origin={formState.acquisitionOrigin}
                         setOrigin={formState.setAcquisitionOrigin}
                     />

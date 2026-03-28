@@ -1,12 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { Invoice, CATEGORY_ICONS, BENEFICIARIES } from './types';
+import { formatMoney } from '@/lib/formatters';
 
 interface InvoiceViewerProps {
     invoice: Invoice;
     onClose?: () => void;
     onDelete: (id: string) => void;
     onApprove: (id: string) => void;
-    onUpdate: (id: string, data: any) => Promise<void>;
+    onUpdate: (id: string, data: Record<string, unknown>) => Promise<void>;
     availableCategories?: string[];
 }
 
@@ -15,7 +16,6 @@ export const InvoiceViewer: React.FC<InvoiceViewerProps> = ({ invoice, onClose, 
     const [isCreatingCategory, setIsCreatingCategory] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState("");
 
-    const formatMoney = (v: any) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
     const dateStr = (d?: string) => d || "-";
 
     const categories = useMemo(() => {
@@ -109,8 +109,8 @@ export const InvoiceViewer: React.FC<InvoiceViewerProps> = ({ invoice, onClose, 
                             <div className="bg-white dark:bg-[#1e293b] border border-indigo-100 dark:border-indigo-900/50 rounded-xl overflow-hidden shadow-sm">
                                 <div className="grid grid-cols-[40px_1fr_60px_100px_120px_100px] gap-4 px-4 py-3 bg-indigo-50/50 dark:bg-slate-800/50 border-b border-indigo-100 dark:border-indigo-900/50 text-[10px] font-black uppercase tracking-wider text-indigo-400 dark:text-indigo-500"><div className="text-center">#</div><div>Descrição</div><div className="text-center">Qtd.</div><div className="text-right">V. Unit</div><div className="text-right font-black text-indigo-600 dark:text-indigo-400">V. Total</div><div className="text-right">Categoria</div></div>
                                 <div className="bg-white dark:bg-[#1e293b] divide-y divide-slate-50 dark:divide-slate-800">
-                                    {invoice.items && (invoice.items as any[]).length > 0 ? (
-                                        (invoice.items as any[]).map((item: any, idx: number) => {
+                                    {invoice.items && (invoice.items as Array<Record<string, unknown>>).length > 0 ? (
+                                        (invoice.items as Array<Record<string, unknown>>).map((item: Record<string, unknown>, idx: number) => {
                                             const qty = Number(item.quantidade) || 1;
                                             const total = Number(item.valor) || 0;
                                             return <div key={idx} className="grid grid-cols-[40px_1fr_60px_100px_120px_100px] gap-4 px-4 py-3 hover:bg-indigo-50/30 dark:hover:bg-indigo-900/20 transition-colors items-center text-xs group"><div className="text-center text-slate-300 dark:text-slate-600 font-bold group-hover:text-indigo-300">{idx + 1}</div><div className="font-bold text-slate-700 dark:text-slate-200 uppercase leading-snug">{item.descricao}</div><div className="text-center text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/80 rounded py-0.5 font-medium border border-slate-100 dark:border-slate-700">{qty}</div><div className="text-right text-slate-500 dark:text-slate-400">{formatMoney(total / qty)}</div><div className="text-right font-black text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 text-sm">{formatMoney(total)}</div><div className="text-right"><span className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/40 rounded text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase border border-indigo-100 dark:border-indigo-800/50">{item.categoria || '-'}</span></div></div>

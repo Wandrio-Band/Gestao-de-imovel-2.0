@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AuditLogEntry, getAuditLogs } from '@/app/actions/audit';
 
 interface AuditLogViewerProps {
-    onNavigate: (view: any) => void;
+    onNavigate: (view: string) => void;
 }
 
 export const AuditLogViewer: React.FC<AuditLogViewerProps> = () => {

@@ -4,6 +4,7 @@ import {
 } from 'recharts';
 import { CashFlowProjection } from '@/app/actions/financial';
 import { Loader2 } from 'lucide-react';
+import { formatMoney } from '@/lib/formatters';
 
 interface ProjectedCashFlowChartProps {
     data: CashFlowProjection[];
@@ -32,9 +33,6 @@ export function ProjectedCashFlowChart({ data, isLoading }: ProjectedCashFlowCha
     const totalOut = data.reduce((sum, item) => sum + item.payables, 0);
     const balance = totalIn - totalOut;
 
-    const formatCurrency = (val: number) =>
-        new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
-
     return (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 mb-8">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
@@ -49,16 +47,16 @@ export function ProjectedCashFlowChart({ data, isLoading }: ProjectedCashFlowCha
                 <div className="flex gap-4 mt-4 md:mt-0">
                     <div className="text-right">
                         <span className="text-xs text-green-600 font-bold uppercase block">Entradas</span>
-                        <span className="text-lg font-bold text-gray-900">{formatCurrency(totalIn)}</span>
+                        <span className="text-lg font-bold text-gray-900">{formatMoney(totalIn)}</span>
                     </div>
                     <div className="text-right">
                         <span className="text-xs text-red-500 font-bold uppercase block">Saídas</span>
-                        <span className="text-lg font-bold text-gray-900">{formatCurrency(totalOut)}</span>
+                        <span className="text-lg font-bold text-gray-900">{formatMoney(totalOut)}</span>
                     </div>
                     <div className="text-right px-4 py-1 bg-gray-50 rounded-lg border border-gray-100">
                         <span className="text-xs text-blue-600 font-bold uppercase block">Saldo Projetado</span>
                         <span className={`text-lg font-bold ${balance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                            {formatCurrency(balance)}
+                            {formatMoney(balance)}
                         </span>
                     </div>
                 </div>
@@ -84,7 +82,7 @@ export function ProjectedCashFlowChart({ data, isLoading }: ProjectedCashFlowCha
                         <Tooltip
                             cursor={{ fill: '#f9fafb' }}
                             contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                            formatter={(value: any) => formatCurrency(Number(value || 0))}
+                            formatter={(value: string | number) => formatMoney(Number(value || 0))}
                         />
                         <Legend wrapperStyle={{ paddingTop: '20px' }} />
                         <ReferenceLine y={0} stroke="#e5e7eb" />

@@ -3,9 +3,11 @@ import { prisma } from '@/lib/prisma';
 import { logAudit } from '@/lib/audit';
 import { resetConfirmSchema } from '@/lib/validations';
 import { apiError, handleApiError, handleValidationError } from '@/lib/api-utils';
+import { requireAdmin } from '@/lib/auth-guard';
 
 export async function DELETE(request: NextRequest) {
     try {
+        await requireAdmin();
         const body = await request.json();
 
         const parsed = resetConfirmSchema.safeParse(body);

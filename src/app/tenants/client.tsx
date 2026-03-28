@@ -1,23 +1,43 @@
 'use client';
 
 import React, { useState } from 'react';
-import { TenantData, getTenants } from '@/app/actions/tenants';
+import { TenantData, PaginatedTenants, getTenants } from '@/app/actions/tenants';
 import { saveStandaloneTenant } from '@/app/actions/contract-management';
 import { TenantForm } from '@/components/forms/TenantForm';
+import { Pagination } from '@/components/ui/pagination';
 
-interface TenantsClientProps {
-    initialTenants: TenantData[];
+interface TenantFormData {
+    id: string;
+    name: string;
+    document?: string | null;
+    email?: string | null;
+    phone?: string | null;
 }
 
-export default function TenantsClient({ initialTenants }: TenantsClientProps) {
-    const [tenants, setTenants] = useState<TenantData[]>(initialTenants);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedTenant, setSelectedTenant] = useState<any>(null);
+interface TenantsClientProps {
+    initialResult: PaginatedTenants;
+}
 
-    const refreshList = async () => {
-        const data = await getTenants();
-        setTenants(data);
+export default function TenantsClient({ initialResult }: TenantsClientProps) {
+    const [tenants, setTenants] = useState<TenantData[]>(initialResult.data);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedTenant, setSelectedTenant] = useState<TenantFormData | null>(null);
+    const [page, setPage] = useState(initialResult.page);
+    const [limit, setLimit] = useState(initialResult.limit);
+    const [total, setTotal] = useState(initialResult.total);
+    const [totalPages, setTotalPages] = useState(initialResult.totalPages);
+
+    const fetchPage = async (p: number, l: number = limit) => {
+        const result = await getTenants(p, l);
+        setTenants(result.data);
+        setPage(result.page);
+        setTotal(result.total);
+        setTotalPages(result.totalPages);
+        setLimit(result.limit);
     };
+
+    const handlePageChange = (newPage: number) => fetchPage(newPage);
+    const handleLimitChange = (newLimit: number) => fetchPage(1, newLimit);
 
     const handleEdit = (tenant: TenantData) => {
         setSelectedTenant({
@@ -30,9 +50,9 @@ export default function TenantsClient({ initialTenants }: TenantsClientProps) {
         setIsModalOpen(true);
     };
 
-    const handleSaveTenant = async (data: any) => {
+    const handleSaveTenant = async (data: TenantFormData) => {
         await saveStandaloneTenant(data);
-        await refreshList();
+        await fetchPage(page);
     };
 
     return (
@@ -51,12 +71,12 @@ export default function TenantsClient({ initialTenants }: TenantsClientProps) {
                     <table className="w-full text-left text-sm">
                         <thead className="bg-gray-50 border-b border-gray-100">
                             <tr>
-                                <th className="px-6 py-4 font-bold text-gray-500 uppercase text-xs">Nome / Documento</th>
-                                <th className="px-6 py-4 font-bold text-gray-500 uppercase text-xs">Contato</th>
-                                <th className="px-6 py-4 font-bold text-gray-500 uppercase text-xs">Imóvel Atual</th>
-                                <th className="px-6 py-4 font-bold text-gray-500 uppercase text-xs">Contrato</th>
-                                <th className="px-6 py-4 font-bold text-gray-500 uppercase text-xs">Status</th>
-                                <th className="px-6 py-4 text-right font-bold text-gray-500 uppercase text-xs">Ações</th>
+                                <th scope="col" className="px-6 py-4 font-bold text-gray-500 uppercase text-xs">Nome / Documento</th>
+                                <th scope="col" className="px-6 py-4 font-bold text-gray-500 uppercase text-xs">Contato</th>
+                                <th scope="col" className="px-6 py-4 font-bold text-gray-500 uppercase text-xs">Imóvel Atual</th>
+                                <th scope="col" className="px-6 py-4 font-bold text-gray-500 uppercase text-xs">Contrato</th>
+                                <th scope="col" className="px-6 py-4 font-bold text-gray-500 uppercase text-xs">Status</th>
+                                <th scope="col" className="px-6 py-4 text-right font-bold text-gray-500 uppercase text-xs">Ações</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -77,13 +97,13 @@ export default function TenantsClient({ initialTenants }: TenantsClientProps) {
                                             <div className="text-gray-600 space-y-1">
                                                 {tenant.email && (
                                                     <div className="flex items-center gap-1.5" title={tenant.email}>
-                                                        <span className="material-symbols-outlined text-[14px] text-gray-400">mail</span>
+                                                        <span className="material-symbols-outlined text-[14px] text-gray-400" aria-hidden="true">mail</span>
                                                         <span className="truncate max-w-[150px]">{tenant.email}</span>
                                                     </div>
                                                 )}
                                                 {tenant.phone && (
                                                     <div className="flex items-center gap-1.5">
-                                                        <span className="material-symbols-outlined text-[14px] text-gray-400">call</span>
+                                                        <span className="material-symbols-outlined text-[14px] text-gray-400" aria-hidden="true">call</span>
                                                         <span>{tenant.phone}</span>
                                                     </div>
                                                 )}
@@ -93,7 +113,7 @@ export default function TenantsClient({ initialTenants }: TenantsClientProps) {
                                         <td className="px-6 py-4">
                                             {tenant.currentAsset ? (
                                                 <div className="flex items-center gap-2 text-blue-600 font-medium bg-blue-50 px-2 py-1 rounded w-fit">
-                                                    <span className="material-symbols-outlined text-[16px]">apartment</span>
+                                                    <span className="material-symbols-outlined text-[16px]" aria-hidden="true">apartment</span>
                                                     {tenant.currentAsset}
                                                 </div>
                                             ) : (
@@ -128,8 +148,9 @@ export default function TenantsClient({ initialTenants }: TenantsClientProps) {
                                             <button
                                                 onClick={() => handleEdit(tenant)}
                                                 className="text-gray-400 hover:text-blue-600 transition-colors p-1 inline-block"
+                                                aria-label={`Editar inquilino ${tenant.name}`}
                                             >
-                                                <span className="material-symbols-outlined">edit</span>
+                                                <span className="material-symbols-outlined" aria-hidden="true">edit</span>
                                             </button>
                                         </td>
                                     </tr>
@@ -138,6 +159,16 @@ export default function TenantsClient({ initialTenants }: TenantsClientProps) {
                         </tbody>
                     </table>
                 </div>
+
+                <Pagination
+                    page={page}
+                    totalPages={totalPages}
+                    total={total}
+                    limit={limit}
+                    onPageChange={handlePageChange}
+                    onLimitChange={handleLimitChange}
+                    className="border-t border-gray-100"
+                />
             </div>
 
             {selectedTenant && (
